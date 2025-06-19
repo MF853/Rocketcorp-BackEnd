@@ -4,6 +4,7 @@ import * as argon2 from "argon2";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import { JwtPayload } from "./interfaces/jwtpayload.interface";
+import { UserPayload } from "src/types/express";
 @Injectable()
 export class AuthService {
   constructor(
@@ -23,7 +24,12 @@ export class AuthService {
     if (!validPassword || authDto.email !== "admin@email.com") {
       throw new ForbiddenException("Invalid credentials");
     }
-    const payload: JwtPayload = { email: authDto.email };
+    const userPayload: UserPayload = {
+      userId: "1",
+      email: authDto.email,
+      roles: ["user"],
+    };
+    const payload: JwtPayload = { user: userPayload };
     return {
       message: "Login successful",
       access_token: await this.jwtService.signAsync(payload, {

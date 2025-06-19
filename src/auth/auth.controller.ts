@@ -5,12 +5,15 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Req,
   UseGuards,
 } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { AuthDto } from "./dto/auth.dto";
-// import { AuthGuard } from "./auth.guard";
-import { AuthGuard } from "@nestjs/passport"; // Using Passport's AuthGuard for JWT
+import { RequestWithUser } from "src/types/express";
+import { JwtGuard, RolesGuard } from "./guard";
+import { Roles } from "./decorators/roles.decorator";
+import { Role } from "src/enums/roles.enum";
 
 @Controller("auth")
 export class AuthController {
@@ -22,9 +25,23 @@ export class AuthController {
     return this.authService.login(authDto);
   }
 
-  @UseGuards(AuthGuard("jwt")) // Using Passport's JWT AuthGuard
+  @UseGuards(JwtGuard)
   @Get("me")
-  getMe() {
+  getMe(@Req() req: RequestWithUser) {
+    const user = req.user;
+    console.log("User from request:", user);
     return this.authService.getMe();
+  }
+
+  @Roles(Role.Admin)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Get("admin")
+  getAdmin(@Req() req: RequestWithUser) {
+    const user = req.user;
+    console.log("Admin User from request:", user);
+    return {
+      message: "Admin access granted",
+      user,
+    };
   }
 }

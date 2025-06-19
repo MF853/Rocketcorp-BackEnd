@@ -1,4 +1,5 @@
+import { UserPayload } from "src/types/express";
+
 export interface JwtPayload {
-  email: string;
-  // Add other fields as necessary
+  user: UserPayload;
 }
