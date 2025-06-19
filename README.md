@@ -13,6 +13,10 @@ Nosso time é formado pelos seguintes integrantes:
 - [José Mário](https://github.com/MF853)
 - [Raylandson Cesário](https://github.com/Raylandson)
 
+## 📖 Resumo do Projeto
+
+Este projeto consiste em um backend robusto desenvolvido com NestJS, utilizando PostgreSQL como banco de dados, Prisma como ORM, e Docker para a containerização do ambiente. A autenticação é gerenciada com JWT, incluindo um sistema de controle de acesso baseado em roles (Role-Based Access Control). O projeto está configurado com scripts para facilitar o desenvolvimento, deploy em produção e seeding do banco de dados.
+
 ## 🛠️ Tecnologias
 
 - **NestJS** - Framework Node.js para aplicações escaláveis
@@ -53,6 +57,7 @@ O arquivo `.env` já está configurado com as seguintes variáveis:
 DATABASE_URL="postgresql://rocketcorp_user:rocketcorp_password@localhost:5432/rocketcorp_db?schema=public"
 PORT=3000
 NODE_ENV=development
+JWT_SECRET=your_super_secret_key
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=rocketcorp_db
