@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable } from "@nestjs/common";
+import {
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { AuthDto } from "./dto/auth.dto";
 import * as argon2 from "argon2";
 import { JwtService } from "@nestjs/jwt";
@@ -30,12 +34,51 @@ export class AuthService {
       roles: ["user"],
     };
     const payload: JwtPayload = { user: userPayload };
+
+    // Generate access token (1 hour)
+    const accessToken = await this.jwtService.signAsync(payload, {
+      secret: this.config.get<string>("JWT_SECRET"),
+      expiresIn: "1h",
+    });
+
+    // Generate refresh token (7 days)
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      secret: this.config.get<string>("JWT_SECRET"),
+      expiresIn: "7d",
+    });
+
     return {
       message: "Login successful",
-      access_token: await this.jwtService.signAsync(payload, {
-        secret: this.config.get<string>("JWT_SECRET"),
-      }),
+      access_token: accessToken,
+      refresh_token: refreshToken,
     };
+  }
+
+  async refresh(refreshToken: string) {
+    try {
+      const decoded = await this.jwtService.verifyAsync<JwtPayload>(
+        refreshToken,
+        {
+          secret: this.config.get<string>("JWT_SECRET"),
+          // eslint-disable-next-line prettier/prettier
+        }
+      );
+
+      const userPayload: UserPayload = decoded.user;
+      const payload: JwtPayload = { user: userPayload };
+
+      const newAccessToken = await this.jwtService.signAsync(payload, {
+        secret: this.config.get<string>("JWT_SECRET"),
+        expiresIn: "1h",
+      });
+
+      return {
+        message: "Token refreshed successfully",
+        access_token: newAccessToken,
+      };
+    } catch {
+      throw new UnauthorizedException("Invalid refresh token");
+    }
   }
 
   getMe() {
