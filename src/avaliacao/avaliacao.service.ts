@@ -7,6 +7,10 @@ import { UpdateAvaliacaoDto } from './dto/update-avaliacao.dto';
 export class AvaliacaoService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Cria uma nova avaliação.
+   * Primeiro cria a AvaliacaoAbstrata, depois vincula à Avaliacao.
+   */
   async create(createAvaliacaoDto: CreateAvaliacaoDto) {
     // Cria AvaliacaoAbstrata primeiro
     const avaliacaoAbstrata = await this.prisma.avaliacaoAbstrata.create({
@@ -23,10 +27,16 @@ export class AvaliacaoService {
     });
   }
 
+  /**
+   * Retorna todas as avaliações cadastradas, incluindo os dados da AvaliacaoAbstrata.
+   */
   findAll() {
     return this.prisma.avaliacao.findMany({ include: { avaliacaoAbstrata: true } });
   }
 
+  /**
+   * Busca uma avaliação pelo ID, incluindo os dados da AvaliacaoAbstrata.
+   */
   findOne(id: number) {
     return this.prisma.avaliacao.findUnique({
       where: { id },
@@ -34,6 +44,9 @@ export class AvaliacaoService {
     });
   }
 
+  /**
+   * Atualiza uma avaliação e, se necessário, a AvaliacaoAbstrata vinculada.
+   */
   async update(id: number, updateAvaliacaoDto: UpdateAvaliacaoDto) {
     // Atualiza Avaliacao e, se necessário, AvaliacaoAbstrata
     const avaliacao = await this.prisma.avaliacao.update({
@@ -53,6 +66,9 @@ export class AvaliacaoService {
     return this.findOne(id);
   }
 
+  /**
+   * Remove uma avaliação pelo ID.
+   */
   remove(id: number) {
     return this.prisma.avaliacao.delete({ where: { id } });
   }
