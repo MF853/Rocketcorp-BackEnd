@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -17,4 +16,31 @@ model User {
   updatedAt DateTime @updatedAt
 
   @@map("users")
+}
+
+model AvaliacaoAbstrata {
+  id           Int      @id @default(autoincrement())
+  idAvaliador  Int
+  idAvaliado   Int
+  idCiclo      Int
+  nota         Float?
+  
+  avaliacao    Avaliacao?
+  avaliacao360 Avaliacao360?
+}
+
+model Avaliacao {
+  id                   Int                @id @default(autoincrement())
+  justificativa        String
+  criterio             String
+  avaliacaoAbstrataId  Int                @unique
+  avaliacaoAbstrata    AvaliacaoAbstrata  @relation(fields: [avaliacaoAbstrataId], references: [id])
+}
+
+model Avaliacao360 {
+  id                   Int                @id @default(autoincrement())
+  pontosFortes         String
+  pontosMelhora        String
+  avaliacaoAbstrataId  Int                @unique
+  avaliacaoAbstrata    AvaliacaoAbstrata  @relation(fields: [avaliacaoAbstrataId], references: [id])
 }
