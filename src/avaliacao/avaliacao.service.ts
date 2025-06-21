@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateAvaliacaoDto } from './dto/create-avaliacao.dto';
-import { UpdateAvaliacaoDto } from './dto/update-avaliacao.dto';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { CreateAvaliacaoDto } from "./dto/create-avaliacao.dto";
+import { UpdateAvaliacaoDto } from "./dto/update-avaliacao.dto";
 
 @Injectable()
 export class AvaliacaoService {
@@ -31,7 +31,9 @@ export class AvaliacaoService {
    * Retorna todas as avaliações cadastradas, incluindo os dados da AvaliacaoAbstrata.
    */
   findAll() {
-    return this.prisma.avaliacao.findMany({ include: { avaliacaoAbstrata: true } });
+    return this.prisma.avaliacao.findMany({
+      include: { avaliacaoAbstrata: true },
+    });
   }
 
   /**

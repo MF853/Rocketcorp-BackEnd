@@ -9,29 +9,33 @@ import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import { JwtPayload } from "./interfaces/jwtpayload.interface";
 import { UserPayload } from "src/types/express";
+import { PrismaService } from "src/prisma/prisma.service";
 @Injectable()
 export class AuthService {
   constructor(
     private config: ConfigService,
-    // eslint-disable-next-line prettier/prettier
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private prismaService: PrismaService
   ) {}
 
   async login(authDto: AuthDto) {
-    const testPassword = "password123";
-    const testHashedPassword = await argon2.hash(testPassword);
-    const validPassword = await argon2.verify(
-      testHashedPassword,
-      // eslint-disable-next-line prettier/prettier
+    const user = await this.prismaService.user.findUnique({
+      where: { email: authDto.email },
+    });
+    if (!user) {
+      throw new ForbiddenException("Invalid credentials");
+    }
+    const isPasswordValid = await argon2.verify(
+      user.password,
       authDto.password
     );
-    if (!validPassword || authDto.email !== "admin@email.com") {
+    if (!isPasswordValid) {
       throw new ForbiddenException("Invalid credentials");
     }
     const userPayload: UserPayload = {
-      userId: "1",
+      userId: user.id,
       email: authDto.email,
-      roles: ["user"],
+      roles: ["user"], // para exemplo
     };
     const payload: JwtPayload = { user: userPayload };
 
@@ -60,7 +64,6 @@ export class AuthService {
         refreshToken,
         {
           secret: this.config.get<string>("JWT_SECRET"),
-          // eslint-disable-next-line prettier/prettier
         }
       );
 
