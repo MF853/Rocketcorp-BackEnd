@@ -8,25 +8,28 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                  Int                  @id @default(autoincrement())
+  email               String               @unique
+  name                String
+  password            String
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  avaliacoesFeitas     AvaliacaoAbstrata[] @relation("Avaliador")
+  avaliacoesRecebidas  AvaliacaoAbstrata[] @relation("Avaliado")
 
   @@map("users")
 }
 
 model AvaliacaoAbstrata {
-  id           Int      @id @default(autoincrement())
-  idAvaliador  Int
-  idAvaliado   Int
-  idCiclo      Int
-  nota         Float?
-  
-  avaliacao    Avaliacao?
-  avaliacao360 Avaliacao360?
+  id               Int               @id @default(autoincrement())
+  idAvaliador      Int
+  idAvaliado       Int
+  idCiclo          Int
+  nota             Float?
+  avaliador        User              @relation("Avaliador", fields: [idAvaliador], references: [id])
+  avaliado         User              @relation("Avaliado", fields: [idAvaliado], references: [id])
+  avaliacao        Avaliacao?
+  avaliacao360     Avaliacao360?
 }
 
 model Avaliacao {
