@@ -1,3 +1,5 @@
+// schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,42 +10,89 @@ datasource db {
 }
 
 model User {
-  id                  Int                  @id @default(autoincrement())
-  email               String               @unique
+  id                  Int           @id @default(autoincrement())
+  email               String        @unique
   name                String
   password            String
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  avaliacoesFeitas     AvaliacaoAbstrata[] @relation("Avaliador")
-  avaliacoesRecebidas  AvaliacaoAbstrata[] @relation("Avaliado")
-
+  role                String        @default("user")
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  trilhaId            Int?          
+  trilha              Trilha?       @relation(fields: [trilhaId], references: [id], onDelete: SetNull)
+  avaliacoesFeitas    Avaliacao[]   @relation("Avaliador")
+  avaliacoesRecebidas Avaliacao[]   @relation("Avaliado")
+  avaliacoes360Feitas Avaliacao360[] @relation("Avaliador360")
+  avaliacoes360Recebidas Avaliacao360[] @relation("Avaliado360")
+  
+  @@index([trilhaId])
+  @@index([email])
   @@map("users")
 }
 
-model AvaliacaoAbstrata {
-  id               Int               @id @default(autoincrement())
-  idAvaliador      Int
-  idAvaliado       Int
-  idCiclo          Int
-  nota             Float?
-  avaliador        User              @relation("Avaliador", fields: [idAvaliador], references: [id])
-  avaliado         User              @relation("Avaliado", fields: [idAvaliado], references: [id])
-  avaliacao        Avaliacao?
-  avaliacao360     Avaliacao360?
+model Trilha {
+  id       Int       @id @default(autoincrement())
+  name     String    @db.VarChar(255)
+  users    User[]    
+  criterio Criterio[] 
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@map("trilhas")
+}
+
+model Criterio {
+  id         Int         @id @default(autoincrement())
+  name       String      @db.VarChar(255)
+  enabled    Boolean     @default(true)
+  trilhaId    Int
+  trilha      Trilha      @relation(fields: [trilhaId], references: [id], onDelete: Cascade)
+  avaliacoes Avaliacao[] 
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@unique([name, trilhaId])
+  @@index([trilhaId])
+  @@map("criterio")
 }
 
 model Avaliacao {
-  id                   Int                @id @default(autoincrement())
-  justificativa        String
-  criterio             String
-  avaliacaoAbstrataId  Int                @unique
-  avaliacaoAbstrata    AvaliacaoAbstrata  @relation(fields: [avaliacaoAbstrataId], references: [id])
+  id            Int       @id @default(autoincrement())
+  idAvaliador   Int
+  idAvaliado    Int
+  idCiclo       Int
+  nota          Float?
+  justificativa String
+  criterioId    Int
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  avaliador     User      @relation("Avaliador", fields: [idAvaliador], references: [id], onDelete: Restrict)
+  avaliado      User      @relation("Avaliado", fields: [idAvaliado], references: [id], onDelete: Restrict)
+  criterio      Criterio  @relation(fields: [criterioId], references: [id], onDelete: Restrict)
+  
+  @@unique([idAvaliador, idAvaliado, idCiclo, criterioId]) // Prevent duplicate evaluations
+  @@index([idAvaliador])
+  @@index([idAvaliado])
+  @@index([criterioId])
+  @@index([idCiclo])
+  @@map("avaliacoes")
 }
 
 model Avaliacao360 {
-  id                   Int                @id @default(autoincrement())
-  pontosFortes         String
-  pontosMelhora        String
-  avaliacaoAbstrataId  Int                @unique
-  avaliacaoAbstrata    AvaliacaoAbstrata  @relation(fields: [avaliacaoAbstrataId], references: [id])
+  id            Int       @id @default(autoincrement())
+  idAvaliador   Int
+  idAvaliado    Int
+  idCiclo       Int
+  nota          Float?
+  pontosFortes  String
+  pontosMelhora String
+  avaliador     User      @relation("Avaliador360", fields: [idAvaliador], references: [id], onDelete: Restrict)
+  avaliado      User      @relation("Avaliado360", fields: [idAvaliado], references: [id], onDelete: Restrict)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  
+  @@unique([idAvaliador, idAvaliado, idCiclo])
+  @@index([idAvaliador])
+  @@index([idAvaliado])
+  @@index([idCiclo])
+  @@map("avaliacoes_360")
 }
