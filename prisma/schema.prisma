@@ -15,6 +15,7 @@ model User {
   name                String
   password            String
   role                String        @default("user")
+  unidade             String?       @db.VarChar(50)
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
   trilhaId            Int?          
@@ -77,6 +78,14 @@ model Avaliacao {
   @@map("avaliacoes")
 }
 
+enum MotivacaoTrabalhoNovamente {
+  DISCORDO_TOTALMENTE
+  DISCORDO_PARCIALMENTE
+  INDIFERENTE
+  CONCORDO_PARCIALMENTE
+  CONCORDO_TOTALMENTE
+}
+
 model Avaliacao360 {
   id            Int       @id @default(autoincrement())
   idAvaliador   Int
@@ -85,6 +94,9 @@ model Avaliacao360 {
   nota          Float?
   pontosFortes  String
   pontosMelhora String
+  nomeProjeto   String    @db.VarChar(255)
+  periodoMeses  Int
+  trabalhariaNovamente MotivacaoTrabalhoNovamente
   avaliador     User      @relation("Avaliador360", fields: [idAvaliador], references: [id], onDelete: Restrict)
   avaliado      User      @relation("Avaliado360", fields: [idAvaliado], references: [id], onDelete: Restrict)
   createdAt           DateTime      @default(now())

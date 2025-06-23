@@ -1,4 +1,4 @@
-import { User } from "@prisma/client";
+import { User, MotivacaoTrabalhoNovamente } from "@prisma/client";
 
 export class Avaliacao {
   id: number;
@@ -29,6 +29,9 @@ export class Avaliacao360 {
   nota?: number;
   pontosFortes: string;
   pontosMelhora: string;
+  nomeProjeto: string;
+  periodoMeses: number;
+  trabalhariaNovamente: MotivacaoTrabalhoNovamente;
   createdAt: Date;
   updatedAt: Date;
 
