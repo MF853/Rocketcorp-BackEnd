@@ -7,6 +7,7 @@ import { AvaliacaoRepository } from "./avaliacao.repository";
 import {
   CreateAvaliacaoDto,
   CreateAvaliacao360Dto,
+  BulkCreateAvaliacaoDto,
 } from "./dto/create-avaliacao.dto";
 import {
   UpdateAvaliacaoDto,
@@ -49,6 +50,95 @@ export class AvaliacaoService {
 
     return this.avaliacaoRepository.createAvaliacao360(createAvaliacao360Dto);
   }
+
+  /**
+   * Creates multiple Avaliacoes and/or Avaliacoes360 in bulk
+   */
+  async createBulk(bulkCreateDto: BulkCreateAvaliacaoDto) {
+    const results = {
+      success: true,
+      created: {
+        avaliacoes: 0,
+        avaliacoes360: 0,
+      },
+      data: {
+        avaliacoes: [] as any[],
+        avaliacoes360: [] as any[],
+      },
+      errors: [] as string[],
+    };
+
+    try {
+      // Validate duplicates for regular evaluations
+      if (bulkCreateDto.avaliacoes && bulkCreateDto.avaliacoes.length > 0) {
+        for (const avaliacao of bulkCreateDto.avaliacoes) {
+          const exists = await this.avaliacaoRepository.avaliacaoExists(
+            avaliacao.idAvaliador,
+            avaliacao.idAvaliado,
+            avaliacao.idCiclo,
+            avaliacao.criterioId
+          );
+          if (exists) {
+            results.errors.push(
+              `Já existe uma avaliação para avaliador ${avaliacao.idAvaliador}, avaliado ${avaliacao.idAvaliado}, ciclo ${avaliacao.idCiclo} e critério ${avaliacao.criterioId}`
+            );
+          }
+        }
+      }
+
+      // Validate duplicates for 360 evaluations
+      if (
+        bulkCreateDto.avaliacoes360 &&
+        bulkCreateDto.avaliacoes360.length > 0
+      ) {
+        for (const avaliacao360 of bulkCreateDto.avaliacoes360) {
+          const exists = await this.avaliacaoRepository.avaliacao360Exists(
+            avaliacao360.idAvaliador,
+            avaliacao360.idAvaliado,
+            avaliacao360.idCiclo
+          );
+          if (exists) {
+            results.errors.push(
+              `Já existe uma avaliação 360 para avaliador ${avaliacao360.idAvaliador}, avaliado ${avaliacao360.idAvaliado} e ciclo ${avaliacao360.idCiclo}`
+            );
+          }
+        }
+      }
+
+      // If there are validation errors, don't proceed
+      if (results.errors.length > 0) {
+        results.success = false;
+        throw new ConflictException({
+          message: "Validation errors found",
+          errors: results.errors,
+        });
+      }
+
+      // Create in bulk using repository transaction
+      const createdData = await this.avaliacaoRepository.createBulkMixed({
+        avaliacoes: bulkCreateDto.avaliacoes,
+        avaliacoes360: bulkCreateDto.avaliacoes360,
+      });
+
+      results.data = createdData;
+      results.created.avaliacoes = createdData.avaliacoes.length;
+      results.created.avaliacoes360 = createdData.avaliacoes360.length;
+
+      return results;
+    } catch (error) {
+      results.success = false;
+      if (error instanceof ConflictException) {
+        throw error;
+      }
+      throw new Error(
+        `Failed to create bulk evaluations: ${
+          (error as Error).message || "Unknown error"
+        }`
+      );
+    }
+  }
+
+  // ==================== QUERY METHODS ====================
 
   findAll() {
     return this.avaliacaoRepository.findAllAvaliacoes();

@@ -8,6 +8,27 @@ import {
   UpdateAvaliacaoDto,
   UpdateAvaliacao360Dto,
 } from "./dto/update-avaliacao.dto";
+import { Prisma } from "@prisma/client";
+
+// Define the include objects to be reused
+const avaliacaoInclude = {
+  avaliador: { select: { id: true, name: true, email: true } },
+  avaliado: { select: { id: true, name: true, email: true } },
+  criterio: { select: { id: true, name: true, enabled: true } },
+};
+
+const avaliacao360Include = {
+  avaliador: { select: { id: true, name: true, email: true } },
+  avaliado: { select: { id: true, name: true, email: true } },
+};
+
+// Generate the types based on the include objects
+type AvaliacaoWithIncludes = Prisma.AvaliacaoGetPayload<{
+  include: typeof avaliacaoInclude;
+}>;
+type Avaliacao360WithIncludes = Prisma.Avaliacao360GetPayload<{
+  include: typeof avaliacao360Include;
+}>;
 
 @Injectable()
 export class AvaliacaoRepository {
@@ -247,28 +268,91 @@ export class AvaliacaoRepository {
     };
   }
 
+  // ==================== BULK OPERATIONS ====================
+
+  /**
+   * Creates multiple Avaliacoes in a single transaction
+   */
+  async createBulkAvaliacoes(avaliacoes: CreateAvaliacaoDto[]) {
+    return this.prisma.$transaction(async (tx) => {
+      const results: AvaliacaoWithIncludes[] = [];
+      for (const avaliacao of avaliacoes) {
+        const result = await tx.avaliacao.create({
+          data: avaliacao,
+          include: this.getAvaliacaoIncludes(),
+        });
+        results.push(result);
+      }
+      return results;
+    });
+  }
+
+  /**
+   * Creates multiple Avaliacoes360 in a single transaction
+   */
+  async createBulkAvaliacoes360(avaliacoes360: CreateAvaliacao360Dto[]) {
+    return this.prisma.$transaction(async (tx) => {
+      const results: Avaliacao360WithIncludes[] = [];
+      for (const avaliacao360 of avaliacoes360) {
+        const result = await tx.avaliacao360.create({
+          data: avaliacao360,
+          include: this.getAvaliacao360Includes(),
+        });
+        results.push(result);
+      }
+      return results;
+    });
+  }
+
+  /**
+   * Creates a mix of Avaliacoes and Avaliacoes360 in a single transaction
+   */
+  async createBulkMixed(data: {
+    avaliacoes?: CreateAvaliacaoDto[];
+    avaliacoes360?: CreateAvaliacao360Dto[];
+  }) {
+    return this.prisma.$transaction(async (tx) => {
+      const results: {
+        avaliacoes: AvaliacaoWithIncludes[];
+        avaliacoes360: Avaliacao360WithIncludes[];
+      } = {
+        avaliacoes: [],
+        avaliacoes360: [],
+      };
+
+      // Create regular evaluations
+      if (data.avaliacoes && data.avaliacoes.length > 0) {
+        for (const avaliacao of data.avaliacoes) {
+          const result = await tx.avaliacao.create({
+            data: avaliacao,
+            include: this.getAvaliacaoIncludes(),
+          });
+          results.avaliacoes.push(result);
+        }
+      }
+
+      // Create 360 evaluations
+      if (data.avaliacoes360 && data.avaliacoes360.length > 0) {
+        for (const avaliacao360 of data.avaliacoes360) {
+          const result = await tx.avaliacao360.create({
+            data: avaliacao360,
+            include: this.getAvaliacao360Includes(),
+          });
+          results.avaliacoes360.push(result);
+        }
+      }
+
+      return results;
+    });
+  }
+
+  // ==================== PRIVATE HELPER METHODS ====================
+
   private getAvaliacaoIncludes() {
-    return {
-      avaliador: {
-        select: { id: true, name: true, email: true },
-      },
-      avaliado: {
-        select: { id: true, name: true, email: true },
-      },
-      criterio: {
-        select: { id: true, name: true, enabled: true },
-      },
-    };
+    return avaliacaoInclude;
   }
 
   private getAvaliacao360Includes() {
-    return {
-      avaliador: {
-        select: { id: true, name: true, email: true },
-      },
-      avaliado: {
-        select: { id: true, name: true, email: true },
-      },
-    };
+    return avaliacao360Include;
   }
 }
