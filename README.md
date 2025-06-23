@@ -142,6 +142,7 @@ pnpm db:migrate     # Executar migrações
 pnpm db:studio      # Abrir Prisma Studio
 pnpm db:reset       # Resetar banco de dados
 pnpm db:deploy      # Deploy das migrações (produção)
+pnpm ts-node prisma/seed.ts # Popular Banco de Dados Para testes
 ```
 
 ### Desenvolvimento
