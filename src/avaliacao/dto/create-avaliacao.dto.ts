@@ -5,8 +5,18 @@ import {
   IsPositive,
   IsArray,
   ValidateNested,
+  IsEnum,
+  IsInt,
 } from "class-validator";
 import { Type, Transform } from "class-transformer";
+
+export enum MotivacaoTrabalhoNovamente {
+  DISCORDO_TOTALMENTE = "DISCORDO_TOTALMENTE",
+  DISCORDO_PARCIALMENTE = "DISCORDO_PARCIALMENTE",
+  INDIFERENTE = "INDIFERENTE",
+  CONCORDO_PARCIALMENTE = "CONCORDO_PARCIALMENTE",
+  CONCORDO_TOTALMENTE = "CONCORDO_TOTALMENTE",
+}
 
 export class CreateAvaliacaoDto {
   @Transform(({ value }) => Number(value)) // Convert string to number
@@ -24,18 +34,18 @@ export class CreateAvaliacaoDto {
   @IsPositive()
   idCiclo: number;
 
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }) => (value ? Number(value) : undefined))
+  @IsOptional()
   @IsNumber()
-  @IsPositive()
-  nota: number;
+  nota?: number;
 
   @IsString()
   justificativa: string;
 
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }) => value !== undefined ? Number(value) : null)
+  @IsOptional()
   @IsNumber()
   @IsPositive()
-  @IsOptional()
   criterioId?: number;
 }
 
@@ -65,6 +75,18 @@ export class CreateAvaliacao360Dto {
 
   @IsString()
   pontosMelhora: string;
+
+  @IsString()
+  nomeProjeto: string;
+
+  @Transform(({ value }) => Number(value))
+  @IsNumber()
+  @IsPositive()
+  @IsInt()
+  periodoMeses: number;
+
+  @IsEnum(MotivacaoTrabalhoNovamente)
+  trabalhariaNovamente: MotivacaoTrabalhoNovamente;
 }
 
 export class BulkCreateAvaliacaoDto {

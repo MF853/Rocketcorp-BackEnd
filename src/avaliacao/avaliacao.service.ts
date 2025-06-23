@@ -19,17 +19,19 @@ export class AvaliacaoService {
   constructor(private readonly avaliacaoRepository: AvaliacaoRepository) {}
 
   async create(createAvaliacaoDto: CreateAvaliacaoDto) {
-    const exists = await this.avaliacaoRepository.avaliacaoExists(
-      createAvaliacaoDto.idAvaliador,
-      createAvaliacaoDto.idAvaliado,
-      createAvaliacaoDto.idCiclo,
-      createAvaliacaoDto.criterioId
-    );
-
-    if (exists) {
-      throw new ConflictException(
-        "Já existe uma avaliação para este avaliador, avaliado, ciclo e critério"
+    if (createAvaliacaoDto.criterioId !== undefined) {
+      const exists = await this.avaliacaoRepository.avaliacaoExists(
+        createAvaliacaoDto.idAvaliador,
+        createAvaliacaoDto.idAvaliado,
+        createAvaliacaoDto.idCiclo,
+        createAvaliacaoDto.criterioId
       );
+
+      if (exists) {
+        throw new ConflictException(
+          "Já existe uma avaliação para este avaliador, avaliado, ciclo e critério"
+        );
+      }
     }
 
     return this.avaliacaoRepository.createAvaliacao(createAvaliacaoDto);
@@ -72,16 +74,18 @@ export class AvaliacaoService {
       // Validate duplicates for regular evaluations
       if (bulkCreateDto.avaliacoes && bulkCreateDto.avaliacoes.length > 0) {
         for (const avaliacao of bulkCreateDto.avaliacoes) {
-          const exists = await this.avaliacaoRepository.avaliacaoExists(
-            avaliacao.idAvaliador,
-            avaliacao.idAvaliado,
-            avaliacao.idCiclo,
-            avaliacao.criterioId
-          );
-          if (exists) {
-            results.errors.push(
-              `Já existe uma avaliação para avaliador ${avaliacao.idAvaliador}, avaliado ${avaliacao.idAvaliado}, ciclo ${avaliacao.idCiclo} e critério ${avaliacao.criterioId}`
+          if (avaliacao.criterioId !== undefined) {
+            const exists = await this.avaliacaoRepository.avaliacaoExists(
+              avaliacao.idAvaliador,
+              avaliacao.idAvaliado,
+              avaliacao.idCiclo,
+              avaliacao.criterioId
             );
+            if (exists) {
+              results.errors.push(
+                `Já existe uma avaliação para avaliador ${avaliacao.idAvaliador}, avaliado ${avaliacao.idAvaliado}, ciclo ${avaliacao.idCiclo} e critério ${avaliacao.criterioId}`
+              );
+            }
           }
         }
       }

@@ -66,12 +66,12 @@ model Avaliacao {
   idCiclo       Int
   nota          Float?
   justificativa String
-  criterioId    Int
+  criterioId    Int?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   avaliador     User      @relation("Avaliador", fields: [idAvaliador], references: [id], onDelete: Restrict)
   avaliado      User      @relation("Avaliado", fields: [idAvaliado], references: [id], onDelete: Restrict)
-  criterio      Criterio  @relation(fields: [criterioId], references: [id], onDelete: Restrict)
+  criterio      Criterio?  @relation(fields: [criterioId], references: [id], onDelete: Restrict)
 
   @@unique([idAvaliador, idAvaliado, idCiclo, criterioId])
   @@index([idAvaliador])

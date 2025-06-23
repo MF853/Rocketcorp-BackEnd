@@ -1,0 +1,108 @@
+{
+  "bulk_mixed_example": {
+    "avaliacoes": [
+      {
+        "idAvaliador": 1,
+        "idAvaliado": 2,
+        "idCiclo": 1,
+        "nota": 8.5,
+        "justificativa": "Excelente trabalho em equipe",
+        "criterioId": 1
+      },
+      {
+        "idAvaliador": 1,
+        "idAvaliado": 3,
+        "idCiclo": 1,
+        "justificativa": "Boa comunicação, precisa melhorar proatividade",
+        "criterioId": 2
+      }
+    ],
+    "avaliacoes360": [
+      {
+        "idAvaliador": 2,
+        "idAvaliado": 1,
+        "idCiclo": 1,
+        "nota": 9.0,
+        "pontosFortes": "Excelente liderança técnica e comunicação clara",
+        "pontosMelhora": "Poderia delegar mais tarefas",
+        "nomeProjeto": "Sistema de Gestão de Vendas",
+        "periodoMeses": 6,
+        "trabalhariaNovamente": "CONCORDO_TOTALMENTE"
+      },
+      {
+        "idAvaliador": 3,
+        "idAvaliado": 1,
+        "idCiclo": 1,
+        "pontosFortes": "Muito colaborativo e sempre disponível para ajudar",
+        "pontosMelhora": "Às vezes assume muitas responsabilidades",
+        "nomeProjeto": "Migração para Microserviços",
+        "periodoMeses": 4,
+        "trabalhariaNovamente": "CONCORDO_PARCIALMENTE"
+      }
+    ]
+  },
+  "single_avaliacao_example": {
+    "idAvaliador": 1,
+    "idAvaliado": 2,
+    "idCiclo": 1,
+    "nota": 7.5,
+    "justificativa": "Boa performance, atende aos critérios estabelecidos",
+    "criterioId": 1
+  },
+  "single_avaliacao360_example": {
+    "idAvaliador": 2,
+    "idAvaliado": 3,
+    "idCiclo": 1,
+    "nota": 8.8,
+    "pontosFortes": "Excelente capacidade de resolução de problemas e inovação",
+    "pontosMelhora": "Poderia melhorar a documentação do código",
+    "nomeProjeto": "Plataforma de E-commerce",
+    "periodoMeses": 8,
+    "trabalhariaNovamente": "CONCORDO_TOTALMENTE"
+  },
+  "bulk_avaliacoes_only": {
+    "avaliacoes": [
+      {
+        "idAvaliador": 1,
+        "idAvaliado": 4,
+        "idCiclo": 2,
+        "nota": 6.5,
+        "justificativa": "Performance satisfatória, com espaço para crescimento",
+        "criterioId": 1
+      },
+      {
+        "idAvaliador": 2,
+        "idAvaliado": 4,
+        "idCiclo": 2,
+        "nota": 7.0,
+        "justificativa": "Bom trabalho técnico, precisa melhorar soft skills",
+        "criterioId": 2
+      }
+    ]
+  },
+  "bulk_avaliacoes360_only": {
+    "avaliacoes360": [
+      {
+        "idAvaliador": 1,
+        "idAvaliado": 5,
+        "idCiclo": 1,
+        "nota": 9.5,
+        "pontosFortes": "Liderança excepcional e visão estratégica",
+        "pontosMelhora": "Nenhum ponto significativo a melhorar",
+        "nomeProjeto": "Transformação Digital",
+        "periodoMeses": 12,
+        "trabalhariaNovamente": "CONCORDO_TOTALMENTE"
+      },
+      {
+        "idAvaliador": 3,
+        "idAvaliado": 5,
+        "idCiclo": 1,
+        "pontosFortes": "Muito organizado e eficiente na gestão de projetos",
+        "pontosMelhora": "Poderia ser mais flexível com prazos em situações excepcionais",
+        "nomeProjeto": "Implementação de DevOps",
+        "periodoMeses": 3,
+        "trabalhariaNovamente": "CONCORDO_PARCIALMENTE"
+      }
+    ]
+  }
+}
