@@ -1,7 +1,7 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { Logger, ValidationPipe } from "@nestjs/common";
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,13 +14,13 @@ async function bootstrap() {
   );
   // Configuração do Swagger
   const config = new DocumentBuilder()
-  .setTitle('Rocketcorp API')
-  .setDescription('Documentação da API Rocketcorp')
-  .setVersion('1.0')
-  .build();
+    .setTitle("Rocketcorp API")
+    .setDescription("Documentação da API Rocketcorp")
+    .setVersion("1.0")
+    .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup("api", app, document);
 
   app.enableCors();
 
