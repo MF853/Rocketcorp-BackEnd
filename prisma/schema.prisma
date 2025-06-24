@@ -18,12 +18,18 @@ model User {
   unidade             String?       @db.VarChar(50)
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
+  mentorId           Int?
+  mentor             User?         @relation("Mentor", fields: [mentorId], references: [id], onDelete: SetNull)
+  mentorados         User[]        @relation("Mentor")
+  avaliadorId         Int?
   trilhaId            Int?          
   trilha              Trilha?       @relation(fields: [trilhaId], references: [id], onDelete: SetNull)
   avaliacoesFeitas    Avaliacao[]   @relation("Avaliador")
   avaliacoesRecebidas Avaliacao[]   @relation("Avaliado")
   avaliacoes360Feitas Avaliacao360[] @relation("Avaliador360")
   avaliacoes360Recebidas Avaliacao360[] @relation("Avaliado360")
+  referenciasFeitas   referencia[]  @relation("Referenciador")
+  referenciasRecebidas referencia[] @relation("Referenciado")
   
   @@index([trilhaId])
   @@index([email])
@@ -58,6 +64,26 @@ model Criterio {
   @@index([trilhaId])
   @@map("criterio")
 }
+
+model referencia {
+  id         Int       @id @default(autoincrement())
+  idReferenciador Int
+  idReferenciado Int
+  justificativa String
+  idCiclo    Int
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  
+  referenciador User @relation("Referenciador", fields: [idReferenciador], references: [id], onDelete: Restrict)
+  referenciado  User @relation("Referenciado", fields: [idReferenciado], references: [id], onDelete: Restrict)
+
+  @@unique([idReferenciador, idReferenciado, idCiclo])
+  @@index([idReferenciador])
+  @@index([idReferenciado])
+  @@index([idCiclo])
+  @@map("referencias")
+}
+
 
 model Avaliacao {
   id            Int       @id @default(autoincrement())

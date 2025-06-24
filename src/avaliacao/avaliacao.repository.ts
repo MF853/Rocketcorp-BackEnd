@@ -10,7 +10,6 @@ import {
 } from "./dto/update-avaliacao.dto";
 import { Prisma } from "@prisma/client";
 
-// Define the include objects to be reused
 const avaliacaoInclude = {
   avaliador: { select: { id: true, name: true, email: true } },
   avaliado: { select: { id: true, name: true, email: true } },
@@ -22,7 +21,6 @@ const avaliacao360Include = {
   avaliado: { select: { id: true, name: true, email: true } },
 };
 
-// Generate the types based on the include objects
 type AvaliacaoWithIncludes = Prisma.AvaliacaoGetPayload<{
   include: typeof avaliacaoInclude;
 }>;
