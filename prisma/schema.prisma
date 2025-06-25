@@ -36,6 +36,26 @@ model User {
   @@map("users")
 }
 
+
+model Ciclo {
+  id         Int       @id @default(autoincrement())
+  name       String    @db.VarChar(255)
+  year       Int
+  period     Int
+  status     String    @db.VarChar(50) @default("aberto")
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  referencias referencia[] 
+  avaliacoes Avaliacao[] 
+  avaliacoes360 Avaliacao360[] 
+  criterios Criterio[]
+
+  @@unique([name, year, period])
+  @@index([year])
+  @@index([period])
+  @@map("ciclos")
+}
+
 model Trilha {
   id       Int       @id @default(autoincrement())
   name     String    @db.VarChar(255)
@@ -53,8 +73,10 @@ model Criterio {
   tipo       String      @db.VarChar(50)
   peso       Float       @default(20.0)
   description       String      @db.VarChar(255)
+  idCiclo    Int
   enabled    Boolean     @default(true)
   trilhaId    Int
+  ciclo       Ciclo       @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
   trilha      Trilha      @relation(fields: [trilhaId], references: [id], onDelete: Cascade)
   avaliacoes Avaliacao[] 
   createdAt           DateTime      @default(now())
@@ -62,6 +84,7 @@ model Criterio {
 
   @@unique([name, trilhaId])
   @@index([trilhaId])
+  @@index([idCiclo])
   @@map("criterio")
 }
 
@@ -76,6 +99,7 @@ model referencia {
   
   referenciador User @relation("Referenciador", fields: [idReferenciador], references: [id], onDelete: Restrict)
   referenciado  User @relation("Referenciado", fields: [idReferenciado], references: [id], onDelete: Restrict)
+  ciclo         Ciclo @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
 
   @@unique([idReferenciador, idReferenciado, idCiclo])
   @@index([idReferenciador])
@@ -97,6 +121,7 @@ model Avaliacao {
   updatedAt     DateTime  @updatedAt
   avaliador     User      @relation("Avaliador", fields: [idAvaliador], references: [id], onDelete: Restrict)
   avaliado      User      @relation("Avaliado", fields: [idAvaliado], references: [id], onDelete: Restrict)
+  ciclo         Ciclo     @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
   criterio      Criterio?  @relation(fields: [criterioId], references: [id], onDelete: Restrict)
 
   @@unique([idAvaliador, idAvaliado, idCiclo, criterioId])
@@ -128,6 +153,7 @@ model Avaliacao360 {
   trabalhariaNovamente MotivacaoTrabalhoNovamente
   avaliador     User      @relation("Avaliador360", fields: [idAvaliador], references: [id], onDelete: Restrict)
   avaliado      User      @relation("Avaliado360", fields: [idAvaliado], references: [id], onDelete: Restrict)
+  ciclo         Ciclo     @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
