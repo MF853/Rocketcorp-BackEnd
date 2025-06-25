@@ -5,9 +5,10 @@ import { AuthModule } from "./auth/auth.module";
 import { ConfigModule } from "@nestjs/config";
 import { AvaliacaoModule } from './avaliacao/avaliacao.module';
 import { ReferenciaModule } from './referencia/referencia.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
-  imports: [AuthModule, ConfigModule.forRoot({}), AvaliacaoModule, ReferenciaModule],
+  imports: [AuthModule, ConfigModule.forRoot({}), AvaliacaoModule, ReferenciaModule, UsersModule],
   controllers: [AppController],
   providers: [AppService],
 })
