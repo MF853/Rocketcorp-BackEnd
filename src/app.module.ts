@@ -7,9 +7,10 @@ import { AvaliacaoModule } from './avaliacao/avaliacao.module';
 import { ReferenciaModule } from './referencia/referencia.module';
 import { UsersModule } from './users/users.module';
 import { TrilhaModule } from './trilha/trilha.module';
+import { CriterioModule } from './criterio/criterio.module';
 
 @Module({
-  imports: [AuthModule, ConfigModule.forRoot({}), AvaliacaoModule, ReferenciaModule, UsersModule, TrilhaModule],
+  imports: [AuthModule, ConfigModule.forRoot({}), AvaliacaoModule, ReferenciaModule, UsersModule, TrilhaModule, CriterioModule],
   controllers: [AppController],
   providers: [AppService],
 })
