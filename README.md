@@ -57,7 +57,7 @@ O arquivo `.env` já está configurado com as seguintes variáveis:
 DATABASE_URL="postgresql://rocketcorp_user:rocketcorp_password@localhost:5432/rocketcorp_db?schema=public"
 PORT=3000
 NODE_ENV=development
-JWT_SECRET=your_super_secret_key
+JWT_SECRET="your_super_secret_key"
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=rocketcorp_db
