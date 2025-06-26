@@ -50,7 +50,7 @@ model Ciclo {
   avaliacoes360 Avaliacao360[] 
   criterios Criterio[]
 
-  @@unique([name, year, period])
+  @@unique([year, period])
   @@index([year])
   @@index([period])
   @@map("ciclos")
@@ -58,7 +58,7 @@ model Ciclo {
 
 model Trilha {
   id       Int       @id @default(autoincrement())
-  name     String    @db.VarChar(255)
+  name     String    @db.VarChar(255) @unique
   users    User[]    
   criterio Criterio[] 
   createdAt           DateTime      @default(now())
@@ -124,7 +124,7 @@ model Avaliacao {
   ciclo         Ciclo     @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
   criterio      Criterio?  @relation(fields: [criterioId], references: [id], onDelete: Restrict)
 
-  @@unique([idAvaliador, idAvaliado, idCiclo, criterioId])
+  @@unique([idAvaliador, idAvaliado, idCiclo])
   @@index([idAvaliador])
   @@index([idAvaliado])
   @@index([criterioId])

@@ -7,6 +7,8 @@ import {
   ValidateNested,
   IsEnum,
   IsInt,
+  Min,
+  Max,
 } from "class-validator";
 import { Type, Transform } from "class-transformer";
 import { ApiProperty } from "@nestjs/swagger";
@@ -51,14 +53,18 @@ export class CreateAvaliacaoDto {
   idCiclo: number;
 
   @ApiProperty({
-    description: "Nota numérica da avaliação (opcional)",
-    example: 8.5,
+    description: "Nota numérica da avaliação de 1 a 5 (opcional)",
+    example: 4,
     type: Number,
+    minimum: 1,
+    maximum: 5,
     required: false,
   })
   @Transform(({ value }) => (value ? Number(value) : undefined))
   @IsOptional()
   @IsNumber()
+  @Min(1, { message: "Nota deve ser no mínimo 1" })
+  @Max(5, { message: "Nota deve ser no máximo 5" })
   nota?: number;
 
   @ApiProperty({
@@ -117,13 +123,17 @@ export class CreateAvaliacao360Dto {
 
   @ApiProperty({
     description: "Nota numérica da avaliação 360 (opcional)",
-    example: 9.0,
+    example: 4,
     type: Number,
+    minimum: 1,
+    maximum: 5,
     required: false,
   })
   @Transform(({ value }) => (value ? Number(value) : undefined)) // Handle optional number
   @IsOptional()
   @IsNumber()
+  @Min(1, { message: "Nota deve ser no mínimo 1" })
+  @Max(5, { message: "Nota deve ser no máximo 5" })
   nota?: number;
 
   @ApiProperty({
@@ -184,7 +194,7 @@ export class BulkCreateAvaliacaoDto {
         idAvaliador: 1,
         idAvaliado: 2,
         idCiclo: 1,
-        nota: 8.5,
+        nota: 4,
         justificativa: "Excelente desempenho técnico e liderança.",
         criterioId: 1,
       },
@@ -205,7 +215,7 @@ export class BulkCreateAvaliacaoDto {
         idAvaliador: 1,
         idAvaliado: 2,
         idCiclo: 1,
-        nota: 9.0,
+        nota: 5,
         pontosFortes: "Excelente comunicação e liderança",
         pontosMelhora: "Melhorar gestão de tempo",
         nomeProjeto: "Sistema de Vendas v2.0",

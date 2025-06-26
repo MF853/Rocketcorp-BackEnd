@@ -1,4 +1,8 @@
-import { PrismaClient, MotivacaoTrabalhoNovamente } from "@prisma/client";
+import {
+  PrismaClient,
+  MotivacaoTrabalhoNovamente,
+  Criterio,
+} from "@prisma/client";
 import * as argon from "argon2";
 
 const prisma = new PrismaClient();
@@ -25,22 +29,22 @@ async function main() {
   const trilhas = await Promise.all([
     prisma.trilha.create({
       data: {
-        name: "Desenvolvimento Full Stack",
+        name: "Desenvolvimento",
       },
     }),
     prisma.trilha.create({
       data: {
-        name: "Data Science & Analytics",
+        name: "Análise de Dados",
       },
     }),
     prisma.trilha.create({
       data: {
-        name: "DevOps & Cloud",
+        name: "Infraestrutura",
       },
     }),
     prisma.trilha.create({
       data: {
-        name: "Gestão de Projetos",
+        name: "Gestão",
       },
     }),
   ]);
@@ -86,7 +90,7 @@ async function main() {
         password: await hashPassword("password123"),
         role: "admin",
         unidade: "Desenvolvimento",
-        trilhaId: trilhas[0].id, // Full Stack
+        trilhaId: trilhas[0].id, // Desenvolvimento
       },
     }),
     prisma.user.create({
@@ -96,7 +100,7 @@ async function main() {
         password: await hashPassword("password123"),
         role: "manager",
         unidade: "Desenvolvimento",
-        trilhaId: trilhas[0].id, // Full Stack
+        trilhaId: trilhas[0].id, // Desenvolvimento
       },
     }),
     prisma.user.create({
@@ -106,7 +110,7 @@ async function main() {
         password: await hashPassword("password123"),
         role: "user",
         unidade: "Dados",
-        trilhaId: trilhas[1].id, // Data Science
+        trilhaId: trilhas[1].id, // Análise de Dados
       },
     }),
     prisma.user.create({
@@ -116,7 +120,7 @@ async function main() {
         password: await hashPassword("password123"),
         role: "user",
         unidade: "Infraestrutura",
-        trilhaId: trilhas[2].id, // DevOps
+        trilhaId: trilhas[2].id, // Infraestrutura
       },
     }),
     prisma.user.create({
@@ -126,7 +130,7 @@ async function main() {
         password: await hashPassword("password123"),
         role: "user",
         unidade: "Desenvolvimento",
-        trilhaId: trilhas[0].id, // Full Stack
+        trilhaId: trilhas[0].id, // Desenvolvimento
       },
     }),
     prisma.user.create({
@@ -146,7 +150,7 @@ async function main() {
         password: await hashPassword("password123"),
         role: "user",
         unidade: "Desenvolvimento",
-        trilhaId: trilhas[0].id, // Full Stack
+        trilhaId: trilhas[0].id, // Desenvolvimento
       },
     }),
     prisma.user.create({
@@ -156,7 +160,7 @@ async function main() {
         password: await hashPassword("password123"),
         role: "user",
         unidade: "Dados",
-        trilhaId: trilhas[1].id, // Data Science
+        trilhaId: trilhas[1].id, // Análise de Dados
       },
     }),
     prisma.user.create({
@@ -166,7 +170,7 @@ async function main() {
         password: await hashPassword("password123"),
         role: "user",
         unidade: "Infraestrutura",
-        trilhaId: trilhas[2].id, // DevOps
+        trilhaId: trilhas[2].id, // Infraestrutura
       },
     }),
     prisma.user.create({
@@ -201,86 +205,158 @@ async function main() {
   // 5. Create Criterios
   console.log("📋 Creating criterios...");
 
-  // Criterios for Full Stack Track
-  const fullStackCriterios = await Promise.all([
-    prisma.criterio.create({
-      data: {
-        name: "Conhecimento Técnico",
-        tipo: "tecnico",
-        peso: 30.0,
-        description: "Domínio de tecnologias front-end e back-end",
-        trilhaId: trilhas[0].id,
-        idCiclo: ciclos[0].id,
-      },
-    }),
-    prisma.criterio.create({
-      data: {
-        name: "Qualidade do Código",
-        tipo: "tecnico",
-        peso: 25.0,
-        description: "Boas práticas, clean code e testes",
-        trilhaId: trilhas[0].id,
-        idCiclo: ciclos[0].id,
-      },
-    }),
-    prisma.criterio.create({
-      data: {
-        name: "Trabalho em Equipe",
-        tipo: "comportamental",
-        peso: 20.0,
-        description: "Colaboração e comunicação efetiva",
-        trilhaId: trilhas[0].id,
-        idCiclo: ciclos[0].id,
-      },
-    }),
-    prisma.criterio.create({
-      data: {
-        name: "Proatividade",
-        tipo: "comportamental",
-        peso: 25.0,
-        description: "Iniciativa e busca por soluções",
-        trilhaId: trilhas[0].id,
-        idCiclo: ciclos[0].id,
-      },
-    }),
-  ]);
+  // Base criterios that will be created for each trilha
+  const baseCriterios = [
+    {
+      name: "Organização",
+      tipo: "comportamental",
+      peso: 5.0,
+      description:
+        "Ser organizado e contribuir para a organização do grupo, compartilhando métodos e entregáveis",
+    },
+    {
+      name: "Imagem",
+      tipo: "comportamental",
+      peso: 5.0,
+      description:
+        "Passar uma imagem pessoal positiva e profissional e fortalecer a imagem do grupo",
+    },
+    {
+      name: "Iniciativa",
+      tipo: "comportamental",
+      peso: 5.0,
+      description:
+        "Ser pro-ativo, buscar assumir responsabilidades e aproveitar oportunidades",
+    },
+    {
+      name: "Comprometimento",
+      tipo: "comportamental",
+      peso: 5.0,
+      description:
+        "Se dedicar o necessário para atingimento dos resultados desejados, considerando mudanças em prazo e escopo das atividades",
+    },
+    {
+      name: "Relacionamento Inter-Pessoal",
+      tipo: "comportamental",
+      peso: 5.0,
+      description:
+        "Relacionar-se positivamente interna e externamente, sem comprometer o profissionalismo",
+    },
+    {
+      name: "Aprendizagem Contínua",
+      tipo: "comportamental",
+      peso: 5.0,
+      description:
+        "Buscar sempre aprender as técnicas mais modernas e dividir o conhecimento com o grupo",
+    },
+    {
+      name: "Flexibilidade",
+      tipo: "comportamental",
+      peso: 5.0,
+      description:
+        "Capacidade de se adaptar a situações diversas, lidar positivamente com críticas (sejam pessoais ou ao grupo) e superar obstáculos",
+    },
+    {
+      name: "Trabalho em Equipe",
+      tipo: "comportamental",
+      peso: 5.0,
+      description:
+        "Pensar sempre no ótimo global para o grupo, tanto na divisão de tarefas e como no auxílio aos membros do mesmo, contribuindo para que a equipe alcance seus objetivos",
+    },
+    {
+      name: "Produtividade",
+      tipo: "tecnico",
+      peso: 5.0,
+      description:
+        "Otimizar a execução das atividades de forma a entregar todos os resultados necessários no menor tempo possível",
+    },
+    {
+      name: "Qualidade",
+      tipo: "tecnico",
+      peso: 5.0,
+      description:
+        "Ser perfeccionista, não gerando erros e retrabalho, entregando resultados que atendam ou superem as expectativas",
+    },
+    {
+      name: "Foco no Cliente",
+      tipo: "comportamental",
+      peso: 5.0,
+      description:
+        "Entender a real necessidade do cliente a partir de suas solicitações e auxiliá-lo nesta visualização, estabelecendo uma relação de confiança com o mesmo",
+    },
+    {
+      name: "Criatividade e Inovação",
+      tipo: "comportamental",
+      peso: 5.0,
+      description:
+        "Pensar criativamente, gerando soluções inovadoras, adequadas à realidade do projeto",
+    },
+    {
+      name: "Gestão de Pessoas",
+      tipo: "gestao",
+      peso: 5.0,
+      description:
+        "Gerenciar grupos de pessoas, capacitando-as, motivando-as e aproveitando ao máximo as qualidades individuais",
+    },
+    {
+      name: "Gestão de Projetos",
+      tipo: "gestao",
+      peso: 5.0,
+      description:
+        "Gerenciar projetos, conduzindo reuniões, definindo atividades, alocando recursos de forma ótima e controlando a execução",
+    },
+    {
+      name: "Gestão Organizacional",
+      tipo: "gestao",
+      peso: 5.0,
+      description:
+        "Contribuir para a eficiência e eficácia da gestão da empresa, criando mecanismos que a tornem cada vez mais organizada, estruturada e independente",
+    },
+    {
+      name: "Novos Clientes",
+      tipo: "negocios",
+      peso: 5.0,
+      description:
+        "Gerar novos contatos, alavancando novos clientes para a empresa",
+    },
+    {
+      name: "Novos Projetos",
+      tipo: "negocios",
+      peso: 5.0,
+      description:
+        "Gerar novos projetos em clientes já existentes, com base na relação de confiança e atendimento de demandas com alto padrão de qualidade",
+    },
+    {
+      name: "Novos Produtos ou Serviços",
+      tipo: "negocios",
+      peso: 5.0,
+      description:
+        "Gerar novos produtos e/ou serviços com grande potencial de mercado",
+    },
+  ];
 
-  // Criterios for Data Science Track
-  const dataScienceCriterios = await Promise.all([
-    prisma.criterio.create({
-      data: {
-        name: "Análise de Dados",
-        tipo: "tecnico",
-        peso: 35.0,
-        description: "Capacidade de análise e interpretação de dados",
-        trilhaId: trilhas[1].id,
-        idCiclo: ciclos[0].id,
-      },
-    }),
-    prisma.criterio.create({
-      data: {
-        name: "Machine Learning",
-        tipo: "tecnico",
-        peso: 30.0,
-        description: "Conhecimento em algoritmos de ML",
-        trilhaId: trilhas[1].id,
-        idCiclo: ciclos[0].id,
-      },
-    }),
-    prisma.criterio.create({
-      data: {
-        name: "Comunicação de Resultados",
-        tipo: "comportamental",
-        peso: 35.0,
-        description: "Habilidade de apresentar insights de forma clara",
-        trilhaId: trilhas[1].id,
-        idCiclo: ciclos[0].id,
-      },
-    }),
-  ]);
+  // Create criterios for each trilha
+  const allCriterios: Criterio[] = [];
+  for (let i = 0; i < trilhas.length; i++) {
+    const trilha = trilhas[i];
+    for (const criterio of baseCriterios) {
+      const createdCriterio = await prisma.criterio.create({
+        data: {
+          name: criterio.name,
+          tipo: criterio.tipo,
+          peso: criterio.peso,
+          description: criterio.description,
+          trilhaId: trilha.id,
+          idCiclo: ciclos[0].id,
+        },
+      });
+      allCriterios.push(createdCriterio);
+    }
+  }
 
-  const allCriterios = [...fullStackCriterios, ...dataScienceCriterios];
-  console.log(`✅ Created ${allCriterios.length} criterios`);
+  console.log(
+    `✅ Created ${allCriterios.length} criterios across ${trilhas.length} trilhas`
+  );
 
   // 6. Create Referencias
   console.log("📝 Creating referencias...");
@@ -327,51 +403,128 @@ async function main() {
   // 7. Create Avaliacoes
   console.log("📊 Creating avaliacoes...");
   const avaliacoes = await Promise.all([
-    // Avaliação do Luan por Alice
+    // Auto-avaliações (mesmo idAvaliador e idAvaliado, COM criterioId)
+    prisma.avaliacao.create({
+      data: {
+        idAvaliador: users[0].id, // Raylandson
+        idAvaliado: users[0].id, // Raylandson (auto-avaliação)
+        idCiclo: ciclos[0].id, // Q1 2025
+        nota: 4,
+        justificativa:
+          "Tenho me dedicado bastante ao desenvolvimento da equipe e aos projetos. Acredito que posso melhorar na organização pessoal.",
+        criterioId: allCriterios.find(
+          (c) => c.name === "Organização" && c.trilhaId === trilhas[0].id
+        )?.id,
+      },
+    }),
+    prisma.avaliacao.create({
+      data: {
+        idAvaliador: users[4].id, // Luan
+        idAvaliado: users[4].id, // Luan (auto-avaliação)
+        idCiclo: ciclos[0].id, // Q1 2025
+        nota: 4,
+        justificativa:
+          "Estou focado em melhorar minha produtividade e qualidade de entrega. Tenho buscado aprender novas tecnologias constantemente.",
+        criterioId: allCriterios.find(
+          (c) => c.name === "Produtividade" && c.trilhaId === trilhas[0].id
+        )?.id,
+      },
+    }),
+    prisma.avaliacao.create({
+      data: {
+        idAvaliador: users[7].id, // Pedro
+        idAvaliado: users[7].id, // Pedro (auto-avaliação)
+        idCiclo: ciclos[0].id, // Q1 2025
+        nota: 4,
+        justificativa:
+          "Tenho me esforçado para ser mais criativo nas soluções analíticas e buscar sempre inovar nas abordagens de análise de dados.",
+        criterioId: allCriterios.find(
+          (c) =>
+            c.name === "Criatividade e Inovação" && c.trilhaId === trilhas[1].id
+        )?.id,
+      },
+    }),
+    prisma.avaliacao.create({
+      data: {
+        idAvaliador: users[3].id, // Erico
+        idAvaliado: users[3].id, // Erico (auto-avaliação)
+        idCiclo: ciclos[0].id, // Q1 2025
+        nota: 4,
+        justificativa:
+          "Tenho trabalhado para melhorar minha flexibilidade e adaptação a novas tecnologias de infraestrutura.",
+        criterioId: allCriterios.find(
+          (c) => c.name === "Flexibilidade" && c.trilhaId === trilhas[2].id
+        )?.id,
+      },
+    }),
+    prisma.avaliacao.create({
+      data: {
+        idAvaliador: users[9].id, // Carlos
+        idAvaliado: users[9].id, // Carlos (auto-avaliação)
+        idCiclo: ciclos[0].id, // Q1 2025
+        nota: 4,
+        justificativa:
+          "Tenho focado em desenvolver minhas habilidades de gestão de pessoas e busco sempre motivar a equipe.",
+        criterioId: allCriterios.find(
+          (c) => c.name === "Gestão de Pessoas" && c.trilhaId === trilhas[3].id
+        )?.id,
+      },
+    }),
+
+    // Avaliações normais (diferentes idAvaliador e idAvaliado, SEM criterioId)
     prisma.avaliacao.create({
       data: {
         idAvaliador: users[1].id, // Alice
         idAvaliado: users[4].id, // Luan
         idCiclo: ciclos[0].id, // Q1 2025
-        nota: 8.5,
+        nota: 4,
         justificativa:
-          "Luan mostrou excelente progresso em React e Node.js. Precisa trabalhar um pouco mais em testes automatizados.",
-        criterioId: fullStackCriterios[0].id, // Conhecimento Técnico
+          "Luan mostrou excelente progresso técnico e sempre demonstra iniciativa para aprender novas tecnologias. Muito dedicado.",
+        // criterioId: null (avaliação geral)
       },
     }),
-    prisma.avaliacao.create({
-      data: {
-        idAvaliador: users[1].id, // Alice
-        idAvaliado: users[4].id, // Luan
-        idCiclo: ciclos[0].id, // Q1 2025
-        nota: 9.0,
-        justificativa:
-          "Código muito bem estruturado e seguindo boas práticas. Excelente uso de clean code.",
-        criterioId: fullStackCriterios[1].id, // Qualidade do Código
-      },
-    }),
-    // Avaliação da Maria por Raylandson
     prisma.avaliacao.create({
       data: {
         idAvaliador: users[0].id, // Raylandson
         idAvaliado: users[6].id, // Maria
         idCiclo: ciclos[0].id, // Q1 2025
-        nota: 9.2,
+        nota: 5,
         justificativa:
-          "Maria demonstra domínio excepcional tanto em frontend quanto backend. Sempre atualizada com as últimas tecnologias.",
-        criterioId: fullStackCriterios[0].id, // Conhecimento Técnico
+          "Maria demonstra domínio técnico excepcional e excelente trabalho em equipe. Sempre colaborativa e proativa.",
+        // criterioId: null (avaliação geral)
       },
     }),
-    // Avaliação do Pedro por Arthur
     prisma.avaliacao.create({
       data: {
         idAvaliador: users[2].id, // Arthur
         idAvaliado: users[7].id, // Pedro
         idCiclo: ciclos[0].id, // Q1 2025
-        nota: 8.8,
+        nota: 4,
         justificativa:
-          "Pedro tem excelente capacidade analítica e consegue extrair insights valiosos dos dados.",
-        criterioId: dataScienceCriterios[0].id, // Análise de Dados
+          "Pedro tem excelente capacidade analítica e consegue extrair insights valiosos dos dados. Comunicação clara dos resultados.",
+        // criterioId: null (avaliação geral)
+      },
+    }),
+    prisma.avaliacao.create({
+      data: {
+        idAvaliador: users[5].id, // José Mário
+        idAvaliado: users[9].id, // Carlos
+        idCiclo: ciclos[0].id, // Q1 2025
+        nota: 5,
+        justificativa:
+          "Carlos demonstra excelente capacidade de gestão e liderança. Sempre organizado e focado nos resultados.",
+        // criterioId: null (avaliação geral)
+      },
+    }),
+    prisma.avaliacao.create({
+      data: {
+        idAvaliador: users[1].id, // Alice
+        idAvaliado: users[6].id, // Maria
+        idCiclo: ciclos[0].id, // Q1 2025
+        nota: 5,
+        justificativa:
+          "Maria é uma das melhores desenvolvedoras da equipe. Sempre disposta a ajudar e com excelente qualidade técnica.",
+        // criterioId: null (avaliação geral)
       },
     }),
   ]);
@@ -385,7 +538,7 @@ async function main() {
         idAvaliador: users[4].id, // Luan
         idAvaliado: users[1].id, // Alice
         idCiclo: ciclos[0].id, // Q1 2025
-        nota: 9.5,
+        nota: 5,
         pontosFortes:
           "Excelente liderança técnica, sempre disponível para mentoria, comunicação clara e objetiva, conhecimento técnico muito sólido.",
         pontosMelhora:
@@ -400,7 +553,7 @@ async function main() {
         idAvaliador: users[6].id, // Maria
         idAvaliado: users[0].id, // Raylandson
         idCiclo: ciclos[0].id, // Q1 2025
-        nota: 9.8,
+        nota: 5,
         pontosFortes:
           "Visão estratégica excepcional, capacidade de resolver problemas complexos, mentorship de qualidade, conhecimento técnico abrangente.",
         pontosMelhora:
@@ -415,7 +568,7 @@ async function main() {
         idAvaliador: users[7].id, // Pedro
         idAvaliado: users[2].id, // Arthur
         idCiclo: ciclos[0].id, // Q1 2025
-        nota: 8.7,
+        nota: 4,
         pontosFortes:
           "Conhecimento profundo em análise de dados, boa capacidade de ensinar conceitos complexos, organizado e metódico.",
         pontosMelhora:
@@ -457,5 +610,5 @@ main()
     process.exit(1);
   })
   .finally(() => {
-    prisma.$disconnect();
+    void prisma.$disconnect();
   });
