@@ -11,6 +11,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiParam } from "@nestjs/swagger";
 import { TrilhaService } from "./trilha.service";
 import { CreateTrilhaDto, BulkCreateTrilhaDto } from "./dto/create-trilha.dto";
 import { UpdateTrilhaDto } from "./dto/update-trilha.dto";
+import { BulkUpdateTrilhaDto } from "./dto/bulk-update-trilha.dto";
 
 @ApiTags("Trilhas")
 @Controller("trilha")
@@ -191,6 +192,43 @@ export class TrilhaController {
   }
 
   @ApiOperation({
+    summary: "Atualizar múltiplas trilhas",
+    description: "Atualiza múltiplas trilhas em uma única operação",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Trilhas atualizadas com sucesso",
+    schema: {
+      example: {
+        trilhas: [
+          {
+            id: 1,
+            name: "Desenvolvimento Full Stack Avançado",
+            createdAt: "2025-06-25T18:30:00Z",
+            updatedAt: "2025-06-25T19:30:00Z",
+          },
+          {
+            id: 2,
+            name: "Data Science & Machine Learning",
+            createdAt: "2025-06-25T18:30:00Z",
+            updatedAt: "2025-06-25T19:30:00Z",
+          },
+        ],
+        count: 2,
+        updated: [1, 2],
+        notFound: [],
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: "Dados inválidos" })
+  @Patch("bulk")
+  updateBulk(@Body() bulkUpdateTrilhaDto: BulkUpdateTrilhaDto) {
+    return this.trilhaService.updateBulk(bulkUpdateTrilhaDto);
+  }
+
+  // === PARAMETERIZED ROUTES - MUST BE AT THE END ===
+
+  @ApiOperation({
     summary: "Buscar trilha por ID",
     description: "Retorna uma trilha específica pelo seu ID",
   })
@@ -255,80 +293,104 @@ export class TrilhaController {
   }
 
   @ApiOperation({
-    summary: "Listar trilhas com critérios",
-    description: "Retorna todas as trilhas com seus critérios associados",
+    summary: "Listar trilhas com critérios por ID",
+    description: "Retorna uma trilha específica com seus critérios associados",
   })
+  @ApiParam({ name: "id", description: "ID da trilha", example: 1 })
   @ApiResponse({
     status: 200,
-    description: "Lista de trilhas com critérios",
+    description: "Trilha com critérios",
     schema: {
-      type: "array",
-      items: {
-        example: {
-          id: 1,
-          name: "Desenvolvimento Full Stack",
-          createdAt: "2025-06-25T18:30:00Z",
-          updatedAt: "2025-06-25T18:30:00Z",
-          criterio: [
-            {
-              id: 1,
-              name: "Qualidade do Código",
-              tipo: "técnico",
-              peso: 30.0,
-              description: "Avaliação da qualidade e estrutura do código",
-              enabled: true,
-            },
-          ],
-        },
+      example: {
+        id: 1,
+        name: "Desenvolvimento Full Stack",
+        createdAt: "2025-06-25T18:30:00Z",
+        updatedAt: "2025-06-25T18:30:00Z",
+        criterio: [
+          {
+            id: 1,
+            name: "Qualidade do Código",
+            tipo: "técnico",
+            peso: 30.0,
+            description: "Avaliação da qualidade e estrutura do código",
+            enabled: true,
+          },
+        ],
       },
     },
   })
+  @ApiResponse({ status: 404, description: "Trilha não encontrada" })
   @Get(":id/with-criterios")
   findOneWithCriterios(@Param("id") id: string) {
     return this.trilhaService.findOneWithCriterios(+id);
   }
 
+  @ApiOperation({
+    summary: "Listar trilha com usuários por ID",
+    description: "Retorna uma trilha específica com seus usuários associados",
+  })
+  @ApiParam({ name: "id", description: "ID da trilha", example: 1 })
+  @ApiResponse({
+    status: 200,
+    description: "Trilha com usuários",
+    schema: {
+      example: {
+        id: 1,
+        name: "Desenvolvimento Full Stack",
+        createdAt: "2025-06-25T18:30:00Z",
+        updatedAt: "2025-06-25T18:30:00Z",
+        users: [
+          {
+            id: 1,
+            name: "João Silva",
+            email: "joao@example.com",
+          },
+        ],
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: "Trilha não encontrada" })
   @Get(":id/with-users")
   findOneWithUsers(@Param("id") id: string) {
     return this.trilhaService.findOneWithUsers(+id);
   }
 
   @ApiOperation({
-    summary: "Listar trilhas completas",
-    description: "Retorna todas as trilhas com usuários e critérios associados",
+    summary: "Listar trilha completa por ID",
+    description:
+      "Retorna uma trilha específica com usuários e critérios associados",
   })
+  @ApiParam({ name: "id", description: "ID da trilha", example: 1 })
   @ApiResponse({
     status: 200,
-    description: "Lista de trilhas completas",
+    description: "Trilha completa",
     schema: {
-      type: "array",
-      items: {
-        example: {
-          id: 1,
-          name: "Desenvolvimento Full Stack",
-          createdAt: "2025-06-25T18:30:00Z",
-          updatedAt: "2025-06-25T18:30:00Z",
-          users: [
-            {
-              id: 1,
-              name: "João Silva",
-              email: "joao@example.com",
-            },
-          ],
-          criterio: [
-            {
-              id: 1,
-              name: "Qualidade do Código",
-              tipo: "técnico",
-              peso: 30.0,
-              description: "Avaliação da qualidade e estrutura do código",
-              enabled: true,
-            },
-          ],
-        },
+      example: {
+        id: 1,
+        name: "Desenvolvimento Full Stack",
+        createdAt: "2025-06-25T18:30:00Z",
+        updatedAt: "2025-06-25T18:30:00Z",
+        users: [
+          {
+            id: 1,
+            name: "João Silva",
+            email: "joao@example.com",
+          },
+        ],
+        criterio: [
+          {
+            id: 1,
+            name: "Qualidade do Código",
+            tipo: "técnico",
+            peso: 30.0,
+            description: "Avaliação da qualidade e estrutura do código",
+            enabled: true,
+          },
+        ],
       },
     },
   })
+  @ApiResponse({ status: 404, description: "Trilha não encontrada" })
   @Get(":id/complete")
   findOneComplete(@Param("id") id: string) {
     return this.trilhaService.findOneComplete(+id);

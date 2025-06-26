@@ -3,6 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { Prisma, Trilha } from "@prisma/client";
 import { CreateTrilhaDto, BulkCreateTrilhaDto } from "./dto/create-trilha.dto";
 import { UpdateTrilhaDto } from "./dto/update-trilha.dto";
+import { BulkUpdateTrilhaDto } from "./dto/bulk-update-trilha.dto";
 
 // Define the return types using Prisma payload types
 export type TrilhaWithUsers = Prisma.TrilhaGetPayload<{
@@ -57,6 +58,13 @@ export type TrilhaComplete = Prisma.TrilhaGetPayload<{
 export type BulkCreateResult = {
   trilhas: Trilha[];
   count: number;
+};
+
+export type BulkUpdateResult = {
+  trilhas: Trilha[];
+  count: number;
+  updated: number[];
+  notFound: number[];
 };
 
 @Injectable()
@@ -197,6 +205,46 @@ export class TrilhaRepository {
       where: { id },
       data,
     });
+  }
+
+  async updateBulk(data: BulkUpdateTrilhaDto): Promise<BulkUpdateResult> {
+    const { trilhas } = data;
+
+    if (!trilhas || trilhas.length === 0) {
+      return { trilhas: [] as Trilha[], count: 0, updated: [], notFound: [] };
+    }
+
+    const results: Trilha[] = [];
+    const updated: number[] = [];
+    const notFound: number[] = [];
+
+    // Process each update individually to handle not found cases
+    for (const trilhaUpdate of trilhas) {
+      try {
+        const updatedTrilha = await this.prisma.trilha.update({
+          where: { id: trilhaUpdate.id },
+          data: { name: trilhaUpdate.name },
+        });
+        results.push(updatedTrilha);
+        updated.push(trilhaUpdate.id);
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2025"
+        ) {
+          notFound.push(trilhaUpdate.id);
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    return {
+      trilhas: results,
+      count: results.length,
+      updated,
+      notFound,
+    };
   }
 
   async delete(id: number): Promise<Trilha> {

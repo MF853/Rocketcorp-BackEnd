@@ -6,7 +6,12 @@ import {
 import { Prisma } from "@prisma/client";
 import { CreateTrilhaDto, BulkCreateTrilhaDto } from "./dto/create-trilha.dto";
 import { UpdateTrilhaDto } from "./dto/update-trilha.dto";
-import { TrilhaRepository, BulkCreateResult } from "./trilha.repository";
+import { BulkUpdateTrilhaDto } from "./dto/bulk-update-trilha.dto";
+import {
+  TrilhaRepository,
+  BulkCreateResult,
+  BulkUpdateResult,
+} from "./trilha.repository";
 
 @Injectable()
 export class TrilhaService {
@@ -135,6 +140,42 @@ export class TrilhaService {
           default:
             throw new BadRequestException(
               "Erro ao atualizar trilha. Verifique os dados fornecidos."
+            );
+        }
+      }
+      throw error;
+    }
+  }
+
+  async updateBulk(
+    bulkUpdateTrilhaDto: BulkUpdateTrilhaDto
+  ): Promise<BulkUpdateResult> {
+    const { trilhas } = bulkUpdateTrilhaDto;
+
+    if (!trilhas || trilhas.length === 0) {
+      throw new BadRequestException(
+        "Nenhuma trilha fornecida para atualização em lote."
+      );
+    }
+
+    try {
+      return await this.trilhaRepository.updateBulk(bulkUpdateTrilhaDto);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        switch (error.code) {
+          case "P2002": {
+            const failedTrilha = trilhas.find((trilha) =>
+              error.message.includes(trilha.name)
+            );
+            const trilhaName = failedTrilha?.name || "uma das trilhas";
+            throw new BadRequestException(
+              `Erro na atualização em lote: Trilha "${trilhaName}" já existe. ` +
+                "Verifique se não há nomes duplicados na lista ou no banco de dados."
+            );
+          }
+          default:
+            throw new BadRequestException(
+              "Erro na atualização em lote de trilhas. Verifique os dados fornecidos."
             );
         }
       }
