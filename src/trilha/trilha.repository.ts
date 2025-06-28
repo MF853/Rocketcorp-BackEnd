@@ -1,13 +1,20 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Prisma, Trilha } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { CreateTrilhaDto, BulkCreateTrilhaDto } from "./dto/create-trilha.dto";
 import { UpdateTrilhaDto } from "./dto/update-trilha.dto";
 import { BulkUpdateTrilhaDto } from "./dto/bulk-update-trilha.dto";
 
 // Define the return types using Prisma payload types
+export type TrilhaBasic = {
+  id: number;
+  name: string;
+};
+
 export type TrilhaWithUsers = Prisma.TrilhaGetPayload<{
-  include: {
+  select: {
+    id: true;
+    name: true;
     users: {
       select: {
         id: true;
@@ -19,7 +26,9 @@ export type TrilhaWithUsers = Prisma.TrilhaGetPayload<{
 }>;
 
 export type TrilhaWithCriterios = Prisma.TrilhaGetPayload<{
-  include: {
+  select: {
+    id: true;
+    name: true;
     criterio: {
       select: {
         id: true;
@@ -27,6 +36,7 @@ export type TrilhaWithCriterios = Prisma.TrilhaGetPayload<{
         tipo: true;
         peso: true;
         description: true;
+        idCiclo: true;
         enabled: true;
       };
     };
@@ -34,7 +44,9 @@ export type TrilhaWithCriterios = Prisma.TrilhaGetPayload<{
 }>;
 
 export type TrilhaComplete = Prisma.TrilhaGetPayload<{
-  include: {
+  select: {
+    id: true;
+    name: true;
     users: {
       select: {
         id: true;
@@ -49,6 +61,7 @@ export type TrilhaComplete = Prisma.TrilhaGetPayload<{
         tipo: true;
         peso: true;
         description: true;
+        idCiclo: true;
         enabled: true;
       };
     };
@@ -56,12 +69,12 @@ export type TrilhaComplete = Prisma.TrilhaGetPayload<{
 }>;
 
 export type BulkCreateResult = {
-  trilhas: Trilha[];
+  trilhas: TrilhaBasic[];
   count: number;
 };
 
 export type BulkUpdateResult = {
-  trilhas: Trilha[];
+  trilhas: TrilhaBasic[];
   count: number;
   updated: number[];
   notFound: number[];
@@ -71,8 +84,14 @@ export type BulkUpdateResult = {
 export class TrilhaRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Include constants for consistent queries
-  private readonly usersIncludes = {
+  // Select constants for consistent queries (excluding createdAt and updatedAt)
+  private readonly baseSelect = {
+    id: true,
+    name: true,
+  };
+
+  private readonly usersSelect = {
+    ...this.baseSelect,
     users: {
       select: {
         id: true,
@@ -82,7 +101,8 @@ export class TrilhaRepository {
     },
   };
 
-  private readonly criteriosIncludes = {
+  private readonly criteriosSelect = {
+    ...this.baseSelect,
     criterio: {
       select: {
         id: true,
@@ -90,33 +110,52 @@ export class TrilhaRepository {
         tipo: true,
         peso: true,
         description: true,
+        idCiclo: true,
         enabled: true,
       },
     },
   };
 
-  private readonly completeIncludes = {
-    ...this.usersIncludes,
-    ...this.criteriosIncludes,
+  private readonly completeSelect = {
+    ...this.baseSelect,
+    users: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    },
+    criterio: {
+      select: {
+        id: true,
+        name: true,
+        tipo: true,
+        peso: true,
+        description: true,
+        idCiclo: true,
+        enabled: true,
+      },
+    },
   };
 
-  async create(data: CreateTrilhaDto): Promise<Trilha> {
+  async create(data: CreateTrilhaDto): Promise<TrilhaBasic> {
     return this.prisma.trilha.create({
       data,
+      select: this.baseSelect,
     });
   }
 
   async createBulk(data: BulkCreateTrilhaDto): Promise<BulkCreateResult> {
     const { trilhas } = data;
-
     if (!trilhas || trilhas.length === 0) {
-      return { trilhas: [] as Trilha[], count: 0 };
+      return { trilhas: [] as TrilhaBasic[], count: 0 };
     }
 
     const createdTrilhas = await this.prisma.$transaction(
       trilhas.map((trilha) =>
         this.prisma.trilha.create({
           data: trilha,
+          select: this.baseSelect,
         })
       )
     );
@@ -127,8 +166,9 @@ export class TrilhaRepository {
     };
   }
 
-  async findAll(): Promise<Trilha[]> {
+  async findAll(): Promise<TrilhaBasic[]> {
     return this.prisma.trilha.findMany({
+      select: this.baseSelect,
       orderBy: {
         name: "asc",
       },
@@ -137,7 +177,7 @@ export class TrilhaRepository {
 
   async findAllWithUsers(): Promise<TrilhaWithUsers[]> {
     return this.prisma.trilha.findMany({
-      include: this.usersIncludes,
+      select: this.usersSelect,
       orderBy: {
         name: "asc",
       },
@@ -146,7 +186,7 @@ export class TrilhaRepository {
 
   async findAllWithCriterios(): Promise<TrilhaWithCriterios[]> {
     return this.prisma.trilha.findMany({
-      include: this.criteriosIncludes,
+      select: this.criteriosSelect,
       orderBy: {
         name: "asc",
       },
@@ -155,41 +195,42 @@ export class TrilhaRepository {
 
   async findAllComplete(): Promise<TrilhaComplete[]> {
     return this.prisma.trilha.findMany({
-      include: this.completeIncludes,
+      select: this.completeSelect,
       orderBy: {
         name: "asc",
       },
     });
   }
 
-  async findById(id: number): Promise<Trilha | null> {
+  async findById(id: number): Promise<TrilhaBasic | null> {
     return this.prisma.trilha.findUnique({
       where: { id },
+      select: this.baseSelect,
     });
   }
 
   async findByIdWithUsers(id: number): Promise<TrilhaWithUsers | null> {
     return this.prisma.trilha.findUnique({
       where: { id },
-      include: this.usersIncludes,
+      select: this.usersSelect,
     });
   }
 
   async findByIdWithCriterios(id: number): Promise<TrilhaWithCriterios | null> {
     return this.prisma.trilha.findUnique({
       where: { id },
-      include: this.criteriosIncludes,
+      select: this.criteriosSelect,
     });
   }
 
   async findByIdComplete(id: number): Promise<TrilhaComplete | null> {
     return this.prisma.trilha.findUnique({
       where: { id },
-      include: this.completeIncludes,
+      select: this.completeSelect,
     });
   }
 
-  async findByName(name: string): Promise<Trilha | null> {
+  async findByName(name: string): Promise<TrilhaBasic | null> {
     return this.prisma.trilha.findFirst({
       where: {
         name: {
@@ -197,13 +238,15 @@ export class TrilhaRepository {
           mode: "insensitive",
         },
       },
+      select: this.baseSelect,
     });
   }
 
-  async update(id: number, data: UpdateTrilhaDto): Promise<Trilha> {
+  async update(id: number, data: UpdateTrilhaDto): Promise<TrilhaBasic> {
     return this.prisma.trilha.update({
       where: { id },
       data,
+      select: this.baseSelect,
     });
   }
 
@@ -211,10 +254,15 @@ export class TrilhaRepository {
     const { trilhas } = data;
 
     if (!trilhas || trilhas.length === 0) {
-      return { trilhas: [] as Trilha[], count: 0, updated: [], notFound: [] };
+      return {
+        trilhas: [] as TrilhaBasic[],
+        count: 0,
+        updated: [],
+        notFound: [],
+      };
     }
 
-    const results: Trilha[] = [];
+    const results: TrilhaBasic[] = [];
     const updated: number[] = [];
     const notFound: number[] = [];
 
@@ -224,6 +272,7 @@ export class TrilhaRepository {
         const updatedTrilha = await this.prisma.trilha.update({
           where: { id: trilhaUpdate.id },
           data: { name: trilhaUpdate.name },
+          select: this.baseSelect,
         });
         results.push(updatedTrilha);
         updated.push(trilhaUpdate.id);
@@ -247,9 +296,10 @@ export class TrilhaRepository {
     };
   }
 
-  async delete(id: number): Promise<Trilha> {
+  async delete(id: number): Promise<TrilhaBasic> {
     return this.prisma.trilha.delete({
       where: { id },
+      select: this.baseSelect,
     });
   }
 

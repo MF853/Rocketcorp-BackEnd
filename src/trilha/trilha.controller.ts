@@ -226,6 +226,156 @@ export class TrilhaController {
     return this.trilhaService.updateBulk(bulkUpdateTrilhaDto);
   }
 
+  @ApiOperation({
+    summary: "Listar trilhas com critérios agrupados",
+    description:
+      "Retorna todas as trilhas com seus critérios agrupados por tipo",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Lista de trilhas com critérios agrupados por tipo",
+    schema: {
+      type: "array",
+      items: {
+        example: {
+          id: 1,
+          name: "Desenvolvimento Full Stack",
+          createdAt: "2025-06-25T18:30:00Z",
+          updatedAt: "2025-06-25T18:30:00Z",
+          criteriosGrouped: {
+            comportamental: [
+              {
+                id: 1,
+                name: "Trabalho em Equipe",
+                tipo: "comportamental",
+                peso: 20.0,
+                description: "Capacidade de trabalhar colaborativamente",
+                idCiclo: 1,
+                enabled: true,
+              },
+              {
+                id: 2,
+                name: "Comunicação",
+                tipo: "comportamental",
+                peso: 15.0,
+                description: "Habilidades de comunicação efetiva",
+                idCiclo: 1,
+                enabled: true,
+              },
+            ],
+            tecnico: [
+              {
+                id: 3,
+                name: "Qualidade do Código",
+                tipo: "tecnico",
+                peso: 30.0,
+                description: "Avaliação da qualidade e estrutura do código",
+                idCiclo: 1,
+                enabled: true,
+              },
+            ],
+            gestao: [
+              {
+                id: 4,
+                name: "Gestão de Projetos",
+                tipo: "gestao",
+                peso: 25.0,
+                description: "Capacidade de gerenciar projetos efetivamente",
+                idCiclo: 1,
+                enabled: true,
+              },
+            ],
+            negocios: [
+              {
+                id: 5,
+                name: "Visão de Negócio",
+                tipo: "negocios",
+                peso: 10.0,
+                description: "Compreensão do contexto de negócios",
+                idCiclo: 1,
+                enabled: true,
+              },
+            ],
+          },
+        },
+      },
+    },
+  })
+  @Get("with-criterios-grouped")
+  findAllWithCriteriosGrouped() {
+    return this.trilhaService.findAllWithCriteriosGrouped();
+  }
+
+  @ApiOperation({
+    summary: "Buscar trilha com critérios agrupados por ID",
+    description:
+      "Retorna uma trilha específica com seus critérios agrupados por tipo",
+  })
+  @ApiParam({ name: "id", description: "ID da trilha", example: 1 })
+  @ApiResponse({
+    status: 200,
+    description: "Trilha com critérios agrupados por tipo",
+    schema: {
+      example: {
+        id: 1,
+        name: "Desenvolvimento Full Stack",
+        createdAt: "2025-06-25T18:30:00Z",
+        updatedAt: "2025-06-25T18:30:00Z",
+        criteriosGrouped: {
+          comportamental: [
+            {
+              id: 1,
+              name: "Trabalho em Equipe",
+              tipo: "comportamental",
+              peso: 20.0,
+              description: "Capacidade de trabalhar colaborativamente",
+              idCiclo: 1,
+              enabled: true,
+            },
+          ],
+          tecnico: [
+            {
+              id: 3,
+              name: "Qualidade do Código",
+              tipo: "tecnico",
+              peso: 30.0,
+              description: "Avaliação da qualidade e estrutura do código",
+              idCiclo: 1,
+              enabled: true,
+            },
+          ],
+          gestao: [
+            {
+              id: 4,
+              name: "Gestão de Projetos",
+              tipo: "gestao",
+              peso: 25.0,
+              description: "Capacidade de gerenciar projetos efetivamente",
+              idCiclo: 1,
+              enabled: true,
+            },
+          ],
+          negocios: [
+            {
+              id: 5,
+              name: "Visão de Negócio",
+              tipo: "negocios",
+              peso: 10.0,
+              description: "Compreensão do contexto de negócios",
+              idCiclo: 1,
+              enabled: true,
+            },
+          ],
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: "Trilha não encontrada" })
+  @Get(":id/with-criterios-grouped")
+  findOneWithCriteriosGrouped(@Param("id") id: string) {
+    return this.trilhaService.findOneWithCriteriosGrouped(+id);
+  }
+
   // === PARAMETERIZED ROUTES - MUST BE AT THE END ===
 
   @ApiOperation({

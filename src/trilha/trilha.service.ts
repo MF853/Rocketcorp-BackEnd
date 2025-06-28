@@ -54,8 +54,8 @@ export class TrilhaService {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         switch (error.code) {
           case "P2002": {
-            const failedTrilha = trilhas.find((trilha) =>
-              error.message.includes(trilha.name)
+            const failedTrilha = trilhas.find(
+              (trilha) => trilha.name && error.message.includes(trilha.name)
             );
             const trilhaName = failedTrilha?.name || "uma das trilhas";
             throw new BadRequestException(
@@ -89,6 +89,16 @@ export class TrilhaService {
     return await this.trilhaRepository.findAllWithCriterios();
   }
 
+  async findAllWithCriteriosGrouped() {
+    const trilhas = await this.trilhaRepository.findAllWithCriterios();
+
+    return trilhas.map((trilha) => ({
+      ...trilha,
+      criteriosGrouped: this.groupCriteriosByTipo(trilha.criterio || []),
+      criterio: undefined, // Remove the original criterio array
+    }));
+  }
+
   async findOne(id: number) {
     const trilha = await this.trilhaRepository.findById(id);
     if (!trilha) {
@@ -119,6 +129,36 @@ export class TrilhaService {
       throw new NotFoundException(`Trilha com ID ${id} não encontrada.`);
     }
     return trilha;
+  }
+
+  async findOneWithCriteriosGrouped(id: number) {
+    const trilha = await this.trilhaRepository.findByIdWithCriterios(id);
+    if (!trilha) {
+      throw new NotFoundException(`Trilha com ID ${id} não encontrada.`);
+    }
+
+    return {
+      ...trilha,
+      criteriosGrouped: this.groupCriteriosByTipo(trilha.criterio || []),
+      criterio: undefined, // Remove the original criterio array
+    };
+  }
+
+  private groupCriteriosByTipo(criterios: any[]) {
+    const grouped: Record<string, any[]> = {};
+
+    criterios.forEach((criterio: any) => {
+      const tipo: string = (criterio as { tipo?: string })?.tipo || "outros";
+
+      // If this tipo doesn't exist yet, create an empty array for it
+      if (!grouped[tipo]) {
+        grouped[tipo] = [];
+      }
+
+      grouped[tipo].push(criterio);
+    });
+
+    return grouped;
   }
 
   async update(id: number, updateTrilhaDto: UpdateTrilhaDto) {
@@ -164,8 +204,8 @@ export class TrilhaService {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         switch (error.code) {
           case "P2002": {
-            const failedTrilha = trilhas.find((trilha) =>
-              error.message.includes(trilha.name)
+            const failedTrilha = trilhas.find(
+              (trilha) => trilha.name && error.message.includes(trilha.name)
             );
             const trilhaName = failedTrilha?.name || "uma das trilhas";
             throw new BadRequestException(

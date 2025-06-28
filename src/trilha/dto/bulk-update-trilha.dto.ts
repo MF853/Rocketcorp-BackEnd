@@ -27,11 +27,13 @@ export class UpdateTrilhaItemDto {
     example: "Desenvolvimento Full Stack Avançado",
     type: String,
     maxLength: 255,
+    required: false,
   })
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
   @MaxLength(255)
-  name: string;
+  name?: string;
 }
 
 export class BulkUpdateTrilhaDto {
