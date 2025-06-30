@@ -15,6 +15,9 @@ export class ResumoiaRepository {
       include: {
         avaliacoesRecebidas: {
           where: { idCiclo },
+          include: {
+            criterio: true,
+          },
         },
         avaliacoes360Recebidas: {
           where: { idCiclo },

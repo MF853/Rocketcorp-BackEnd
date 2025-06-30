@@ -19,12 +19,17 @@ export class ResumoiaController {
   })
   @ApiResponse({
     status: 200,
-    description: "Resumos gerados com sucesso",
+    description: "Resumos processados com sucesso",
     schema: {
       example: {
-        message: "Resumos IA gerados com sucesso para o ciclo 1",
+        message: "Resumos IA processados para o ciclo 1",
         cicloId: 1,
-        processedUsers: 15,
+        statistics: {
+          total: 25,
+          processed: 23,
+          errors: 2,
+          batches: 9,
+        },
         timestamp: "2025-06-29T10:30:00Z",
       },
     },
@@ -41,11 +46,14 @@ export class ResumoiaController {
   async processarResumosCiclo(@Param("idCiclo") idCiclo: string) {
     const cicloId = +idCiclo;
 
-    await this.resumoiaService.gerarResumosParaCiclo(cicloId);
+    const statistics = await this.resumoiaService.gerarResumosParaCiclo(
+      cicloId
+    );
 
     return {
-      message: `Resumos IA gerados com sucesso para o ciclo ${cicloId}`,
+      message: `Resumos IA processados para o ciclo ${cicloId}`,
       cicloId,
+      statistics,
       timestamp: new Date().toISOString(),
     };
   }

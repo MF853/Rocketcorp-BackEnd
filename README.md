@@ -58,12 +58,15 @@ DATABASE_URL="postgresql://rocketcorp_user:rocketcorp_password@localhost:5432/ro
 PORT=3000
 NODE_ENV=development
 JWT_SECRET="your_super_secret_key"
+GEMINI_API_KEY="your-gemini-api-key"
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=rocketcorp_db
 DB_USER=rocketcorp_user
 DB_PASSWORD=rocketcorp_password
 ```
+
+> **⚠️ Importante**: Para usar o sistema de geração de resumos com IA, você precisa configurar uma chave da API do Google Gemini na variável `GEMINI_API_KEY`. Obtenha sua chave em [Google AI Studio](https://makersuite.google.com/app/apikey).
 
 ### 4. Inicie o banco de dados com Docker
 
