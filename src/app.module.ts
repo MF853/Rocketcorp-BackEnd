@@ -8,10 +8,12 @@ import { ReferenciaModule } from './referencia/referencia.module';
 import { UsersModule } from './users/users.module';
 import { TrilhaModule } from './trilha/trilha.module';
 import { CriterioModule } from './criterio/criterio.module';
+import { ExcelService } from './excel/excel.service';
+import { ExcelModule } from './excel/excel.module';
 
 @Module({
-  imports: [AuthModule, ConfigModule.forRoot({}), AvaliacaoModule, ReferenciaModule, UsersModule, TrilhaModule, CriterioModule],
+  imports: [AuthModule, ConfigModule.forRoot({}), AvaliacaoModule, ReferenciaModule, UsersModule, TrilhaModule, CriterioModule, ExcelModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, ExcelService],
 })
 export class AppModule {}

@@ -6,6 +6,10 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 export class UsersService {
   constructor(private readonly usersRepository: UsersRepository) {}
 
+  async create(data: any) {
+    return this.usersRepository.create(data);
+  }
+
   async findAll() {
     return this.usersRepository.findAll();
   }

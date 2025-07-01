@@ -13,6 +13,12 @@ const userInclude = {
 export class UsersRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async create(data: any) {
+    return this.prisma.user.create({
+      data
+    });
+  }
+
   async findAll() {
     return this.prisma.user.findMany({
       include: this.getUserIncludes(),
