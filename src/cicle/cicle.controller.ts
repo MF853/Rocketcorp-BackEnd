@@ -24,6 +24,9 @@ export class CicleController {
   }
 
   @Get(':id')
+  @Get(":id")
+  @ApiOperation({ summary: "Busca um ciclo pelo ID" })
+  @ApiResponse({ status: 200, description: "Ciclo retornado com sucesso." })
   findOne(@Param('id') id: string) {
     return this.cicleService.findOne(+id);
   }

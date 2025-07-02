@@ -10,4 +10,10 @@ export class CicleRepository {
   async findAll() {
     return this.prisma.ciclo.findMany();
   }  
+
+  async findById(id: number) {
+    return this.prisma.ciclo.findUnique({
+        where: {id}
+    });
+  }
 }

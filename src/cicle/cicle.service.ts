@@ -9,13 +9,17 @@ export class CicleService {
   create(createCicleDto: CreateCicleDto) {
     return 'This action adds a new cicle';
   }
-  
+
   findAll() {
     return this.cicleRepository.findAll();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} cicle`;
+  async findOne(id: number) {
+    const cicle = await this.cicleRepository.findById(id);
+    if(!cicle){
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    return cicle;
   }
 
   update(id: number, updateCicleDto: UpdateCicleDto) {
