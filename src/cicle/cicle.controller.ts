@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { CicleService } from './cicle.service';
 import { CreateCicleDto } from './dto/create-cicle.dto';
 import { UpdateCicleDto } from './dto/update-cicle.dto';
+import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 
 @Controller('cicle')
 export class CicleController {
@@ -13,6 +14,11 @@ export class CicleController {
   }
 
   @Get()
+  @ApiOperation({ summary: "Lista todos os ciclos" })
+  @ApiResponse({
+    status: 200,
+    description: "Lista de ciclos retornada com sucesso.",
+  })
   findAll() {
     return this.cicleService.findAll();
   }

@@ -1,15 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { CicleRepository } from "./cicle.repository";
 import { CreateCicleDto } from './dto/create-cicle.dto';
 import { UpdateCicleDto } from './dto/update-cicle.dto';
 
 @Injectable()
 export class CicleService {
+  constructor(private readonly cicleRepository: CicleRepository) {}
   create(createCicleDto: CreateCicleDto) {
     return 'This action adds a new cicle';
   }
-
+  
   findAll() {
-    return `This action returns all cicle`;
+    return this.cicleRepository.findAll();
   }
 
   findOne(id: number) {
