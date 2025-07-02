@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { CicleService } from './cicle.service';
 import { CreateCicleDto } from './dto/create-cicle.dto';
 import { UpdateCicleDto } from './dto/update-cicle.dto';
@@ -34,8 +34,11 @@ export class CicleController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCicleDto: UpdateCicleDto) {
-    return this.cicleService.update(+id, updateCicleDto);
+  @ApiOperation({ summary: 'Atualiza um ciclo por ID' })
+  @ApiResponse({ status: 200, description: 'Ciclo atualizado com sucesso' })
+  async update(
+    @Param('id') id: number, @Body() updateCicleDto: UpdateCicleDto) {
+    return await this.cicleService.update(id, updateCicleDto);
   }
 
 }

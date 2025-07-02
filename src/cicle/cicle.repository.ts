@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { Prisma } from "@prisma/client";
+import { UpdateCicleDto } from "./dto/update-cicle.dto";
 
 
 @Injectable()
@@ -35,5 +36,16 @@ export class CicleRepository {
       },
     });
   }
-  
+
+    async update(id: number, data: UpdateCicleDto) {
+        return this.prisma.ciclo.update({
+        where: { id },
+        data:{
+            name: data.name,
+            year: data.year ? Number(data.year) : undefined,
+            period: data.period ? Number(data.period) : undefined,
+            status: data.status,
+        },
+        });
+    }
 }

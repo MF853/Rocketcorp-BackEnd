@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString, IsOptional, IsNumber, IsEnum } from "class-validator";
+import { IsString, IsEnum } from "class-validator";
 
 export class CreateCicleDto {
     @ApiProperty({ required: true, description: "Nome do ciclo" })

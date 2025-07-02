@@ -52,8 +52,10 @@ export class CicleService {
     });
   }  
 
-  update(id: number, updateCicleDto: UpdateCicleDto) {
-    return `This action updates a #${id} cicle`;
+  async update(id: number, updateCicleDto: UpdateCicleDto) {
+    await this.findOne(id);
+    await this.cicleRepository.update(id, updateCicleDto);
+    return 'Ciclo atualizado com sucesso'
   }
 
 }
