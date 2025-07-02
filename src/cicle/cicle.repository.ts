@@ -8,7 +8,7 @@ export class CicleRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll() {
-    return await this.prisma.ciclo.findMany();
+    return this.prisma.ciclo.findMany();
   }  
 
   async findById(id: number) {
@@ -27,4 +27,13 @@ export class CicleRepository {
       },
     });
   }
+
+  async findByYearAndPeriod(year: number, period: number) {
+    return this.prisma.ciclo.findUnique({
+      where: {
+        year_period: { year, period },
+      },
+    });
+  }
+  
 }

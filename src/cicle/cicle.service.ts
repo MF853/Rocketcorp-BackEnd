@@ -23,11 +23,37 @@ export class CicleService {
     return cicle;
   }
 
+  async getByYearAndPeriod(year: number, period: number) {
+    const ciclo = await this.cicleRepository.findByYearAndPeriod(year, period);
+    if (!ciclo) {
+      throw new NotFoundException('Ciclo não encontrado');
+    }
+    return ciclo;
+  }
+
+  async findOrCreateByString(cicloString: string) {
+    const [yearStr, periodStr] = cicloString.split(".");
+    const year = Number(yearStr);
+    const period = Number(periodStr);
+  
+    // tenta achar o ciclo
+    const existing = await this.cicleRepository.findByYearAndPeriod(year, period);
+  
+    if (existing) {
+      return existing;
+    }
+  
+    // se não existir, cria
+    return this.cicleRepository.create({
+      name: cicloString,
+      year,
+      period,
+      status: "aberto", // ou outro valor padrão
+    });
+  }  
+
   update(id: number, updateCicleDto: UpdateCicleDto) {
     return `This action updates a #${id} cicle`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} cicle`;
-  }
 }
