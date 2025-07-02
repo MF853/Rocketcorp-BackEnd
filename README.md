@@ -87,6 +87,9 @@ pnpm db:generate
 # Executar as migrações
 pnpm db:migrate
 
+# Popular o banco de dados com dados de exemplo
+npx tsx prisma/seed.ts
+
 # (Opcional) Abrir Prisma Studio para visualizar os dados
 pnpm db:studio
 ```
@@ -145,7 +148,7 @@ pnpm db:migrate     # Executar migrações
 pnpm db:studio      # Abrir Prisma Studio
 pnpm db:reset       # Resetar banco de dados
 pnpm db:deploy      # Deploy das migrações (produção)
-pnpm ts-node prisma/seed.ts # Popular Banco de Dados Para testes
+npx tsx prisma/seed.ts # Popular banco de dados com dados de exemplo
 ```
 
 ### Desenvolvimento
