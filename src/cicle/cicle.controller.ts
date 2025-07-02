@@ -4,11 +4,14 @@ import { CreateCicleDto } from './dto/create-cicle.dto';
 import { UpdateCicleDto } from './dto/update-cicle.dto';
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 
+@ApiTags("Cicle")
 @Controller('cicle')
 export class CicleController {
   constructor(private readonly cicleService: CicleService) {}
 
   @Post()
+  @ApiOperation({ summary: "Cria um ciclo" })
+  @ApiResponse({ status: 200, description: "Ciclo criado com sucesso." })
   create(@Body() createCicleDto: CreateCicleDto) {
     return this.cicleService.create(createCicleDto);
   }

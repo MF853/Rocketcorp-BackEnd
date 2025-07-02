@@ -8,12 +8,23 @@ export class CicleRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll() {
-    return this.prisma.ciclo.findMany();
+    return await this.prisma.ciclo.findMany();
   }  
 
   async findById(id: number) {
     return this.prisma.ciclo.findUnique({
         where: {id}
+    });
+  }
+
+  async create(createCicleDto: any) {
+    await this.prisma.ciclo.create({
+      data: {
+        name: createCicleDto.name,
+        year: Number(createCicleDto.year),
+        period: Number(createCicleDto.period),
+        status: createCicleDto.status,
+      },
     });
   }
 }

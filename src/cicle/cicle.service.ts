@@ -6,12 +6,13 @@ import { UpdateCicleDto } from './dto/update-cicle.dto';
 @Injectable()
 export class CicleService {
   constructor(private readonly cicleRepository: CicleRepository) {}
-  create(createCicleDto: CreateCicleDto) {
-    return 'This action adds a new cicle';
+  async create(createCicleDto: CreateCicleDto) {
+    await this.cicleRepository.create(createCicleDto);
+    return 'Ciclo criado com sucesso';
   }
 
-  findAll() {
-    return this.cicleRepository.findAll();
+  async findAll() {
+    return await this.cicleRepository.findAll();
   }
 
   async findOne(id: number) {
