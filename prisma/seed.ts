@@ -4,6 +4,7 @@ import {
   Criterio,
 } from "@prisma/client";
 import * as argon from "argon2";
+import { execSync } from "child_process";
 
 const prisma = new PrismaClient();
 
@@ -11,8 +12,22 @@ async function hashPassword(password: string): Promise<string> {
   return await argon.hash(password);
 }
 
+function runMigrations() {
+  console.log("🔄 Running Prisma migrations...");
+  try {
+    execSync("npx prisma migrate deploy", { stdio: "inherit" });
+    console.log("✅ Migrations completed successfully");
+  } catch (error) {
+    console.error("❌ Error running migrations:", error);
+    throw error;
+  }
+}
+
 async function main() {
   console.log("🌱 Starting comprehensive database seeding...");
+
+  // Run migrations first
+  runMigrations();
 
   // Clear existing data in correct order (due to foreign keys)
   await prisma.avaliacao360.deleteMany();
@@ -358,6 +373,25 @@ async function main() {
     `✅ Created ${allCriterios.length} criterios across ${trilhas.length} trilhas`
   );
 
+  // Helper function to get criterios by trilha and name
+  // const getCriterioByTrilhaAndName = (trilhaId: number, name: string) => {
+  //   return allCriterios.find((c) => c.trilhaId === trilhaId && c.name === name);
+  // };
+
+  // Create specific criterio shortcuts for easier access
+  const desenvolvimentoCriterios = allCriterios.filter(
+    (c) => c.trilhaId === trilhas[0].id
+  );
+  const dadosCriterios = allCriterios.filter(
+    (c) => c.trilhaId === trilhas[1].id
+  );
+  const infraCriterios = allCriterios.filter(
+    (c) => c.trilhaId === trilhas[2].id
+  );
+  const gestaoCriterios = allCriterios.filter(
+    (c) => c.trilhaId === trilhas[3].id
+  );
+
   // 6. Create Referencias
   console.log("📝 Creating referencias...");
   const referencias = await Promise.all([
@@ -400,145 +434,262 @@ async function main() {
   ]);
   console.log(`✅ Created ${referencias.length} referencias`);
 
-  // 7. Create Avaliacoes
+  // 7. Create Avaliacoes (with both self-evaluations and manager evaluations)
   console.log("📊 Creating avaliacoes...");
-  const avaliacoes = await Promise.all([
-    // Auto-avaliações (mesmo idAvaliador e idAvaliado, COM criterioId)
-    prisma.avaliacao.create({
-      data: {
-        idAvaliador: users[0].id, // Raylandson
-        idAvaliado: users[0].id, // Raylandson (auto-avaliação)
-        idCiclo: ciclos[0].id, // Q1 2025
-        nota: 4,
-        justificativa:
-          "Tenho me dedicado bastante ao desenvolvimento da equipe e aos projetos. Acredito que posso melhorar na organização pessoal.",
-        criterioId: allCriterios.find(
-          (c) => c.name === "Organização" && c.trilhaId === trilhas[0].id
-        )?.id,
-      },
-    }),
-    prisma.avaliacao.create({
-      data: {
-        idAvaliador: users[4].id, // Luan
-        idAvaliado: users[4].id, // Luan (auto-avaliação)
-        idCiclo: ciclos[0].id, // Q1 2025
-        nota: 4,
-        justificativa:
-          "Estou focado em melhorar minha produtividade e qualidade de entrega. Tenho buscado aprender novas tecnologias constantemente.",
-        criterioId: allCriterios.find(
-          (c) => c.name === "Produtividade" && c.trilhaId === trilhas[0].id
-        )?.id,
-      },
-    }),
-    prisma.avaliacao.create({
-      data: {
-        idAvaliador: users[7].id, // Pedro
-        idAvaliado: users[7].id, // Pedro (auto-avaliação)
-        idCiclo: ciclos[0].id, // Q1 2025
-        nota: 4,
-        justificativa:
-          "Tenho me esforçado para ser mais criativo nas soluções analíticas e buscar sempre inovar nas abordagens de análise de dados.",
-        criterioId: allCriterios.find(
-          (c) =>
-            c.name === "Criatividade e Inovação" && c.trilhaId === trilhas[1].id
-        )?.id,
-      },
-    }),
-    prisma.avaliacao.create({
-      data: {
-        idAvaliador: users[3].id, // Erico
-        idAvaliado: users[3].id, // Erico (auto-avaliação)
-        idCiclo: ciclos[0].id, // Q1 2025
-        nota: 4,
-        justificativa:
-          "Tenho trabalhado para melhorar minha flexibilidade e adaptação a novas tecnologias de infraestrutura.",
-        criterioId: allCriterios.find(
-          (c) => c.name === "Flexibilidade" && c.trilhaId === trilhas[2].id
-        )?.id,
-      },
-    }),
-    prisma.avaliacao.create({
-      data: {
-        idAvaliador: users[9].id, // Carlos
-        idAvaliado: users[9].id, // Carlos (auto-avaliação)
-        idCiclo: ciclos[0].id, // Q1 2025
-        nota: 4,
-        justificativa:
-          "Tenho focado em desenvolver minhas habilidades de gestão de pessoas e busco sempre motivar a equipe.",
-        criterioId: allCriterios.find(
-          (c) => c.name === "Gestão de Pessoas" && c.trilhaId === trilhas[3].id
-        )?.id,
-      },
-    }),
+  // Helper to avoid duplicate (idAvaliador, idAvaliado, idCiclo)
+  const uniqueAvaliacao: string[] = [];
+  function addAvaliacao(av: {
+    data: {
+      idAvaliador: number;
+      idAvaliado: number;
+      idCiclo: number;
+      criterioId: number;
+      nota: number;
+      justificativa: string;
+      notaGestor: number;
+      justificativaGestor: string;
+    };
+  }) {
+    const key = `${av.data.idAvaliador}_${av.data.idAvaliado}_${av.data.idCiclo}`;
+    if (!uniqueAvaliacao.includes(key)) {
+      uniqueAvaliacao.push(key);
+      return prisma.avaliacao.create(av);
+    }
+    return undefined;
+  }
 
-    // Avaliações normais (diferentes idAvaliador e idAvaliado, SEM criterioId)
-    prisma.avaliacao.create({
-      data: {
-        idAvaliador: users[1].id, // Alice
-        idAvaliado: users[4].id, // Luan
-        idCiclo: ciclos[0].id, // Q1 2025
-        nota: 4,
-        justificativa:
-          "Luan mostrou excelente progresso técnico e sempre demonstra iniciativa para aprender novas tecnologias. Muito dedicado.",
-        // criterioId: null (avaliação geral)
-      },
-    }),
-    prisma.avaliacao.create({
-      data: {
-        idAvaliador: users[0].id, // Raylandson
-        idAvaliado: users[6].id, // Maria
-        idCiclo: ciclos[0].id, // Q1 2025
-        nota: 5,
-        justificativa:
-          "Maria demonstra domínio técnico excepcional e excelente trabalho em equipe. Sempre colaborativa e proativa.",
-        // criterioId: null (avaliação geral)
-      },
-    }),
-    prisma.avaliacao.create({
-      data: {
-        idAvaliador: users[2].id, // Arthur
-        idAvaliado: users[7].id, // Pedro
-        idCiclo: ciclos[0].id, // Q1 2025
-        nota: 4,
-        justificativa:
-          "Pedro tem excelente capacidade analítica e consegue extrair insights valiosos dos dados. Comunicação clara dos resultados.",
-        // criterioId: null (avaliação geral)
-      },
-    }),
-    prisma.avaliacao.create({
-      data: {
-        idAvaliador: users[5].id, // José Mário
-        idAvaliado: users[9].id, // Carlos
-        idCiclo: ciclos[0].id, // Q1 2025
-        nota: 5,
-        justificativa:
-          "Carlos demonstra excelente capacidade de gestão e liderança. Sempre organizado e focado nos resultados.",
-        // criterioId: null (avaliação geral)
-      },
-    }),
-    prisma.avaliacao.create({
-      data: {
-        idAvaliador: users[1].id, // Alice
-        idAvaliado: users[6].id, // Maria
-        idCiclo: ciclos[0].id, // Q1 2025
-        nota: 5,
-        justificativa:
-          "Maria é uma das melhores desenvolvedoras da equipe. Sempre disposta a ajudar e com excelente qualidade técnica.",
-        // criterioId: null (avaliação geral)
-      },
-    }),
-  ]);
+  const avaliacoes = await Promise.all(
+    [
+      // Raylandson (Desenvolvimento)
+      addAvaliacao({
+        data: {
+          idAvaliador: users[0].id,
+          idAvaliado: users[0].id,
+          idCiclo: ciclos[0].id,
+          nota: 4.7,
+          justificativa:
+            "Tenho amplo conhecimento técnico e busco sempre me manter atualizado com as tecnologias mais recentes.",
+          criterioId: desenvolvimentoCriterios[0]?.id,
+          notaGestor: 4.9,
+          justificativaGestor:
+            "Conhecimento técnico excepcional, sempre na vanguarda das tecnologias.",
+        },
+      }),
+      // Luan (Desenvolvimento)
+      addAvaliacao({
+        data: {
+          idAvaliador: users[4].id,
+          idAvaliado: users[4].id,
+          idCiclo: ciclos[0].id,
+          nota: 3.5,
+          justificativa:
+            "Sinto que evolui muito em React e Node.js, mas ainda preciso melhorar em testes.",
+          criterioId: desenvolvimentoCriterios[0]?.id,
+          notaGestor: 4.2,
+          justificativaGestor:
+            "Luan mostrou excelente progresso técnico. Concordo que precisa focar mais em testes automatizados.",
+        },
+      }),
+      addAvaliacao({
+        data: {
+          idAvaliador: users[4].id,
+          idAvaliado: users[4].id,
+          idCiclo: ciclos[0].id,
+          nota: 4.0,
+          justificativa:
+            "Tenho me esforçado para escrever código limpo e bem documentado.",
+          criterioId: desenvolvimentoCriterios[1]?.id,
+          notaGestor: 4.5,
+          justificativaGestor:
+            "Código muito bem estruturado e seguindo boas práticas. Excelente evolução.",
+        },
+      }),
+      addAvaliacao({
+        data: {
+          idAvaliador: users[4].id,
+          idAvaliado: users[4].id,
+          idCiclo: ciclos[0].id,
+          nota: 4.2,
+          justificativa:
+            "Gosto de colaborar com a equipe e sempre ajudo quando posso.",
+          criterioId: desenvolvimentoCriterios[2]?.id,
+          notaGestor: 4.6,
+          justificativaGestor:
+            "Excelente colaborador, sempre disposto a ajudar os colegas.",
+        },
+      }),
+      // Maria (Desenvolvimento)
+      addAvaliacao({
+        data: {
+          idAvaliador: users[6].id,
+          idAvaliado: users[6].id,
+          idCiclo: ciclos[0].id,
+          nota: 4.4,
+          justificativa:
+            "Tenho bom domínio de tecnologias full-stack e busco sempre me atualizar.",
+          criterioId: desenvolvimentoCriterios[0]?.id,
+          notaGestor: 4.6,
+          justificativaGestor:
+            "Maria demonstra domínio excepcional tanto em frontend quanto backend. Sempre atualizada.",
+        },
+      }),
+      addAvaliacao({
+        data: {
+          idAvaliador: users[6].id,
+          idAvaliado: users[6].id,
+          idCiclo: ciclos[0].id,
+          nota: 4.2,
+          justificativa:
+            "Me preocupo muito com a qualidade e sempre faço code review cuidadoso.",
+          criterioId: desenvolvimentoCriterios[1]?.id,
+          notaGestor: 4.5,
+          justificativaGestor:
+            "Código de alta qualidade, bem testado e documentado.",
+        },
+      }),
+      addAvaliacao({
+        data: {
+          idAvaliador: users[6].id,
+          idAvaliado: users[6].id,
+          idCiclo: ciclos[0].id,
+          nota: 4.5,
+          justificativa: "Sempre busco antecipar problemas e propor soluções.",
+          criterioId: desenvolvimentoCriterios[3]?.id,
+          notaGestor: 4.8,
+          justificativaGestor:
+            "Proatividade excepcional, sempre traz ideias inovadoras.",
+        },
+      }),
+      // Pedro (Dados)
+      addAvaliacao({
+        data: {
+          idAvaliador: users[7].id,
+          idAvaliado: users[7].id,
+          idCiclo: ciclos[0].id,
+          nota: 4.0,
+          justificativa:
+            "Tenho boa capacidade analítica, mas ainda estou aprendendo técnicas mais avançadas.",
+          criterioId: dadosCriterios[0]?.id,
+          notaGestor: 4.4,
+          justificativaGestor:
+            "Pedro tem excelente capacidade analítica e consegue extrair insights valiosos.",
+        },
+      }),
+      addAvaliacao({
+        data: {
+          idAvaliador: users[7].id,
+          idAvaliado: users[7].id,
+          idCiclo: ciclos[0].id,
+          nota: 3.8,
+          justificativa:
+            "Estou estudando ML intensivamente, mas ainda preciso de mais prática.",
+          criterioId: dadosCriterios[1]?.id,
+          notaGestor: 4.0,
+          justificativaGestor:
+            "Boa evolução em ML, continue estudando e praticando.",
+        },
+      }),
+      // Arthur (Dados)
+      addAvaliacao({
+        data: {
+          idAvaliador: users[2].id,
+          idAvaliado: users[2].id,
+          idCiclo: ciclos[0].id,
+          nota: 4.5,
+          justificativa:
+            "Tenho sólida experiência em análise de dados e uso de ferramentas estatísticas.",
+          criterioId: dadosCriterios[0]?.id,
+          notaGestor: 4.7,
+          justificativaGestor:
+            "Excelente domínio em análise de dados, referência para a equipe.",
+        },
+      }),
+      addAvaliacao({
+        data: {
+          idAvaliador: users[2].id,
+          idAvaliado: users[2].id,
+          idCiclo: ciclos[0].id,
+          nota: 4.1,
+          justificativa:
+            "Consigo explicar resultados complexos de forma clara para diferentes audiências.",
+          criterioId: dadosCriterios[2]?.id,
+          notaGestor: 4.4,
+          justificativaGestor:
+            "Ótima capacidade de comunicar insights de dados de forma acessível.",
+        },
+      }),
+      // Erico (Infraestrutura)
+      addAvaliacao({
+        data: {
+          idAvaliador: users[3].id,
+          idAvaliado: users[3].id,
+          idCiclo: ciclos[0].id,
+          nota: 4.3,
+          justificativa:
+            "Tenho forte conhecimento em DevOps e automação de infraestrutura.",
+          criterioId: infraCriterios[0]?.id,
+          notaGestor: 4.6,
+          justificativaGestor:
+            "Excelente expertise técnica em DevOps e infraestrutura.",
+        },
+      }),
+      // Ana (Infraestrutura)
+      addAvaliacao({
+        data: {
+          idAvaliador: users[8].id,
+          idAvaliado: users[8].id,
+          idCiclo: ciclos[0].id,
+          nota: 4.1,
+          justificativa: "Estou evoluindo bem em infraestrutura e automação.",
+          criterioId: infraCriterios[0]?.id,
+          notaGestor: 4.3,
+          justificativaGestor:
+            "Boa evolução técnica, continue focando em automação.",
+        },
+      }),
+      // Carlos (Gestão)
+      addAvaliacao({
+        data: {
+          idAvaliador: users[9].id,
+          idAvaliado: users[9].id,
+          idCiclo: ciclos[0].id,
+          nota: 3.9,
+          justificativa:
+            "Tenho boa visão de gestão, mas preciso melhorar aspectos técnicos.",
+          criterioId: gestaoCriterios[0]?.id,
+          notaGestor: 4.2,
+          justificativaGestor: "Excelente liderança e gestão de equipe.",
+        },
+      }),
+      // Alice (Desenvolvimento)
+      addAvaliacao({
+        data: {
+          idAvaliador: users[1].id,
+          idAvaliado: users[1].id,
+          idCiclo: ciclos[0].id,
+          nota: 4.6,
+          justificativa:
+            "Procuro sempre liderar pelo exemplo e apoiar o crescimento da equipe.",
+          criterioId: desenvolvimentoCriterios[7]?.id,
+          notaGestor: 4.8,
+          justificativaGestor:
+            "Liderança exemplar, excelente capacidade de desenvolver pessoas.",
+        },
+      }),
+    ].filter(Boolean)
+  );
   console.log(`✅ Created ${avaliacoes.length} avaliacoes`);
 
-  // 8. Create Avaliacoes 360
-  console.log("� Creating avaliacoes 360...");
+  // 8. Create Avaliacoes 360 (Extended with more evaluations)
+  console.log("🔄 Creating avaliacoes 360...");
   const avaliacoes360 = await Promise.all([
+    // Luan evaluating Alice (his mentor)
     prisma.avaliacao360.create({
       data: {
         idAvaliador: users[4].id, // Luan
         idAvaliado: users[1].id, // Alice
         idCiclo: ciclos[0].id, // Q1 2025
-        nota: 5,
+        nota: 4.8,
         pontosFortes:
           "Excelente liderança técnica, sempre disponível para mentoria, comunicação clara e objetiva, conhecimento técnico muito sólido.",
         pontosMelhora:
@@ -548,12 +699,13 @@ async function main() {
         trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
       },
     }),
+    // Maria evaluating Raylandson
     prisma.avaliacao360.create({
       data: {
         idAvaliador: users[6].id, // Maria
         idAvaliado: users[0].id, // Raylandson
         idCiclo: ciclos[0].id, // Q1 2025
-        nota: 5,
+        nota: 4.9,
         pontosFortes:
           "Visão estratégica excepcional, capacidade de resolver problemas complexos, mentorship de qualidade, conhecimento técnico abrangente.",
         pontosMelhora:
@@ -563,12 +715,13 @@ async function main() {
         trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
       },
     }),
+    // Pedro evaluating Arthur (his mentor)
     prisma.avaliacao360.create({
       data: {
         idAvaliador: users[7].id, // Pedro
         idAvaliado: users[2].id, // Arthur
         idCiclo: ciclos[0].id, // Q1 2025
-        nota: 4,
+        nota: 4.3,
         pontosFortes:
           "Conhecimento profundo em análise de dados, boa capacidade de ensinar conceitos complexos, organizado e metódico.",
         pontosMelhora:
@@ -576,6 +729,150 @@ async function main() {
         nomeProjeto: "Dashboard de Métricas de Negócio",
         periodoMeses: 4,
         trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_PARCIALMENTE,
+      },
+    }),
+    // Alice evaluating Luan
+    prisma.avaliacao360.create({
+      data: {
+        idAvaliador: users[1].id, // Alice
+        idAvaliado: users[4].id, // Luan
+        idCiclo: ciclos[0].id, // Q1 2025
+        nota: 4.2,
+        pontosFortes:
+          "Muito dedicado, aprende rapidamente, sempre disposto a ajudar colegas, código bem estruturado.",
+        pontosMelhora:
+          "Precisa ganhar mais confiança para propor soluções arquiteturais e melhorar em testes automatizados.",
+        nomeProjeto: "Sistema de Avaliação de Performance",
+        periodoMeses: 6,
+        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+      },
+    }),
+    // Raylandson evaluating Maria
+    prisma.avaliacao360.create({
+      data: {
+        idAvaliador: users[0].id, // Raylandson
+        idAvaliado: users[6].id, // Maria
+        idCiclo: ciclos[0].id, // Q1 2025
+        nota: 4.6,
+        pontosFortes:
+          "Excelente qualidade técnica, proativa, ótima capacidade de resolver problemas complexos, trabalha bem em equipe.",
+        pontosMelhora:
+          "Poderia compartilhar mais conhecimento com a equipe através de apresentações técnicas.",
+        nomeProjeto: "API de Integração de Sistemas",
+        periodoMeses: 5,
+        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+      },
+    }),
+    // Arthur evaluating Pedro
+    prisma.avaliacao360.create({
+      data: {
+        idAvaliador: users[2].id, // Arthur
+        idAvaliado: users[7].id, // Pedro
+        idCiclo: ciclos[0].id, // Q1 2025
+        nota: 4.1,
+        pontosFortes:
+          "Boa capacidade analítica, curioso e sempre pergunta quando tem dúvidas, organizado com documentação.",
+        pontosMelhora:
+          "Precisa ganhar mais autonomia na escolha de ferramentas e técnicas de análise.",
+        nomeProjeto: "Análise de Comportamento do Cliente",
+        periodoMeses: 3,
+        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_PARCIALMENTE,
+      },
+    }),
+    // Erico evaluating Ana (both DevOps)
+    prisma.avaliacao360.create({
+      data: {
+        idAvaliador: users[3].id, // Erico
+        idAvaliado: users[8].id, // Ana
+        idCiclo: ciclos[0].id, // Q1 2025
+        nota: 4.0,
+        pontosFortes:
+          "Boa compreensão de infraestrutura, meticulosa na documentação, sempre segue procedimentos de segurança.",
+        pontosMelhora:
+          "Poderia ser mais ágil na implementação de automações e ganhar mais confiança em ambientes de produção.",
+        nomeProjeto: "Migração para Cloud AWS",
+        periodoMeses: 4,
+        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_PARCIALMENTE,
+      },
+    }),
+    // Ana evaluating Erico
+    prisma.avaliacao360.create({
+      data: {
+        idAvaliador: users[8].id, // Ana
+        idAvaliado: users[3].id, // Erico
+        idCiclo: ciclos[0].id, // Q1 2025
+        nota: 4.5,
+        pontosFortes:
+          "Expertise sólida em DevOps, ótimo conhecimento em containers e CI/CD, sempre disposto a ensinar.",
+        pontosMelhora:
+          "Às vezes pode ser muito perfeccionista, poderia acelerar algumas entregas não críticas.",
+        nomeProjeto: "Implementação de Pipeline CI/CD",
+        periodoMeses: 6,
+        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+      },
+    }),
+    // José Mário evaluating Carlos (both management)
+    prisma.avaliacao360.create({
+      data: {
+        idAvaliador: users[5].id, // José Mário
+        idAvaliado: users[9].id, // Carlos
+        idCiclo: ciclos[0].id, // Q1 2025
+        nota: 4.3,
+        pontosFortes:
+          "Excelente visão estratégica, boa capacidade de comunicação com stakeholders, organizado com prazos.",
+        pontosMelhora:
+          "Poderia se envolver mais nos aspectos técnicos dos projetos para melhor compreensão das complexidades.",
+        nomeProjeto: "Reestruturação de Processos Internos",
+        periodoMeses: 8,
+        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+      },
+    }),
+    // Carlos evaluating José Mário
+    prisma.avaliacao360.create({
+      data: {
+        idAvaliador: users[9].id, // Carlos
+        idAvaliado: users[5].id, // José Mário
+        idCiclo: ciclos[0].id, // Q1 2025
+        nota: 4.4,
+        pontosFortes:
+          "Liderança inspiradora, ótima capacidade de motivar equipes, visão clara dos objetivos organizacionais.",
+        pontosMelhora:
+          "Poderia ser mais flexível com mudanças de escopo e dar mais autonomia para as equipes técnicas.",
+        nomeProjeto: "Transformação Digital da Empresa",
+        periodoMeses: 12,
+        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+      },
+    }),
+    // Maria evaluating Luan (both full-stack)
+    prisma.avaliacao360.create({
+      data: {
+        idAvaliador: users[6].id, // Maria
+        idAvaliado: users[4].id, // Luan
+        idCiclo: ciclos[0].id, // Q1 2025
+        nota: 4.1,
+        pontosFortes:
+          "Código limpo e bem estruturado, aprende tecnologias novas rapidamente, bom trabalho em pair programming.",
+        pontosMelhora:
+          "Poderia participar mais ativamente das discussões de arquitetura e propor mais soluções inovadoras.",
+        nomeProjeto: "Refatoração do Sistema Legacy",
+        periodoMeses: 4,
+        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+      },
+    }),
+    // Luan evaluating Maria
+    prisma.avaliacao360.create({
+      data: {
+        idAvaliador: users[4].id, // Luan
+        idAvaliado: users[6].id, // Maria
+        idCiclo: ciclos[0].id, // Q1 2025
+        nota: 4.7,
+        pontosFortes:
+          "Conhecimento técnico impressionante, sempre ajuda quando tenho dúvidas, code reviews muito construtivos.",
+        pontosMelhora:
+          "Às vezes pode ser muito detalhista nos code reviews, poderia priorizar os pontos mais críticos.",
+        nomeProjeto: "Desenvolvimento de Nova Feature",
+        periodoMeses: 3,
+        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
       },
     }),
   ]);
