@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { UsersRepository } from "./users.repository";
 import { UpdateUserDto } from "./dto/update-user.dto";
+import { UserStatisticsResponseDto } from "./dto/user-statistics-response.dto";
 
 @Injectable()
 export class UsersService {
@@ -51,4 +52,24 @@ export class UsersService {
     await this.findOne(id); // Check if user exists
     return this.usersRepository.delete(id);
   }
-} 
+
+  async getUserStatistics(
+    userId: number,
+    idCiclo?: number
+  ): Promise<UserStatisticsResponseDto> {
+    const statistics = await this.usersRepository.getUserStatistics(
+      userId,
+      idCiclo
+    );
+    if (!statistics) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+    return statistics;
+  }
+
+  async getAllUsersStatisticsByCycle(
+    idCiclo: number
+  ): Promise<UserStatisticsResponseDto[]> {
+    return this.usersRepository.getAllUsersStatisticsByCycle(idCiclo);
+  }
+}

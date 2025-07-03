@@ -34,6 +34,7 @@ model User {
   @@index([trilhaId])
   @@index([email])
   @@map("users")
+  ResumoIA ResumoIA[]
 }
 
 
@@ -54,6 +55,7 @@ model Ciclo {
   @@index([year])
   @@index([period])
   @@map("ciclos")
+  ResumoIA ResumoIA[]
 }
 
 model Trilha {
@@ -88,6 +90,20 @@ model Criterio {
   @@map("criterio")
 }
 
+model ResumoIA {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  idCiclo   Int
+  resumo    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ciclo     Ciclo    @relation(fields: [idCiclo], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, idCiclo])
+  @@map("resumos_ia")
+}
+
 model referencia {
   id         Int       @id @default(autoincrement())
   idReferenciador Int
@@ -117,6 +133,8 @@ model Avaliacao {
   nota          Float?
   justificativa String
   criterioId    Int?
+  notaGestor    Float?
+  justificativaGestor String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   avaliador     User      @relation("Avaliador", fields: [idAvaliador], references: [id], onDelete: Restrict)
