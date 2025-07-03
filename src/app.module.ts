@@ -9,9 +9,10 @@ import { UsersModule } from './users/users.module';
 import { TrilhaModule } from './trilha/trilha.module';
 import { CriterioModule } from './criterio/criterio.module';
 import { CicleModule } from './cicle/cicle.module';
+import { ResumoiaModule } from './resumoia/resumoia.module';
 
 @Module({
-  imports: [AuthModule, ConfigModule.forRoot({}), AvaliacaoModule, ReferenciaModule, UsersModule, TrilhaModule, CriterioModule, CicleModule],
+  imports: [AuthModule, ConfigModule.forRoot({}), AvaliacaoModule, ReferenciaModule, UsersModule, TrilhaModule, CriterioModule, CicleModule, ResumoiaModule],
   controllers: [AppController],
   providers: [AppService],
 })
