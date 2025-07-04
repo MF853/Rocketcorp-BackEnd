@@ -6,6 +6,8 @@ import {
   HttpStatus,
   Post,
   Req,
+  Res,
+  UnauthorizedException,
   UseGuards,
 } from "@nestjs/common";
 import { AuthService } from "./auth.service";
@@ -14,6 +16,7 @@ import { RequestWithUser } from "src/types/express";
 import { JwtGuard, RolesGuard } from "./guard";
 import { Roles } from "./decorators/roles.decorator";
 import { Role } from "src/enums/roles.enum";
+import { Response, Request } from "express";
 
 @Controller("auth")
 export class AuthController {
@@ -21,8 +24,34 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post("login")
-  login(@Body() authDto: AuthDto) {
-    return this.authService.login(authDto);
+  async login(
+    @Body() authDto: AuthDto,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    const result = await this.authService.login(authDto);
+
+    res.cookie("refresh_token", result.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias
+    });
+
+    return {
+      message: result.message,
+      access_token: result.access_token,
+    };
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post("refresh")
+  refresh(@Req() req: Request) {
+    const cookies = req.cookies as Record<string, string>;
+    const refreshToken = cookies?.refresh_token;
+    if (!refreshToken) {
+      throw new UnauthorizedException("Refresh token not found");
+    }
+    return this.authService.refresh(refreshToken);
   }
 
   @UseGuards(JwtGuard)

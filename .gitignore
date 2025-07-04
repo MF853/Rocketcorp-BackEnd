@@ -161,3 +161,8 @@ coverage/
 .dockerignore
 
 /generated/prisma
+
+
+#Excel Import Data
+compilado_2025-06-20/
+*.xlsx

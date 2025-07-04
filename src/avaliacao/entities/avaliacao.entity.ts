@@ -1,23 +1,40 @@
-export class AvaliacaoAbstrata {
+import { User, MotivacaoTrabalhoNovamente } from "@prisma/client";
+
+export class Avaliacao {
   id: number;
   idAvaliador: number;
   idAvaliado: number;
   idCiclo: number;
   nota?: number;
-}
-
-export class Avaliacao {
-  id: number;
   justificativa: string;
-  criterio: string;
-  avaliacaoAbstrataId: number;
-  avaliacaoAbstrata?: AvaliacaoAbstrata;
+  criterioId: number;
+  createdAt: Date;
+  updatedAt: Date;
+
+  avaliador?: User;
+  avaliado?: User;
+  criterio?: {
+    id: number;
+    name: string;
+    enabled: boolean;
+    trilhaId: number;
+  };
 }
 
 export class Avaliacao360 {
   id: number;
+  idAvaliador: number;
+  idAvaliado: number;
+  idCiclo: number;
+  nota?: number;
   pontosFortes: string;
   pontosMelhora: string;
-  avaliacaoAbstrataId: number;
-  avaliacaoAbstrata?: AvaliacaoAbstrata;
+  nomeProjeto: string;
+  periodoMeses: number;
+  trabalhariaNovamente: MotivacaoTrabalhoNovamente;
+  createdAt: Date;
+  updatedAt: Date;
+
+  avaliador?: User;
+  avaliado?: User;
 }
