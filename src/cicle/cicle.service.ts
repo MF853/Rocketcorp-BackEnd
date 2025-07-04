@@ -46,9 +46,9 @@ export class CicleService {
     // se não existir, cria
     return this.cicleRepository.create({
       name: cicloString,
-      year,
-      period,
-      status: "aberto", // ou outro valor padrão
+      year: year.toString(),
+      period: period.toString(),
+      status: "aberto",
     });
   }  
 
