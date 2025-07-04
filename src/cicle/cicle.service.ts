@@ -49,23 +49,20 @@ export class CicleService {
     const year = Number(yearStr);
     const period = Number(periodStr);
 
-    // tenta achar o ciclo
-    const existing = await this.cicleRepository.findByYearAndPeriod(
-      year,
-      period
-    );
+    try {
+      return await this.cicleRepository.findByYearAndPeriod(year, period);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return this.cicleRepository.create({
+          name: cicloString,
+          year: year.toString(),
+          period: period.toString(),
+          status: "aberto",
+        });
+      }
 
-    if (existing) {
-      return existing;
+      throw error;
     }
-
-    // se não existir, cria
-    return this.cicleRepository.create({
-      name: cicloString,
-      year,
-      period,
-      status: "aberto", // ou outro valor padrão
-    });
   }
 
   async update(id: number, updateCicleDto: UpdateCicleDto) {
