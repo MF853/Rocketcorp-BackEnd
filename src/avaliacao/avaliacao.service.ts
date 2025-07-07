@@ -7,7 +7,7 @@ import { AvaliacaoRepository } from "./avaliacao.repository";
 import {
   CreateAvaliacaoDto,
   CreateAvaliacao360Dto,
-  BulkCreateAvaliacaoDto,
+  BulkCreateAvaliacaoDto, // ✅ Este é o tipo correto
 } from "./dto/create-avaliacao.dto";
 import {
   UpdateAvaliacaoDto,
@@ -34,7 +34,7 @@ export class AvaliacaoService {
       }
     }
 
-    return this.avaliacaoRepository.createAvaliacao(createAvaliacaoDto);
+    return this.avaliacaoRepository.create(createAvaliacaoDto);
   }
 
   async create360(createAvaliacao360Dto: CreateAvaliacao360Dto) {
@@ -227,5 +227,10 @@ export class AvaliacaoService {
 
   getUserPerformanceSummary(userId: number, idCiclo?: number) {
     return this.avaliacaoRepository.getUserPerformanceSummary(userId, idCiclo);
+  }
+
+  // Método para atualizar nota do gestor em avaliação existente
+  async updateNotaGestor(id: number, notaGestor: number, justificativa?: string) {
+    return await this.avaliacaoRepository.updateNotaGestor(id, notaGestor, justificativa);
   }
 }

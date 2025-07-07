@@ -24,8 +24,9 @@ model User {
   avaliadorId         Int?
   trilhaId            Int?          
   trilha              Trilha?       @relation(fields: [trilhaId], references: [id], onDelete: SetNull)
-  avaliacoesFeitas    Avaliacao[]   @relation("Avaliador")
-  avaliacoesRecebidas Avaliacao[]   @relation("Avaliado")
+  // ✅ CORRIGIR: usar os mesmos nomes das relações no model Avaliacao
+  avaliacoesFeitas    Avaliacao[]   @relation("AvaliadorRelation")
+  avaliacoesRecebidas Avaliacao[]   @relation("AvaliadoRelation")
   avaliacoes360Feitas Avaliacao360[] @relation("Avaliador360")
   avaliacoes360Recebidas Avaliacao360[] @relation("Avaliado360")
   referenciasFeitas   referencia[]  @relation("Referenciador")
@@ -130,24 +131,19 @@ model Avaliacao {
   idAvaliador   Int
   idAvaliado    Int
   idCiclo       Int
-  nota          Float?
+  criterioId    Int
+  nota          Int?      // Nota da autoavaliação
+  notaGestor    Int?      // Nota do gestor (quando diferente do avaliado)
   justificativa String
-  criterioId    Int?
-  notaGestor    Float?
-  justificativaGestor String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  avaliador     User      @relation("Avaliador", fields: [idAvaliador], references: [id], onDelete: Restrict)
-  avaliado      User      @relation("Avaliado", fields: [idAvaliado], references: [id], onDelete: Restrict)
-  ciclo         Ciclo     @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
-  criterio      Criterio?  @relation(fields: [criterioId], references: [id], onDelete: Restrict)
+  avaliador     User      @relation("AvaliadorRelation", fields: [idAvaliador], references: [id])
+  avaliado      User      @relation("AvaliadoRelation", fields: [idAvaliado], references: [id])
+  ciclo         Ciclo     @relation(fields: [idCiclo], references: [id])
+  criterio      Criterio  @relation(fields: [criterioId], references: [id])
 
-  @@unique([idAvaliador, idAvaliado, idCiclo])
-  @@index([idAvaliador])
-  @@index([idAvaliado])
-  @@index([criterioId])
-  @@index([idCiclo])
-  @@map("avaliacoes")
+  @@unique([idAvaliador, idAvaliado, idCiclo, criterioId])
+  @@map("avaliacao")
 }
 
 enum MotivacaoTrabalhoNovamente {

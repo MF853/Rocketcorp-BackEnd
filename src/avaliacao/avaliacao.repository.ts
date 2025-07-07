@@ -3,6 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import {
   CreateAvaliacaoDto,
   CreateAvaliacao360Dto,
+  BulkCreateAvaliacaoDto, // ✅ Adicionar este import
 } from "./dto/create-avaliacao.dto";
 import {
   UpdateAvaliacaoDto,
@@ -32,10 +33,19 @@ type Avaliacao360WithIncludes = Prisma.Avaliacao360GetPayload<{
 export class AvaliacaoRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createAvaliacao(data: CreateAvaliacaoDto) {
+  async create(data: CreateAvaliacaoDto) {
+    // ✅ Validar criterioId obrigatório
+    if (!data.criterioId) {
+      throw new Error("criterioId é obrigatório");
+    }
+
     return this.prisma.avaliacao.create({
       data,
-      include: this.getAvaliacaoIncludes(),
+      include: {
+        criterio: { select: { id: true, name: true, enabled: true } },
+        avaliador: { select: { id: true, name: true, email: true } },
+        avaliado: { select: { id: true, name: true, email: true } },
+      },
     });
   }
 
@@ -352,5 +362,26 @@ export class AvaliacaoRepository {
 
   private getAvaliacao360Includes() {
     return avaliacao360Include;
+  }
+
+  // ✅ Adicionar método updateNotaGestor
+  async updateNotaGestor(id: number, notaGestor: number, justificativa?: string) {
+    return await this.prisma.avaliacao.update({
+      where: { id },
+      data: {
+        notaGestor,
+        ...(justificativa && { justificativa }),
+      },
+      include: {
+        criterio: { select: { id: true, name: true, enabled: true } },
+        avaliador: { select: { id: true, name: true, email: true } },
+        avaliado: { select: { id: true, name: true, email: true } },
+      },
+    });
+  }
+
+  // ✅ Adicionar método createBulk que o service está chamando
+  async createBulk(data: BulkCreateAvaliacaoDto) {
+    return this.createBulkMixed(data);
   }
 }
