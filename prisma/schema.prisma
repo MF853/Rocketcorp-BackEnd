@@ -27,8 +27,8 @@ model User {
   autoAvaliacoesFeitas   Autoavaliacao[] @relation("AutoavaliacoesDoUsuario")
   avaliacoes360Feitas    Avaliacao360[]  @relation("Avaliador360")
   avaliacoes360Recebidas Avaliacao360[]  @relation("Avaliado360")
-  referenciasFeitas      referencia[]    @relation("Referenciador")
-  referenciasRecebidas   referencia[]    @relation("Referenciado")
+  referenciasFeitas      Referencia[]    @relation("Referenciador")
+  referenciasRecebidas   Referencia[]    @relation("Referenciado")
   ResumoIA               ResumoIA[]
   equalizacoesFeitas     Equalizacao[]   @relation("AvaliadorEqualizacao")
   equalizacoesRecebidas  Equalizacao[]   @relation("AvaliadoEqualizacao")
@@ -55,7 +55,7 @@ model Ciclo {
   dataAberturaRevisaoComite   DateTime
   dataFechamentoRevisaoComite DateTime
   dataFinalizacao             DateTime
-  referencias                 referencia[]
+  referencias                 Referencia[]
   autoAvaliacoes              Autoavaliacao[]
   avaliacoes360               Avaliacao360[]
   criterios                   Criterio[]
@@ -114,7 +114,7 @@ model ResumoIA {
   @@map("resumos_ia")
 }
 
-model referencia {
+model Referencia {
   id              Int      @id @default(autoincrement())
   idReferenciador Int
   idReferenciado  Int
@@ -220,4 +220,6 @@ model Equalizacao {
   status               StatusEqualizacao
   avaliador            User              @relation("AvaliadorEqualizacao", fields: [idAvaliador], references: [id], onDelete: Restrict)
   avaliado             User              @relation("AvaliadoEqualizacao", fields: [idAvaliado], references: [id], onDelete: Restrict)
+
+  @@map("equalizacoes")
 }
