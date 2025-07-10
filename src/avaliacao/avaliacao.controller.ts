@@ -18,6 +18,13 @@ import {
   UpdateAvaliacao360Dto,
 } from "./dto/update-avaliacao.dto";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import {
+  // ApiOkResponse,
+  ApiNotFoundResponse,
+  // ApiConflictResponse,
+  // ApiExtraModels,
+  // getSchemaPath,
+} from "@nestjs/swagger";
 
 @ApiTags("Avaliacao")
 @Controller("avaliacao")
@@ -249,33 +256,119 @@ export class AvaliacaoController {
   }
 
   // ==================== ANALYTICS ENDPOINTS ====================
-
+  // MAYBE IGNORE THIS SECTION IF NOT NEEDED
+  // --- IGNORE ---
   @Get("analytics/ciclo/:id")
-  @ApiOperation({ summary: "Estatísticas de um ciclo" })
+  @ApiOperation({
+    summary: "Estatísticas agregadas de avaliações de um ciclo",
+    description:
+      "Retorna o total de avaliações, avaliações 360, média das notas e média das notas 360 para o ciclo especificado.",
+  })
   @ApiResponse({
     status: 200,
     description: "Estatísticas do ciclo retornadas com sucesso.",
+    schema: {
+      example: {
+        totalAvaliacoes: 24,
+        totalAvaliacoes360: 10,
+        avgNota: 4.2,
+        avgNota360: 4.5,
+      },
+      properties: {
+        totalAvaliacoes: { type: "number", example: 24 },
+        totalAvaliacoes360: { type: "number", example: 10 },
+        avgNota: {
+          type: "number",
+          example: 4.2,
+          description: "Média das notas das avaliações regulares",
+        },
+        avgNota360: {
+          type: "number",
+          example: 4.5,
+          description: "Média das notas das avaliações 360",
+        },
+      },
+    },
   })
+  @ApiNotFoundResponse({ description: "Ciclo não encontrado." })
   getCycleStatistics(@Param("id") id: string) {
     return this.avaliacaoService.getCycleStatistics(+id);
   }
 
   @Get("analytics/user/:userId")
-  @ApiOperation({ summary: "Resumo de performance do usuário" })
+  @ApiOperation({
+    summary: "Resumo de performance do usuário",
+    description:
+      "Retorna todas as avaliações recebidas e avaliações 360 recebidas pelo usuário, além dos totais.",
+  })
   @ApiResponse({
     status: 200,
     description: "Resumo de performance retornado com sucesso.",
+    schema: {
+      example: {
+        avaliacoesRecebidas: [
+          {
+            id: 1,
+            nota: 4.5,
+            justificativa: "Ótimo trabalho em equipe.",
+            avaliador: { id: 2, name: "Maria" },
+            criterio: { id: 3, name: "Trabalho em Equipe" },
+          },
+        ],
+        avaliacoes360Recebidas: [
+          {
+            id: 1,
+            nota: 4.7,
+            pontosFortes: "Comunicação clara",
+            pontosMelhora: "Mais proatividade",
+            avaliador: { id: 4, name: "Pedro" },
+          },
+        ],
+        totalAvaliacoes: 5,
+        totalAvaliacoes360: 2,
+      },
+    },
   })
+  @ApiNotFoundResponse({ description: "Usuário não encontrado." })
   getUserPerformanceSummary(@Param("userId") userId: string) {
     return this.avaliacaoService.getUserPerformanceSummary(+userId);
   }
 
   @Get("analytics/user/:userId/ciclo/:cicloId")
-  @ApiOperation({ summary: "Resumo de performance do usuário por ciclo" })
+  @ApiOperation({
+    summary: "Resumo de performance do usuário por ciclo",
+    description:
+      "Retorna todas as avaliações recebidas e avaliações 360 recebidas pelo usuário em um ciclo específico, além dos totais.",
+  })
   @ApiResponse({
     status: 200,
     description: "Resumo de performance por ciclo retornado com sucesso.",
+    schema: {
+      example: {
+        avaliacoesRecebidas: [
+          {
+            id: 2,
+            nota: 4.0,
+            justificativa: "Precisa melhorar em prazos.",
+            avaliador: { id: 5, name: "Arthur" },
+            criterio: { id: 1, name: "Produtividade" },
+          },
+        ],
+        avaliacoes360Recebidas: [
+          {
+            id: 3,
+            nota: 4.2,
+            pontosFortes: "Boa liderança",
+            pontosMelhora: "Delegar mais tarefas",
+            avaliador: { id: 6, name: "Ana" },
+          },
+        ],
+        totalAvaliacoes: 3,
+        totalAvaliacoes360: 1,
+      },
+    },
   })
+  @ApiNotFoundResponse({ description: "Usuário ou ciclo não encontrado." })
   getUserPerformanceSummaryByCiclo(
     @Param("userId") userId: string,
     @Param("cicloId") cicloId: string
