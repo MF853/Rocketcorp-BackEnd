@@ -24,6 +24,81 @@ import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 export class AvaliacaoController {
   constructor(private readonly avaliacaoService: AvaliacaoService) {}
 
+  // ==================== 360 EVALUATION ENDPOINTS ====================
+
+  @Post("360")
+  @ApiOperation({ summary: "Cria uma nova avaliação 360" })
+  @ApiResponse({
+    status: 201,
+    description: "Avaliação 360 criada com sucesso.",
+  })
+  create360(@Body() createAvaliacao360Dto: CreateAvaliacao360Dto) {
+    return this.avaliacaoService.create360(createAvaliacao360Dto);
+  }
+
+  @Get("360")
+  @ApiOperation({ summary: "Lista todas as avaliações 360" })
+  @ApiResponse({
+    status: 200,
+    description: "Lista de avaliações 360 retornada com sucesso.",
+  })
+  findAll360() {
+    return this.avaliacaoService.findAll360();
+  }
+
+  @Get("360/:id")
+  @ApiOperation({ summary: "Busca uma avaliação 360 pelo ID" })
+  @ApiResponse({
+    status: 200,
+    description: "Avaliação 360 retornada com sucesso.",
+  })
+  findOne360(@Param("id") id: string) {
+    return this.avaliacaoService.findOne360(+id);
+  }
+
+  @Get("360/avaliador/:id")
+  @ApiOperation({ summary: "Busca uma avaliação 360 pelo ID" })
+  @ApiResponse({
+    status: 200,
+    description: "Avaliação 360 retornada com sucesso.",
+  })
+  find360ByAvaliadorId(@Param("id") id: string) {
+    return this.avaliacaoService.findOne360(+id);
+  }
+
+  @Get("360/avaliado/:id")
+  @ApiOperation({ summary: "Busca uma avaliação 360 pelo ID" })
+  @ApiResponse({
+    status: 200,
+    description: "Avaliação 360 retornada com sucesso.",
+  })
+  find360ByAvaliadoId(@Param("id") id: string) {
+    return this.avaliacaoService.findOne360(+id);
+  }
+
+  @Patch("360/:id")
+  @ApiOperation({ summary: "Atualiza uma avaliação 360 pelo ID" })
+  @ApiResponse({
+    status: 200,
+    description: "Avaliação 360 atualizada com sucesso.",
+  })
+  update360(
+    @Param("id") id: string,
+    @Body() updateAvaliacao360Dto: UpdateAvaliacao360Dto
+  ) {
+    return this.avaliacaoService.update360(+id, updateAvaliacao360Dto);
+  }
+
+  @Delete("360/:id")
+  @ApiOperation({ summary: "Remove uma avaliação 360 pelo ID" })
+  @ApiResponse({
+    status: 200,
+    description: "Avaliação 360 removida com sucesso.",
+  })
+  remove360(@Param("id") id: string) {
+    return this.avaliacaoService.remove360(+id);
+  }
+
   @Post()
   @ApiOperation({ summary: "Cria uma nova avaliação" })
   @ApiResponse({ status: 201, description: "Avaliação criada com sucesso." })
@@ -147,61 +222,6 @@ export class AvaliacaoController {
   @ApiResponse({ status: 200, description: "Avaliação removida com sucesso." })
   remove(@Param("id") id: string) {
     return this.avaliacaoService.remove(+id);
-  }
-
-  // ==================== 360 EVALUATION ENDPOINTS ====================
-
-  @Post("360")
-  @ApiOperation({ summary: "Cria uma nova avaliação 360" })
-  @ApiResponse({
-    status: 201,
-    description: "Avaliação 360 criada com sucesso.",
-  })
-  create360(@Body() createAvaliacao360Dto: CreateAvaliacao360Dto) {
-    return this.avaliacaoService.create360(createAvaliacao360Dto);
-  }
-
-  @Get("360")
-  @ApiOperation({ summary: "Lista todas as avaliações 360" })
-  @ApiResponse({
-    status: 200,
-    description: "Lista de avaliações 360 retornada com sucesso.",
-  })
-  findAll360() {
-    return this.avaliacaoService.findAll360();
-  }
-
-  @Get("360/:id")
-  @ApiOperation({ summary: "Busca uma avaliação 360 pelo ID" })
-  @ApiResponse({
-    status: 200,
-    description: "Avaliação 360 retornada com sucesso.",
-  })
-  findOne360(@Param("id") id: string) {
-    return this.avaliacaoService.findOne360(+id);
-  }
-
-  @Patch("360/:id")
-  @ApiOperation({ summary: "Atualiza uma avaliação 360 pelo ID" })
-  @ApiResponse({
-    status: 200,
-    description: "Avaliação 360 atualizada com sucesso.",
-  })
-  update360(
-    @Param("id") id: string,
-    @Body() updateAvaliacao360Dto: UpdateAvaliacao360Dto
-  ) {
-    return this.avaliacaoService.update360(+id, updateAvaliacao360Dto);
-  }
-
-  @Delete("360/:id")
-  @ApiOperation({ summary: "Remove uma avaliação 360 pelo ID" })
-  @ApiResponse({
-    status: 200,
-    description: "Avaliação 360 removida com sucesso.",
-  })
-  remove360(@Param("id") id: string) {
-    return this.avaliacaoService.remove360(+id);
   }
 
   // ==================== QUERY ENDPOINTS ====================

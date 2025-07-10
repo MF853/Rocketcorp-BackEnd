@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { Prisma, Ciclo } from '@prisma/client';
-import { UpdateCicleDto } from './dto/update-cicle.dto';
-import { CreateCicleDto } from './dto/create-cicle.dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { Prisma, Ciclo } from "@prisma/client";
+import { UpdateCicleDto } from "./dto/update-cicle.dto";
+import { CreateCicleDto } from "./dto/create-cicle.dto";
 
 @Injectable()
 export class CicleRepository {
@@ -10,6 +10,10 @@ export class CicleRepository {
 
   async findAll(): Promise<Ciclo[]> {
     return this.prisma.ciclo.findMany();
+  }
+
+  async findByStatus(status: string) {
+    return this.prisma.ciclo.findFirst({ where: { status } });
   }
 
   async findById(id: number): Promise<Ciclo> {
@@ -37,11 +41,13 @@ export class CicleRepository {
         year_period: { year, period },
       },
     });
-  
+
     if (!ciclo) {
-      throw new NotFoundException(`Ciclo com ano ${year} e período ${period} não encontrado.`);
+      throw new NotFoundException(
+        `Ciclo com ano ${year} e período ${period} não encontrado.`
+      );
     }
-  
+
     return ciclo;
   }
 
