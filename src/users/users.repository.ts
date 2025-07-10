@@ -84,7 +84,7 @@ export class UsersRepository {
       return null;
     }
 
-    const autoavaliacaoStats = await this.prisma.avaliacao.aggregate({
+    const autoavaliacaoStats = await this.prisma.autoavaliacao.aggregate({
       where: {
         idAvaliado: userId,
         idAvaliador: userId, // Self-evaluation
@@ -95,7 +95,7 @@ export class UsersRepository {
       _count: { nota: true },
     });
 
-    const gestorAvaliacaoStats = await this.prisma.avaliacao.aggregate({
+    const gestorAvaliacaoStats = await this.prisma.autoavaliacao.aggregate({
       where: {
         idAvaliado: userId,
         notaGestor: { not: null },
@@ -143,12 +143,12 @@ export class UsersRepository {
       await Promise.all([
         this.prisma.$queryRaw<{ idAvaliado: number }[]>`
         SELECT DISTINCT "idAvaliado" 
-        FROM avaliacoes 
+        FROM Autoavaliacao 
         WHERE "idCiclo" = ${idCiclo} 
         AND "idAvaliador" = "idAvaliado" 
         AND nota IS NOT NULL
       `,
-        this.prisma.avaliacao.findMany({
+        this.prisma.autoavaliacao.findMany({
           where: {
             idCiclo,
             notaGestor: { not: null },

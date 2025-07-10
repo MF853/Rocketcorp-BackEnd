@@ -63,17 +63,16 @@ export class AvaliacaoController {
     description: "Erro de conflito - avaliações duplicadas.",
   })
   createBulk(@Body() bulkCreateDto: BulkCreateAvaliacaoDto) {
-    console.log("Received Bulk DTO:", JSON.stringify(bulkCreateDto, null, 2));
-    console.log("Avaliacoes array:", bulkCreateDto.avaliacoes);
-    console.log("Avaliacoes360 array:", bulkCreateDto.avaliacoes360);
+    console.log("Received bulk data:", JSON.stringify(bulkCreateDto, null, 2));
+    console.log("Autoavaliacoes array:", bulkCreateDto.autoavaliacoes); // ✅ CORRIGIDO
 
-    if (bulkCreateDto.avaliacoes?.length) {
-      console.log("First avaliacao types:", {
-        idAvaliador: typeof bulkCreateDto.avaliacoes[0].idAvaliador,
-        idAvaliado: typeof bulkCreateDto.avaliacoes[0].idAvaliado,
-        idCiclo: typeof bulkCreateDto.avaliacoes[0].idCiclo,
-        nota: typeof bulkCreateDto.avaliacoes[0].nota,
-        criterioId: typeof bulkCreateDto.avaliacoes[0].criterioId,
+    if (bulkCreateDto.autoavaliacoes?.length) { // ✅ CORRIGIDO
+      console.log("First autoavaliacao types:", {
+        idAvaliador: typeof bulkCreateDto.autoavaliacoes[0].idAvaliador, // ✅ CORRIGIDO
+        idAvaliado: typeof bulkCreateDto.autoavaliacoes[0].idAvaliado, // ✅ CORRIGIDO
+        idCiclo: typeof bulkCreateDto.autoavaliacoes[0].idCiclo, // ✅ CORRIGIDO
+        nota: typeof bulkCreateDto.autoavaliacoes[0].nota, // ✅ CORRIGIDO
+        criterioId: typeof bulkCreateDto.autoavaliacoes[0].criterioId, // ✅ CORRIGIDO
       });
     }
 
@@ -83,6 +82,15 @@ export class AvaliacaoController {
         idAvaliado: typeof bulkCreateDto.avaliacoes360[0].idAvaliado,
         idCiclo: typeof bulkCreateDto.avaliacoes360[0].idCiclo,
         nota: typeof bulkCreateDto.avaliacoes360[0].nota,
+      });
+    }
+
+    if (bulkCreateDto.mentoring?.length) {
+      console.log("First mentoring types:", {
+        idAvaliador: typeof bulkCreateDto.mentoring[0].idMentorado,
+        idAvaliado: typeof bulkCreateDto.mentoring[0].idMentor,
+        idCiclo: typeof bulkCreateDto.mentoring[0].idCiclo,
+        nota: typeof bulkCreateDto.mentoring[0].nota,
       });
     }
 

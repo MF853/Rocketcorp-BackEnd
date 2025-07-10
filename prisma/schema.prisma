@@ -24,11 +24,16 @@ model User {
   avaliadorId         Int?
   trilhaId            Int?          
   trilha              Trilha?       @relation(fields: [trilhaId], references: [id], onDelete: SetNull)
-  // ✅ CORRIGIR: usar os mesmos nomes das relações no model Avaliacao
-  avaliacoesFeitas    Avaliacao[]   @relation("AvaliadorRelation")
-  avaliacoesRecebidas Avaliacao[]   @relation("AvaliadoRelation")
+  
+  autoavaliacoesFeitas    Autoavaliacao[]   @relation("AutoavaliadorRelation")
+  autoavaliacoesRecebidas Autoavaliacao[]   @relation("AutoavaliadoRelation")
+  
+  mentoringFeito     Mentoring[]   @relation("MentorRelation")
+  mentoringRecebido  Mentoring[]   @relation("MentoradoRelation")
+  
   avaliacoes360Feitas Avaliacao360[] @relation("Avaliador360")
   avaliacoes360Recebidas Avaliacao360[] @relation("Avaliado360")
+  
   referenciasFeitas   referencia[]  @relation("Referenciador")
   referenciasRecebidas referencia[] @relation("Referenciado")
   
@@ -37,7 +42,6 @@ model User {
   @@map("users")
   ResumoIA ResumoIA[]
 }
-
 
 model Ciclo {
   id         Int       @id @default(autoincrement())
@@ -48,7 +52,8 @@ model Ciclo {
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
   referencias referencia[] 
-  avaliacoes Avaliacao[] 
+  autoavaliacoes Autoavaliacao[]  // ✅ RENOMEAR
+  mentoring Mentoring[]          // ✅ NOVO
   avaliacoes360 Avaliacao360[] 
   criterios Criterio[]
 
@@ -81,7 +86,7 @@ model Criterio {
   trilhaId    Int
   ciclo       Ciclo       @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
   trilha      Trilha      @relation(fields: [trilhaId], references: [id], onDelete: Cascade)
-  avaliacoes Avaliacao[] 
+  autoavaliacoes Autoavaliacao[]  // ✅ RENOMEAR
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
@@ -125,25 +130,46 @@ model referencia {
   @@map("referencias")
 }
 
-
-model Avaliacao {
-  id            Int       @id @default(autoincrement())
-  idAvaliador   Int
-  idAvaliado    Int
-  idCiclo       Int
-  criterioId    Int
-  nota          Int?      // Nota da autoavaliação
-  notaGestor    Int?      // Nota do gestor (quando diferente do avaliado)
-  justificativa String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  avaliador     User      @relation("AvaliadorRelation", fields: [idAvaliador], references: [id])
-  avaliado      User      @relation("AvaliadoRelation", fields: [idAvaliado], references: [id])
-  ciclo         Ciclo     @relation(fields: [idCiclo], references: [id])
-  criterio      Criterio  @relation(fields: [criterioId], references: [id])
+model Autoavaliacao {
+  id                  Int       @id @default(autoincrement())
+  idAvaliador         Int
+  idAvaliado          Int
+  idCiclo             Int
+  criterioId          Int
+  nota                Float?    // ✅ FLOAT para permitir decimais
+  notaGestor          Float?    // ✅ FLOAT para permitir decimais
+  justificativa       String
+  justificativaGestor String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  avaliador           User      @relation("AutoavaliadorRelation", fields: [idAvaliador], references: [id])
+  avaliado            User      @relation("AutoavaliadoRelation", fields: [idAvaliado], references: [id])
+  ciclo               Ciclo     @relation(fields: [idCiclo], references: [id])
+  criterio            Criterio? @relation(fields: [criterioId], references: [id])  // ✅ OPCIONAL
 
   @@unique([idAvaliador, idAvaliado, idCiclo, criterioId])
-  @@map("avaliacao")
+  @@map("autoavaliacoes")
+}
+
+model Mentoring {
+  id                  Int       @id @default(autoincrement())
+  idMentor            Int       // Quem está sendo avaliado (mentor)
+  idMentorado         Int       // Quem está avaliando (mentorado)
+  idCiclo             Int
+  nota                Float?    // Nota da avaliação do mentor
+  justificativa       String    // Justificativa do mentorado
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  mentor              User      @relation("MentorRelation", fields: [idMentor], references: [id])
+  mentorado           User      @relation("MentoradoRelation", fields: [idMentorado], references: [id])
+  ciclo               Ciclo     @relation(fields: [idCiclo], references: [id])
+
+  @@unique([idMentor, idMentorado, idCiclo])
+  @@index([idMentor])
+  @@index([idMentorado])
+  @@index([idCiclo])
+  @@map("mentoring")
 }
 
 enum MotivacaoTrabalhoNovamente {

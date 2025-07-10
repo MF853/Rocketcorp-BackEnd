@@ -1,4 +1,4 @@
-import { User as PrismaUser, Avaliacao, Avaliacao360, referencia } from "@prisma/client";
+import { User as PrismaUser, Autoavaliacao, Avaliacao360, referencia } from "@prisma/client";
 
 export class User implements PrismaUser {
   id: number;
@@ -20,8 +20,8 @@ export class User implements PrismaUser {
     id: number;
     name: string;
   };
-  avaliacoesFeitas?: Avaliacao[];
-  avaliacoesRecebidas?: Avaliacao[];
+  avaliacoesFeitas?: Autoavaliacao[];
+  avaliacoesRecebidas?: Autoavaliacao[];
   avaliacoes360Feitas?: Avaliacao360[];
   avaliacoes360Recebidas?: Avaliacao360[];
   referenciasFeitas?: referencia[];

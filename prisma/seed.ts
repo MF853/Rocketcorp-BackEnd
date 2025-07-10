@@ -29,9 +29,10 @@ async function main() {
   // Run migrations first
   runMigrations();
 
-  // Clear existing data in correct order (due to foreign keys)
+  // ✅ CORRIGIR: Clear existing data in correct order (due to foreign keys)
   await prisma.avaliacao360.deleteMany();
-  await prisma.avaliacao.deleteMany();
+  await prisma.mentoring.deleteMany(); // ✅ NOVO
+  await prisma.autoavaliacao.deleteMany(); // ✅ RENOMEADO: avaliacao -> autoavaliacao
   await prisma.referencia.deleteMany();
   await prisma.criterio.deleteMany();
   await prisma.user.deleteMany();
@@ -434,11 +435,12 @@ async function main() {
   ]);
   console.log(`✅ Created ${referencias.length} referencias`);
 
-  // 7. Create Avaliacoes (with both self-evaluations and manager evaluations)
-  console.log("📊 Creating avaliacoes...");
-  // Helper to avoid duplicate (idAvaliador, idAvaliado, idCiclo)
-  const uniqueAvaliacao: string[] = [];
-  function addAvaliacao(av: {
+  // 7. ✅ CORRIGIR: Create Autoavaliacoes (RENOMEADO de avaliacoes)
+  console.log("📊 Creating autoavaliacoes...");
+  
+  // Helper to avoid duplicate (idAvaliador, idAvaliado, idCiclo, criterioId)
+  const uniqueAutoavaliacao: string[] = [];
+  function addAutoavaliacao(av: {
     data: {
       idAvaliador: number;
       idAvaliado: number;
@@ -450,237 +452,239 @@ async function main() {
       justificativaGestor: string;
     };
   }) {
-    const key = `${av.data.idAvaliador}_${av.data.idAvaliado}_${av.data.idCiclo}`;
-    if (!uniqueAvaliacao.includes(key)) {
-      uniqueAvaliacao.push(key);
-      return prisma.avaliacao.create(av);
+    const key = `${av.data.idAvaliador}_${av.data.idAvaliado}_${av.data.idCiclo}_${av.data.criterioId}`;
+    if (!uniqueAutoavaliacao.includes(key)) {
+      uniqueAutoavaliacao.push(key);
+      return prisma.autoavaliacao.create(av); // ✅ CORRIGIDO: avaliacao -> autoavaliacao
     }
-    return undefined;
+    return Promise.resolve(null); // ✅ CORRIGIR: retornar Promise
   }
 
-  const avaliacoes = await Promise.all(
-    [
-      // Raylandson (Desenvolvimento)
-      addAvaliacao({
-        data: {
-          idAvaliador: users[0].id,
-          idAvaliado: users[0].id,
-          idCiclo: ciclos[0].id,
-          nota: 4.7,
-          justificativa:
-            "Tenho amplo conhecimento técnico e busco sempre me manter atualizado com as tecnologias mais recentes.",
-          criterioId: desenvolvimentoCriterios[0]?.id,
-          notaGestor: 4.9,
-          justificativaGestor:
-            "Conhecimento técnico excepcional, sempre na vanguarda das tecnologias.",
-        },
-      }),
-      // Luan (Desenvolvimento)
-      addAvaliacao({
-        data: {
-          idAvaliador: users[4].id,
-          idAvaliado: users[4].id,
-          idCiclo: ciclos[0].id,
-          nota: 3.5,
-          justificativa:
-            "Sinto que evolui muito em React e Node.js, mas ainda preciso melhorar em testes.",
-          criterioId: desenvolvimentoCriterios[0]?.id,
-          notaGestor: 4.2,
-          justificativaGestor:
-            "Luan mostrou excelente progresso técnico. Concordo que precisa focar mais em testes automatizados.",
-        },
-      }),
-      addAvaliacao({
-        data: {
-          idAvaliador: users[4].id,
-          idAvaliado: users[4].id,
-          idCiclo: ciclos[0].id,
-          nota: 4.0,
-          justificativa:
-            "Tenho me esforçado para escrever código limpo e bem documentado.",
-          criterioId: desenvolvimentoCriterios[1]?.id,
-          notaGestor: 4.5,
-          justificativaGestor:
-            "Código muito bem estruturado e seguindo boas práticas. Excelente evolução.",
-        },
-      }),
-      addAvaliacao({
-        data: {
-          idAvaliador: users[4].id,
-          idAvaliado: users[4].id,
-          idCiclo: ciclos[0].id,
-          nota: 4.2,
-          justificativa:
-            "Gosto de colaborar com a equipe e sempre ajudo quando posso.",
-          criterioId: desenvolvimentoCriterios[2]?.id,
-          notaGestor: 4.6,
-          justificativaGestor:
-            "Excelente colaborador, sempre disposto a ajudar os colegas.",
-        },
-      }),
-      // Maria (Desenvolvimento)
-      addAvaliacao({
-        data: {
-          idAvaliador: users[6].id,
-          idAvaliado: users[6].id,
-          idCiclo: ciclos[0].id,
-          nota: 4.4,
-          justificativa:
-            "Tenho bom domínio de tecnologias full-stack e busco sempre me atualizar.",
-          criterioId: desenvolvimentoCriterios[0]?.id,
-          notaGestor: 4.6,
-          justificativaGestor:
-            "Maria demonstra domínio excepcional tanto em frontend quanto backend. Sempre atualizada.",
-        },
-      }),
-      addAvaliacao({
-        data: {
-          idAvaliador: users[6].id,
-          idAvaliado: users[6].id,
-          idCiclo: ciclos[0].id,
-          nota: 4.2,
-          justificativa:
-            "Me preocupo muito com a qualidade e sempre faço code review cuidadoso.",
-          criterioId: desenvolvimentoCriterios[1]?.id,
-          notaGestor: 4.5,
-          justificativaGestor:
-            "Código de alta qualidade, bem testado e documentado.",
-        },
-      }),
-      addAvaliacao({
-        data: {
-          idAvaliador: users[6].id,
-          idAvaliado: users[6].id,
-          idCiclo: ciclos[0].id,
-          nota: 4.5,
-          justificativa: "Sempre busco antecipar problemas e propor soluções.",
-          criterioId: desenvolvimentoCriterios[3]?.id,
-          notaGestor: 4.8,
-          justificativaGestor:
-            "Proatividade excepcional, sempre traz ideias inovadoras.",
-        },
-      }),
-      // Pedro (Dados)
-      addAvaliacao({
-        data: {
-          idAvaliador: users[7].id,
-          idAvaliado: users[7].id,
-          idCiclo: ciclos[0].id,
-          nota: 4.0,
-          justificativa:
-            "Tenho boa capacidade analítica, mas ainda estou aprendendo técnicas mais avançadas.",
-          criterioId: dadosCriterios[0]?.id,
-          notaGestor: 4.4,
-          justificativaGestor:
-            "Pedro tem excelente capacidade analítica e consegue extrair insights valiosos.",
-        },
-      }),
-      addAvaliacao({
-        data: {
-          idAvaliador: users[7].id,
-          idAvaliado: users[7].id,
-          idCiclo: ciclos[0].id,
-          nota: 3.8,
-          justificativa:
+  const autoavaliacaoPromises = [
+    // Raylandson (Desenvolvimento)
+    addAutoavaliacao({
+      data: {
+        idAvaliador: users[0].id,
+        idAvaliado: users[0].id,
+        idCiclo: ciclos[0].id,
+        nota: 4.7,
+        justificativa:
+          "Tenho amplo conhecimento técnico e busco sempre me manter atualizado com as tecnologias mais recentes.",
+        criterioId: desenvolvimentoCriterios[0]?.id,
+        notaGestor: 4.9,
+        justificativaGestor:
+          "Conhecimento técnico excepcional, sempre na vanguarda das tecnologias.",
+      },
+    }),
+    // Luan (Desenvolvimento)
+    addAutoavaliacao({
+      data: {
+        idAvaliador: users[4].id,
+        idAvaliado: users[4].id,
+        idCiclo: ciclos[0].id,
+        nota: 3.5,
+        justificativa:
+          "Sinto que evolui muito em React e Node.js, mas ainda preciso melhorar em testes.",
+        criterioId: desenvolvimentoCriterios[0]?.id,
+        notaGestor: 4.2,
+        justificativaGestor:
+          "Luan mostrou excelente progresso técnico. Concordo que precisa focar mais em testes automatizados.",
+      },
+    }),
+    addAutoavaliacao({
+      data: {
+        idAvaliador: users[4].id,
+        idAvaliado: users[4].id,
+        idCiclo: ciclos[0].id,
+        nota: 4.0,
+        justificativa:
+          "Tenho me esforçado para escrever código limpo e bem documentado.",
+        criterioId: desenvolvimentoCriterios[1]?.id,
+        notaGestor: 4.5,
+        justificativaGestor:
+          "Código muito bem estruturado e seguindo boas práticas. Excelente evolução.",
+      },
+    }),
+    addAutoavaliacao({
+      data: {
+        idAvaliador: users[4].id,
+        idAvaliado: users[4].id,
+        idCiclo: ciclos[0].id,
+        nota: 4.2,
+        justificativa:
+          "Gosto de colaborar com a equipe e sempre ajudo quando posso.",
+        criterioId: desenvolvimentoCriterios[2]?.id,
+        notaGestor: 4.6,
+        justificativaGestor:
+          "Excelente colaborador, sempre disposto a ajudar os colegas.",
+      },
+    }),
+    // Maria (Desenvolvimento)
+    addAutoavaliacao({
+      data: {
+        idAvaliador: users[6].id,
+        idAvaliado: users[6].id,
+        idCiclo: ciclos[0].id,
+        nota: 4.4,
+        justificativa:
+          "Tenho bom domínio de tecnologias full-stack e busco sempre me atualizar.",
+        criterioId: desenvolvimentoCriterios[0]?.id,
+        notaGestor: 4.6,
+        justificativaGestor:
+          "Maria demonstra domínio excepcional tanto em frontend quanto backend. Sempre atualizada.",
+      },
+    }),
+    addAutoavaliacao({
+      data: {
+        idAvaliador: users[6].id,
+        idAvaliado: users[6].id,
+        idCiclo: ciclos[0].id,
+        nota: 4.2,
+        justificativa:
+          "Me preocupo muito com a qualidade e sempre faço code review cuidadoso.",
+        criterioId: desenvolvimentoCriterios[1]?.id,
+        notaGestor: 4.5,
+        justificativaGestor:
+          "Código de alta qualidade, bem testado e documentado.",
+      },
+    }),
+    addAutoavaliacao({
+      data: {
+        idAvaliador: users[6].id,
+        idAvaliado: users[6].id,
+        idCiclo: ciclos[0].id,
+        nota: 4.5,
+        justificativa: "Sempre busco antecipar problemas e propor soluções.",
+        criterioId: desenvolvimentoCriterios[3]?.id,
+        notaGestor: 4.8,
+        justificativaGestor:
+          "Proatividade excepcional, sempre traz ideias inovadoras.",
+      },
+    }),
+    // Pedro (Dados)
+    addAutoavaliacao({
+      data: {
+        idAvaliador: users[7].id,
+        idAvaliado: users[7].id,
+        idCiclo: ciclos[0].id,
+        nota: 4.0,
+        justificativa:
+          "Tenho boa capacidade analítica, mas ainda estou aprendendo técnicas mais avançadas.",
+        criterioId: dadosCriterios[0]?.id,
+        notaGestor: 4.4,
+        justificativaGestor:
+          "Pedro tem excelente capacidade analítica e consegue extrair insights valiosos.",
+      },
+    }),
+    addAutoavaliacao({
+      data: {
+        idAvaliador: users[7].id,
+        idAvaliado: users[7].id,
+        idCiclo: ciclos[0].id,
+        nota: 3.8,
+        justificativa:
             "Estou estudando ML intensivamente, mas ainda preciso de mais prática.",
-          criterioId: dadosCriterios[1]?.id,
-          notaGestor: 4.0,
-          justificativaGestor:
-            "Boa evolução em ML, continue estudando e praticando.",
-        },
-      }),
-      // Arthur (Dados)
-      addAvaliacao({
-        data: {
-          idAvaliador: users[2].id,
-          idAvaliado: users[2].id,
-          idCiclo: ciclos[0].id,
-          nota: 4.5,
-          justificativa:
-            "Tenho sólida experiência em análise de dados e uso de ferramentas estatísticas.",
-          criterioId: dadosCriterios[0]?.id,
-          notaGestor: 4.7,
-          justificativaGestor:
-            "Excelente domínio em análise de dados, referência para a equipe.",
-        },
-      }),
-      addAvaliacao({
-        data: {
-          idAvaliador: users[2].id,
-          idAvaliado: users[2].id,
-          idCiclo: ciclos[0].id,
-          nota: 4.1,
-          justificativa:
+        criterioId: dadosCriterios[1]?.id,
+        notaGestor: 4.0,
+        justificativaGestor:
+          "Boa evolução em ML, continue estudando e praticando.",
+      },
+    }),
+    // Arthur (Dados)
+    addAutoavaliacao({
+      data: {
+        idAvaliador: users[2].id,
+        idAvaliado: users[2].id,
+        idCiclo: ciclos[0].id,
+        nota: 4.5,
+        justificativa:
+          "Tenho sólida experiência em análise de dados e uso de ferramentas estatísticas.",
+        criterioId: dadosCriterios[0]?.id,
+        notaGestor: 4.7,
+        justificativaGestor:
+          "Excelente domínio em análise de dados, referência para a equipe.",
+      },
+    }),
+    addAutoavaliacao({
+      data: {
+        idAvaliador: users[2].id,
+        idAvaliado: users[2].id,
+        idCiclo: ciclos[0].id,
+        nota: 4.1,
+        justificativa:
             "Consigo explicar resultados complexos de forma clara para diferentes audiências.",
-          criterioId: dadosCriterios[2]?.id,
-          notaGestor: 4.4,
-          justificativaGestor:
-            "Ótima capacidade de comunicar insights de dados de forma acessível.",
-        },
-      }),
-      // Erico (Infraestrutura)
-      addAvaliacao({
-        data: {
-          idAvaliador: users[3].id,
-          idAvaliado: users[3].id,
-          idCiclo: ciclos[0].id,
-          nota: 4.3,
-          justificativa:
-            "Tenho forte conhecimento em DevOps e automação de infraestrutura.",
-          criterioId: infraCriterios[0]?.id,
-          notaGestor: 4.6,
-          justificativaGestor:
-            "Excelente expertise técnica em DevOps e infraestrutura.",
-        },
-      }),
-      // Ana (Infraestrutura)
-      addAvaliacao({
-        data: {
-          idAvaliador: users[8].id,
-          idAvaliado: users[8].id,
-          idCiclo: ciclos[0].id,
-          nota: 4.1,
-          justificativa: "Estou evoluindo bem em infraestrutura e automação.",
-          criterioId: infraCriterios[0]?.id,
-          notaGestor: 4.3,
-          justificativaGestor:
-            "Boa evolução técnica, continue focando em automação.",
-        },
-      }),
-      // Carlos (Gestão)
-      addAvaliacao({
-        data: {
-          idAvaliador: users[9].id,
-          idAvaliado: users[9].id,
-          idCiclo: ciclos[0].id,
-          nota: 3.9,
-          justificativa:
-            "Tenho boa visão de gestão, mas preciso melhorar aspectos técnicos.",
-          criterioId: gestaoCriterios[0]?.id,
-          notaGestor: 4.2,
-          justificativaGestor: "Excelente liderança e gestão de equipe.",
-        },
-      }),
-      // Alice (Desenvolvimento)
-      addAvaliacao({
-        data: {
-          idAvaliador: users[1].id,
-          idAvaliado: users[1].id,
-          idCiclo: ciclos[0].id,
-          nota: 4.6,
-          justificativa:
-            "Procuro sempre liderar pelo exemplo e apoiar o crescimento da equipe.",
-          criterioId: desenvolvimentoCriterios[7]?.id,
-          notaGestor: 4.8,
-          justificativaGestor:
-            "Liderança exemplar, excelente capacidade de desenvolver pessoas.",
-        },
-      }),
-    ].filter(Boolean)
-  );
-  console.log(`✅ Created ${avaliacoes.length} avaliacoes`);
+        criterioId: dadosCriterios[2]?.id,
+        notaGestor: 4.4,
+        justificativaGestor:
+          "Ótima capacidade de comunicar insights de dados de forma acessível.",
+      },
+    }),
+    // Erico (Infraestrutura)
+    addAutoavaliacao({
+      data: {
+        idAvaliador: users[3].id,
+        idAvaliado: users[3].id,
+        idCiclo: ciclos[0].id,
+        nota: 4.3,
+        justificativa:
+          "Tenho forte conhecimento em DevOps e automação de infraestrutura.",
+        criterioId: infraCriterios[0]?.id,
+        notaGestor: 4.6,
+        justificativaGestor:
+          "Excelente expertise técnica em DevOps e infraestrutura.",
+      },
+    }),
+    // Ana (Infraestrutura)
+    addAutoavaliacao({
+      data: {
+        idAvaliador: users[8].id,
+        idAvaliado: users[8].id,
+        idCiclo: ciclos[0].id,
+        nota: 4.1,
+        justificativa: "Estou evoluindo bem em infraestrutura e automação.",
+        criterioId: infraCriterios[0]?.id,
+        notaGestor: 4.3,
+        justificativaGestor:
+          "Boa evolução técnica, continue focando em automação.",
+      },
+    }),
+    // Carlos (Gestão)
+    addAutoavaliacao({
+      data: {
+        idAvaliador: users[9].id,
+        idAvaliado: users[9].id,
+        idCiclo: ciclos[0].id,
+        nota: 3.9,
+        justificativa:
+          "Tenho boa visão de gestão, mas preciso melhorar aspectos técnicos.",
+        criterioId: gestaoCriterios[0]?.id,
+        notaGestor: 4.2,
+        justificativaGestor: "Excelente liderança e gestão de equipe.",
+      },
+    }),
+    // Alice (Desenvolvimento)
+    addAutoavaliacao({
+      data: {
+        idAvaliador: users[1].id,
+        idAvaliado: users[1].id,
+        idCiclo: ciclos[0].id,
+        nota: 4.6,
+        justificativa:
+          "Procuro sempre liderar pelo exemplo e apoiar o crescimento da equipe.",
+        criterioId: desenvolvimentoCriterios[7]?.id,
+        notaGestor: 4.8,
+        justificativaGestor:
+          "Liderança exemplar, excelente capacidade de desenvolver pessoas.",
+      },
+    }),
+  ];
 
-  // 8. Create Avaliacoes 360 (Extended with more evaluations)
+  // ✅ Aguardar todas as promises e filtrar valores null
+  const autoavaliacaoResults = await Promise.all(autoavaliacaoPromises);
+  const autoavaliacoes = autoavaliacaoResults.filter((av) => av !== null);
+  console.log(`✅ Created ${autoavaliacoes.length} autoavaliacoes`);
+
+  // 9. ✅ MANTER: Create Avaliacoes 360 (Extended with more evaluations)
   console.log("🔄 Creating avaliacoes 360...");
   const avaliacoes360 = await Promise.all([
     // Luan evaluating Alice (his mentor)
@@ -880,14 +884,14 @@ async function main() {
 
   console.log("\n🎉 Seeding completed successfully!");
 
-  // Display summary
+  // ✅ CORRIGIR: Display summary
   const summary = {
     trilhas: await prisma.trilha.count(),
     ciclos: await prisma.ciclo.count(),
     users: await prisma.user.count(),
     criterios: await prisma.criterio.count(),
     referencias: await prisma.referencia.count(),
-    avaliacoes: await prisma.avaliacao.count(),
+    autoavaliacoes: await prisma.autoavaliacao.count(), // ✅ CORRIGIDO
     avaliacoes360: await prisma.avaliacao360.count(),
   };
 
@@ -897,7 +901,7 @@ async function main() {
   console.log(`🔄 Ciclos: ${summary.ciclos}`);
   console.log(`📋 Criterios: ${summary.criterios}`);
   console.log(`📝 Referencias: ${summary.referencias}`);
-  console.log(`📊 Avaliacoes: ${summary.avaliacoes}`);
+  console.log(`📊 Autoavaliacoes: ${summary.autoavaliacoes}`); // ✅ CORRIGIDO
   console.log(`🔄 Avaliacoes 360: ${summary.avaliacoes360}`);
 }
 

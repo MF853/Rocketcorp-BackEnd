@@ -118,7 +118,7 @@ export class ResumoiaService {
 
     const avaliacoes = [
       // Autoavaliações (self-evaluations)
-      ...user.avaliacoesRecebidas
+      ...user.autoavaliacoesRecebidas
         .filter((a) => a.idAvaliador === a.idAvaliado)
         .map((a) => {
           const criterioInfo =
@@ -129,13 +129,6 @@ export class ResumoiaService {
             a.nota ?? "N/A"
           }. "${a.justificativa}"`;
         }),
-
-      // Avaliações normais (regular evaluations from others)
-      ...user.avaliacoesRecebidas
-        .filter((a) => a.idAvaliador !== a.idAvaliado)
-        .map(
-          (a) => `[AVALIAÇÃO] Nota: ${a.nota ?? "N/A"}. "${a.justificativa}"`
-        ),
 
       // Avaliações 360 (360-degree evaluations)
       ...user.avaliacoes360Recebidas.map(

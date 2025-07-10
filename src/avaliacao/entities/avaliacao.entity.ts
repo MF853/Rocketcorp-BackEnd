@@ -1,6 +1,7 @@
 import { User, MotivacaoTrabalhoNovamente } from "@prisma/client";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
-export class Avaliacao {
+export class Autoavaliacao {
   id: number;
   idAvaliador: number;
   idAvaliado: number;
@@ -8,17 +9,46 @@ export class Avaliacao {
   nota?: number;
   justificativa: string;
   criterioId: number;
+  notaGestor?: number;
+  justificativaGestor?: string;
   createdAt: Date;
   updatedAt: Date;
 
   avaliador?: User;
   avaliado?: User;
-  criterio?: {
+  criterio: {
     id: number;
     name: string;
     enabled: boolean;
     trilhaId: number;
-  };
+  } | null;
+}
+
+@Entity('mentoring')
+export class Mentoring {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ name: 'id_mentor' })
+  idMentor: number;
+
+  @Column({ name: 'id_mentorado' })
+  idMentorado: number;
+
+  @Column({ name: 'id_ciclo' })
+  idCiclo: number;
+
+  @Column({ type: 'int' })
+  nota: number;
+
+  @Column({ type: 'text' })
+  justificativa: string;
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 }
 
 export class Avaliacao360 {
