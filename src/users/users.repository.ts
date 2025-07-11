@@ -84,10 +84,9 @@ export class UsersRepository {
       return null;
     }
 
-    const autoavaliacaoStats = await this.prisma.avaliacao.aggregate({
+    const autoavaliacaoStats = await this.prisma.autoavaliacao.aggregate({
       where: {
-        idAvaliado: userId,
-        idAvaliador: userId, // Self-evaluation
+        idUser: userId, // Self-evaluation
         nota: { not: null },
         ...whereClause,
       },
@@ -95,9 +94,9 @@ export class UsersRepository {
       _count: { nota: true },
     });
 
-    const gestorAvaliacaoStats = await this.prisma.avaliacao.aggregate({
+    const gestorAvaliacaoStats = await this.prisma.autoavaliacao.aggregate({
       where: {
-        idAvaliado: userId,
+        idUser: userId,
         notaGestor: { not: null },
         ...whereClause,
       },
@@ -148,13 +147,13 @@ export class UsersRepository {
         AND "idAvaliador" = "idAvaliado" 
         AND nota IS NOT NULL
       `,
-        this.prisma.avaliacao.findMany({
+        this.prisma.autoavaliacao.findMany({
           where: {
             idCiclo,
             notaGestor: { not: null },
           },
-          select: { idAvaliado: true },
-          distinct: ["idAvaliado"],
+          select: { idUser: true },
+          distinct: ["idUser"],
         }),
         this.prisma.avaliacao360.findMany({
           where: {
@@ -168,7 +167,7 @@ export class UsersRepository {
 
     const allUserIds = [
       ...autoavaliacaoUsers.map((u) => u.idAvaliado),
-      ...gestorAvaliacaoUsers.map((u) => u.idAvaliado),
+      ...gestorAvaliacaoUsers.map((u) => u.idUser),
       ...avaliacao360Users.map((u) => u.idAvaliado),
     ];
 
