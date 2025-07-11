@@ -31,6 +31,13 @@ export class CicleRepository {
         year: Number(data.year),
         period: Number(data.period),
         status: data.status,
+        dataAberturaAvaliacao: "2024/15/01",      
+        dataFechamentoAvaliacao: "2024/30/01",    
+        dataAberturaRevisaoGestor: "2024/15/01",  
+        dataFechamentoRevisaoGestor: "2024/15/01",
+        dataAberturaRevisaoComite: "2024/15/01",  
+        dataFechamentoRevisaoComite: "2024/15/01",
+        dataFinalizacao: "2024/15/01",     
       },
     });
   }

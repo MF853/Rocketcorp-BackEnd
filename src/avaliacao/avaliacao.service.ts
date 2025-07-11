@@ -21,8 +21,7 @@ export class AvaliacaoService {
   async create(createAvaliacaoDto: CreateAvaliacaoDto) {
     if (createAvaliacaoDto.criterioId !== undefined) {
       const exists = await this.avaliacaoRepository.avaliacaoExists(
-        createAvaliacaoDto.idAvaliador,
-        createAvaliacaoDto.idAvaliado,
+        createAvaliacaoDto.idUser,
         createAvaliacaoDto.idCiclo,
         createAvaliacaoDto.criterioId
       );
@@ -76,14 +75,13 @@ export class AvaliacaoService {
         for (const avaliacao of bulkCreateDto.avaliacoes) {
           if (avaliacao.criterioId !== undefined) {
             const exists = await this.avaliacaoRepository.avaliacaoExists(
-              avaliacao.idAvaliador,
-              avaliacao.idAvaliado,
+              avaliacao.idUser,
               avaliacao.idCiclo,
               avaliacao.criterioId
             );
             if (exists) {
               results.errors.push(
-                `Já existe uma avaliação para avaliador ${avaliacao.idAvaliador}, avaliado ${avaliacao.idAvaliado}, ciclo ${avaliacao.idCiclo} e critério ${avaliacao.criterioId}`
+                `Já existe uma avaliação para avaliador ${avaliacao.idUser}, ciclo ${avaliacao.idCiclo} e critério ${avaliacao.criterioId}`
               );
             }
           }
