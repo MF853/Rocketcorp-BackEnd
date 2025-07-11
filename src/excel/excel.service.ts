@@ -32,9 +32,9 @@ export class ExcelService {
 
     // if (autoSheet) await this.importAutoavaliacao(autoSheet);
    
-    // if (avaliacao360Sheet && userId !== undefined && cicleId !== undefined) {
-    //   await this.importAvaliacao360(avaliacao360Sheet, userId, cicleId);
-    // }
+    if (avaliacao360Sheet && userId !== undefined && cicleId !== undefined) {
+      await this.importAvaliacao360(avaliacao360Sheet, userId, cicleId);
+    }
 
     if (referenciasSheet && userId !== undefined && cicleId !== undefined) {
       await this.importReferencias(referenciasSheet, userId, cicleId);
@@ -91,48 +91,53 @@ export class ExcelService {
     // Implementar lógica para importar autoavaliações
   }
 
-  // async importAvaliacao360(sheet: ExcelJS.Worksheet, userId: number, cicleId: number) {
+  async importAvaliacao360(sheet: ExcelJS.Worksheet, userId: number, cicleId: number) {
 
-  //   const motivacaoMap: Record<string, MotivacaoTrabalhoNovamente> = {
-  //     'Discordo Totalmente': MotivacaoTrabalhoNovamente.DISCORDO_TOTALMENTE,
-  //     'Discordo Parcialmente': MotivacaoTrabalhoNovamente.DISCORDO_PARCIALMENTE,
-  //     'Indiferente': MotivacaoTrabalhoNovamente.INDIFERENTE,
-  //     'Concordo Parcialmente': MotivacaoTrabalhoNovamente.CONCORDO_PARCIALMENTE,
-  //     'Concordo Totalmente': MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
-  //   };
+    const motivacaoMap: Record<string, MotivacaoTrabalhoNovamente> = {
+      'Discordo Totalmente': MotivacaoTrabalhoNovamente.DISCORDO_TOTALMENTE,
+      'Discordo Parcialmente': MotivacaoTrabalhoNovamente.DISCORDO_PARCIALMENTE,
+      'Indiferente': MotivacaoTrabalhoNovamente.INDIFERENTE,
+      'Concordo Parcialmente': MotivacaoTrabalhoNovamente.CONCORDO_PARCIALMENTE,
+      'Concordo Totalmente': MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+    };
 
-  //   sheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
-  //     if (rowNumber === 1) return; 
+    sheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
+      if (rowNumber === 1) return; 
 
-  //     const values = row.values as any[];
-  //     const email = values[1];
-  //     const project = values[2];
-  //     const period = Number(values[3]);
-  //     const workAgain = values[4];
-  //     const grade = values[5];
-  //     const weakPoint = values[6];
-  //     const strengthPoint = values[7];
+      const values = row.values as any[];
+      const email = values[1];
+      const project = values[2];
+      const period = Number(values[3]);
+      const workAgain = values[4];
+      const grade = values[5];
+      const weakPoint = values[6];
+      const strengthPoint = values[7];
 
-  //     const avaliadoUser = await this.usersService.findByEmail(email);
+      const avaliadoUser = await this.usersService.findByEmail(email);
 
-  //     const mappedWorkAgain = motivacaoMap[String(workAgain).trim()];
+      if (!avaliadoUser) {
+        console.warn(`Usuário com email ${email} não encontrado. Operação abortada`);
+        return; // ou continue para ignorar essa linha
+      }
 
-  //     const avaliacao360Data = {
-  //       idAvaliador: userId,   
-  //       idAvaliado: avaliadoUser.id,
-  //       idCiclo: cicleId,       
-  //       nota: grade,          
-  //       pontosFortes: strengthPoint,  
-  //       pontosMelhora: weakPoint, 
-  //       nomeProjeto: project,   
-  //       periodoMeses: period,  
-  //       trabalhariaNovamente: mappedWorkAgain,
-  //     };
+      const mappedWorkAgain = motivacaoMap[String(workAgain).trim()];
+
+      const avaliacao360Data = {
+        idAvaliador: userId,   
+        idAvaliado: avaliadoUser.id,
+        idCiclo: cicleId,       
+        nota: grade,          
+        pontosFortes: strengthPoint,  
+        pontosMelhora: weakPoint, 
+        nomeProjeto: project,   
+        periodoMeses: period,  
+        trabalhariaNovamente: mappedWorkAgain,
+      };
   
-  //     await this.avaliacao360Service.create360(avaliacao360Data);
+      await this.avaliacao360Service.create360(avaliacao360Data);
       
-  //   });
-  // }
+    });
+  }
 
   async importReferencias(sheet: ExcelJS.Worksheet, userId: number, cicleId: number) {
     sheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
@@ -145,7 +150,7 @@ export class ExcelService {
       const referenciadoUser = await this.usersService.findByEmail(email);
 
       if (!referenciadoUser) {
-        console.warn(`Usuário com email ${email} não encontrado. Operação abortada`);
+        console.warn(`Usuário com email ${email} não encontrado. Referencia não importada`);
         return; // ou continue para ignorar essa linha
       }
 
