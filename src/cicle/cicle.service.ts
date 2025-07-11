@@ -58,6 +58,13 @@ export class CicleService {
           year: year.toString(),
           period: period.toString(),
           status: "aberto",
+          dataAberturaAvaliacao: "2024/15/01",      
+          dataFechamentoAvaliacao: "2024/30/01",    
+          dataAberturaRevisaoGestor: "2024/15/01",  
+          dataFechamentoRevisaoGestor: "2024/15/01",
+          dataAberturaRevisaoComite: "2024/15/01",  
+          dataFechamentoRevisaoComite: "2024/15/01",
+          dataFinalizacao: "2024/15/01",
         });
       }
 
