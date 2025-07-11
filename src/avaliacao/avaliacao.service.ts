@@ -27,9 +27,10 @@ export class AvaliacaoService {
       );
 
       if (exists) {
-        throw new ConflictException(
-          "Já existe uma avaliação para este avaliador, avaliado, ciclo e critério"
+        console.warn(
+          `Auto Avaliação já existe: O usuário ${createAvaliacaoDto.idUser} já avaliou o critério ${createAvaliacaoDto.criterioId} no ciclo.`
         );
+        return null;
       }
     }
 
@@ -45,9 +46,9 @@ export class AvaliacaoService {
     
     if (exists) {
       console.warn(
-        `Avaliação 360 já existe: O usuário ${createAvaliacao360Dto.idAvaliador} já fez uma referência para o usuário ${createAvaliacao360Dto.idAvaliado} no ciclo ${createAvaliacao360Dto.idCiclo}`
+        `Avaliação 360 já existe: O usuário ${createAvaliacao360Dto.idAvaliador} já fez uma referência para o usuário ${createAvaliacao360Dto.idAvaliado} no ciclo.`
       );
-      return null; // ou return exists se você quiser retornar o registro já existente
+      return null; 
     }
 
     return this.avaliacaoRepository.createAvaliacao360(createAvaliacao360Dto);

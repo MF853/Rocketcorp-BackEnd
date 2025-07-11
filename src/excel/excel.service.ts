@@ -41,13 +41,13 @@ export class ExcelService {
       await this.importAutoavaliacao(autoSheet, userId, cicleId);
     }
 
-    if (avaliacao360Sheet && userId !== undefined && cicleId !== undefined) {
-      await this.importAvaliacao360(avaliacao360Sheet, userId, cicleId);
-    }
+    // if (avaliacao360Sheet && userId !== undefined && cicleId !== undefined) {
+    //   await this.importAvaliacao360(avaliacao360Sheet, userId, cicleId);
+    // }
 
-    if (referenciasSheet && userId !== undefined && cicleId !== undefined) {
-      await this.importReferencias(referenciasSheet, userId, cicleId);
-    }
+    // if (referenciasSheet && userId !== undefined && cicleId !== undefined) {
+    //   await this.importReferencias(referenciasSheet, userId, cicleId);
+    // }
 
     return { message: 'Importação concluída com sucesso' };
   }
