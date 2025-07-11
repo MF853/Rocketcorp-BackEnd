@@ -36,9 +36,9 @@ export class ExcelService {
     //   await this.importAvaliacao360(avaliacao360Sheet, userId, cicleId);
     // }
 
-    // if (referenciasSheet && userId !== undefined && cicleId !== undefined) {
-    //   await this.importReferencias(referenciasSheet, userId, cicleId);
-    // }
+    if (referenciasSheet && userId !== undefined && cicleId !== undefined) {
+      await this.importReferencias(referenciasSheet, userId, cicleId);
+    }
 
     return { message: 'Importação concluída com sucesso' };
   }
@@ -134,26 +134,31 @@ export class ExcelService {
   //   });
   // }
 
-  // async importReferencias(sheet: ExcelJS.Worksheet, userId: number, cicleId: number) {
-  //   sheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
-  //     if (rowNumber === 1) return; 
+  async importReferencias(sheet: ExcelJS.Worksheet, userId: number, cicleId: number) {
+    sheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
+      if (rowNumber === 1) return; 
 
-  //     const values = row.values as any[];
-  //     const email = values[1];
-  //     const justificativa = values[2];
+      const values = row.values as any[];
+      const email = values[1];
+      const justificativa = values[2];
       
-  //     const referenciadoUser = await this.usersService.findByEmail(email);
+      const referenciadoUser = await this.usersService.findByEmail(email);
 
-  //     const referenciaData = {
-  //       idReferenciador: userId,
-  //       idReferenciado: referenciadoUser.id,
-  //       justificativa: justificativa,
-  //       idCiclo: cicleId
-  //     };
+      if (!referenciadoUser) {
+        console.warn(`Usuário com email ${email} não encontrado. Operação abortada`);
+        return; // ou continue para ignorar essa linha
+      }
+
+      const referenciaData = {
+        idReferenciador: userId,
+        idReferenciado: referenciadoUser.id,
+        justificativa: justificativa,
+        idCiclo: cicleId
+      };
   
-  //     await this.referenciaService.create(referenciaData);
+      await this.referenciaService.create(referenciaData);
       
-  //   });
-  // }
+    });
+  }
 
 }
