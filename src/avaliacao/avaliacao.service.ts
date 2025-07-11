@@ -42,11 +42,12 @@ export class AvaliacaoService {
       createAvaliacao360Dto.idAvaliado,
       createAvaliacao360Dto.idCiclo
     );
-
+    
     if (exists) {
-      throw new ConflictException(
-        "Já existe uma avaliação 360 para este avaliador, avaliado e ciclo"
+      console.warn(
+        `Avaliação 360 já existe: O usuário ${createAvaliacao360Dto.idAvaliador} já fez uma referência para o usuário ${createAvaliacao360Dto.idAvaliado} no ciclo ${createAvaliacao360Dto.idCiclo}`
       );
+      return null; // ou return exists se você quiser retornar o registro já existente
     }
 
     return this.avaliacaoRepository.createAvaliacao360(createAvaliacao360Dto);

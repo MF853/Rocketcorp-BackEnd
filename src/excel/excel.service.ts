@@ -4,11 +4,18 @@ import { UsersService } from '../users/users.service';
 import { ReferenciaService } from 'src/referencia/referencia.service';
 import { CicleService } from 'src/cicle/cicle.service';
 import { AvaliacaoService } from 'src/avaliacao/avaliacao.service';
-import { MotivacaoTrabalhoNovamente } from '../avaliacao/dto/create-avaliacao.dto';;
+import { MotivacaoTrabalhoNovamente } from '../avaliacao/dto/create-avaliacao.dto';
+import { CriterioService } from 'src/criterio/criterio.service';
+import { Criterio } from '@prisma/client';
+import { mapTipoCriterio } from 'src/criterio/helpers/map.tipo.criterios';
 
 @Injectable()
 export class ExcelService {
-  constructor(private readonly usersService: UsersService, private readonly referenciaService: ReferenciaService, private readonly cicleService: CicleService, private readonly avaliacao360Service: AvaliacaoService) {}
+  constructor(private readonly usersService: UsersService, 
+              private readonly referenciaService: ReferenciaService, 
+              private readonly cicleService: CicleService, 
+              private readonly avaliacaoService: AvaliacaoService,
+              private readonly criterioService: CriterioService) {}
 
   // async processExcel(filePath: string) {
   async processExcel(buffer: Buffer) {
@@ -30,8 +37,10 @@ export class ExcelService {
       cicleId = (await this.cicleService.findOrCreateByString(cicle)).id;
     }
 
-    // if (autoSheet) await this.importAutoavaliacao(autoSheet);
-   
+    if (autoSheet && userId !== undefined && cicleId !== undefined) {
+      await this.importAutoavaliacao(autoSheet, userId, cicleId);
+    }
+
     if (avaliacao360Sheet && userId !== undefined && cicleId !== undefined) {
       await this.importAvaliacao360(avaliacao360Sheet, userId, cicleId);
     }
@@ -87,8 +96,48 @@ export class ExcelService {
     return cicloString;
   }
 
-  async importAutoavaliacao(sheet: ExcelJS.Worksheet) {
+  async importAutoavaliacao(sheet: ExcelJS.Worksheet, userId: number, cicleId: number) {
     // Implementar lógica para importar autoavaliações
+    const criteria: Criterio[] = await this.criterioService.findByCicloId(cicleId);
+
+    sheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
+      if (rowNumber === 1) return; 
+
+      const values = row.values as any[];
+      const criterion = values[1];
+      const criterionDescription = values[2];
+      const grade = values[3];
+      const justification = values[5];
+      const criterionType = mapTipoCriterio(criterion); 
+
+      let existingCriteria = criteria.find(c =>
+        c.name.trim().toLowerCase() === criterion.toLowerCase()
+      );
+
+      if (!existingCriteria) {
+        const criteriaData = {
+          name: criterion,
+          tipo: criterionType,
+          description: criterionDescription,
+          idCiclo: cicleId,
+          trilhaId: 1
+          }
+        existingCriteria = await this.criterioService.create(criteriaData);
+      }
+
+      const criteriaId = existingCriteria?.id
+
+      const autoAvaliacaoData = {
+        idUser: userId,   
+        idCiclo: cicleId,       
+        nota: grade,     
+        justificativa: justification,
+        criterioId: criteriaId
+      };
+  
+      await this.avaliacaoService.create(autoAvaliacaoData);
+      
+    });
   }
 
   async importAvaliacao360(sheet: ExcelJS.Worksheet, userId: number, cicleId: number) {
@@ -134,7 +183,7 @@ export class ExcelService {
         trabalhariaNovamente: mappedWorkAgain,
       };
   
-      await this.avaliacao360Service.create360(avaliacao360Data);
+      await this.avaliacaoService.create360(avaliacao360Data);
       
     });
   }
