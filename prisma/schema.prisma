@@ -1,5 +1,4 @@
 // schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,79 +9,90 @@ datasource db {
 }
 
 model User {
-  id                  Int           @id @default(autoincrement())
-  email               String        @unique
-  name                String
-  password            String
-  role                String        @default("user")
-  unidade             String?       @db.VarChar(50)
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-  mentorId           Int?
-  mentor             User?         @relation("Mentor", fields: [mentorId], references: [id], onDelete: SetNull)
-  mentorados         User[]        @relation("Mentor")
-  avaliadorId         Int?
-  trilhaId            Int?          
-  trilha              Trilha?       @relation(fields: [trilhaId], references: [id], onDelete: SetNull)
-  avaliacoesFeitas    Avaliacao[]   @relation("Avaliador")
-  avaliacoesRecebidas Avaliacao[]   @relation("Avaliado")
-  avaliacoes360Feitas Avaliacao360[] @relation("Avaliador360")
-  avaliacoes360Recebidas Avaliacao360[] @relation("Avaliado360")
-  referenciasFeitas   referencia[]  @relation("Referenciador")
-  referenciasRecebidas referencia[] @relation("Referenciado")
-  
+  id                     Int             @id @default(autoincrement())
+  email                  String          @unique
+  name                   String
+  password               String
+  role                   String[]        @default(["user"])
+  cargo                  String?         @db.VarChar(50)
+  unidade                String?         @db.VarChar(50)
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  mentorId               Int?
+  mentor                 User?           @relation("Mentor", fields: [mentorId], references: [id], onDelete: SetNull)
+  mentorados             User[]          @relation("Mentor")
+  gestorId               Int?
+  trilhaId               Int?
+  trilha                 Trilha?         @relation(fields: [trilhaId], references: [id], onDelete: SetNull)
+  autoAvaliacoesFeitas   Autoavaliacao[] @relation("AutoavaliacoesDoUsuario")
+  avaliacoes360Feitas    Avaliacao360[]  @relation("Avaliador360")
+  avaliacoes360Recebidas Avaliacao360[]  @relation("Avaliado360")
+  referenciasFeitas      Referencia[]    @relation("Referenciador")
+  referenciasRecebidas   Referencia[]    @relation("Referenciado")
+  ResumoIA               ResumoIA[]
+  equalizacoesFeitas     Equalizacao[]   @relation("AvaliadorEqualizacao")
+  equalizacoesRecebidas  Equalizacao[]   @relation("AvaliadoEqualizacao")
+  mentoringsFeitos       Mentoring[]     @relation("MentorMentoring")
+  mentoringsRecebidos    Mentoring[]     @relation("MentoradoMentoring")
+
   @@index([trilhaId])
   @@index([email])
   @@map("users")
-  ResumoIA ResumoIA[]
 }
 
-
 model Ciclo {
-  id         Int       @id @default(autoincrement())
-  name       String    @db.VarChar(255)
-  year       Int
-  period     Int
-  status     String    @db.VarChar(50) @default("aberto")
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-  referencias referencia[] 
-  avaliacoes Avaliacao[] 
-  avaliacoes360 Avaliacao360[] 
-  criterios Criterio[]
+  id                          Int             @id @default(autoincrement())
+  name                        String          @db.VarChar(255)
+  year                        Int
+  period                      Int
+  status                      String          @default("aberto") @db.VarChar(50)
+  createdAt                   DateTime        @default(now())
+  updatedAt                   DateTime        @updatedAt
+  dataAberturaAvaliacao       DateTime
+  dataFechamentoAvaliacao     DateTime
+  dataAberturaRevisaoGestor   DateTime
+  dataFechamentoRevisaoGestor DateTime
+  dataAberturaRevisaoComite   DateTime
+  dataFechamentoRevisaoComite DateTime
+  dataFinalizacao             DateTime
+  referencias                 Referencia[]
+  autoAvaliacoes              Autoavaliacao[]
+  avaliacoes360               Avaliacao360[]
+  criterios                   Criterio[]
+  ResumoIA                    ResumoIA[]
+  mentorings                  Mentoring[]
 
   @@unique([year, period])
   @@index([year])
   @@index([period])
   @@map("ciclos")
-  ResumoIA ResumoIA[]
 }
 
 model Trilha {
-  id       Int       @id @default(autoincrement())
-  name     String    @db.VarChar(255) @unique
-  users    User[]    
-  criterio Criterio[] 
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  id        Int        @id @default(autoincrement())
+  name      String     @unique @db.VarChar(255)
+  users     User[]
+  criterio  Criterio[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
   @@map("trilhas")
 }
 
 model Criterio {
-  id         Int         @id @default(autoincrement())
-  name       String      @db.VarChar(255)
-  tipo       String      @db.VarChar(50)
-  peso       Float       @default(20.0)
-  description       String      @db.VarChar(255)
-  idCiclo    Int
-  enabled    Boolean     @default(true)
-  trilhaId    Int
-  ciclo       Ciclo       @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
-  trilha      Trilha      @relation(fields: [trilhaId], references: [id], onDelete: Cascade)
-  avaliacoes Avaliacao[] 
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  id             Int             @id @default(autoincrement())
+  name           String          @db.VarChar(255)
+  tipo           String          @db.VarChar(50)
+  peso           Float           @default(20.0)
+  description    String          @db.VarChar(255)
+  idCiclo        Int
+  enabled        Boolean         @default(true)
+  trilhaId       Int
+  ciclo          Ciclo           @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
+  trilha         Trilha          @relation(fields: [trilhaId], references: [id], onDelete: Cascade)
+  autoAvaliacoes Autoavaliacao[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   @@unique([name, trilhaId])
   @@index([trilhaId])
@@ -104,17 +114,17 @@ model ResumoIA {
   @@map("resumos_ia")
 }
 
-model referencia {
-  id         Int       @id @default(autoincrement())
+model Referencia {
+  id              Int      @id @default(autoincrement())
   idReferenciador Int
-  idReferenciado Int
-  justificativa String
-  idCiclo    Int
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  
-  referenciador User @relation("Referenciador", fields: [idReferenciador], references: [id], onDelete: Restrict)
-  referenciado  User @relation("Referenciado", fields: [idReferenciado], references: [id], onDelete: Restrict)
+  idReferenciado  Int
+  justificativa   String
+  idCiclo         Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  referenciador User  @relation("Referenciador", fields: [idReferenciador], references: [id], onDelete: Restrict)
+  referenciado  User  @relation("Referenciado", fields: [idReferenciado], references: [id], onDelete: Restrict)
   ciclo         Ciclo @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
 
   @@unique([idReferenciador, idReferenciado, idCiclo])
@@ -124,27 +134,23 @@ model referencia {
   @@map("referencias")
 }
 
-
-model Avaliacao {
-  id            Int       @id @default(autoincrement())
-  idAvaliador   Int
-  idAvaliado    Int
-  idCiclo       Int
-  nota          Float?
-  justificativa String
-  criterioId    Int?
-  notaGestor    Float?
+model Autoavaliacao {
+  id                  Int       @id @default(autoincrement())
+  idUser              Int
+  idCiclo             Int
+  nota                Float?
+  justificativa       String
+  criterioId          Int?
+  notaGestor          Float?
   justificativaGestor String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  avaliador     User      @relation("Avaliador", fields: [idAvaliador], references: [id], onDelete: Restrict)
-  avaliado      User      @relation("Avaliado", fields: [idAvaliado], references: [id], onDelete: Restrict)
-  ciclo         Ciclo     @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
-  criterio      Criterio?  @relation(fields: [criterioId], references: [id], onDelete: Restrict)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  user                User      @relation("AutoavaliacoesDoUsuario", fields: [idUser], references: [id], onDelete: Cascade)
+  ciclo               Ciclo     @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
+  criterio            Criterio? @relation(fields: [criterioId], references: [id], onDelete: Restrict)
 
-  @@unique([idAvaliador, idAvaliado, idCiclo])
-  @@index([idAvaliador])
-  @@index([idAvaliado])
+  @@unique([idUser, idCiclo])
+  @@index([idUser])
   @@index([criterioId])
   @@index([idCiclo])
   @@map("avaliacoes")
@@ -159,25 +165,61 @@ enum MotivacaoTrabalhoNovamente {
 }
 
 model Avaliacao360 {
-  id            Int       @id @default(autoincrement())
-  idAvaliador   Int
-  idAvaliado    Int
-  idCiclo       Int
-  nota          Float?
-  pontosFortes  String
-  pontosMelhora String
-  nomeProjeto   String    @db.VarChar(255)
-  periodoMeses  Int
+  id                   Int                        @id @default(autoincrement())
+  idAvaliador          Int
+  idAvaliado           Int
+  idCiclo              Int
+  nota                 Float?
+  pontosFortes         String
+  pontosMelhora        String
+  nomeProjeto          String                     @db.VarChar(255)
+  periodoMeses         Int
   trabalhariaNovamente MotivacaoTrabalhoNovamente
-  avaliador     User      @relation("Avaliador360", fields: [idAvaliador], references: [id], onDelete: Restrict)
-  avaliado      User      @relation("Avaliado360", fields: [idAvaliado], references: [id], onDelete: Restrict)
-  ciclo         Ciclo     @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  avaliador            User                       @relation("Avaliador360", fields: [idAvaliador], references: [id], onDelete: Restrict)
+  avaliado             User                       @relation("Avaliado360", fields: [idAvaliado], references: [id], onDelete: Restrict)
+  ciclo                Ciclo                      @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
 
   @@unique([idAvaliador, idAvaliado, idCiclo])
   @@index([idAvaliador])
   @@index([idAvaliado])
   @@index([idCiclo])
   @@map("avaliacoes_360")
+}
+
+model Mentoring {
+  id            Int      @id @default(autoincrement())
+  idMentor      Int
+  idMentorado   Int
+  idCiclo       Int
+  nota          Float?
+  justificativa String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  ciclo     Ciclo @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
+  mentor    User  @relation("MentorMentoring", fields: [idMentor], references: [id], onDelete: Restrict)
+  mentorado User  @relation("MentoradoMentoring", fields: [idMentorado], references: [id], onDelete: Restrict)
+}
+
+enum StatusEqualizacao {
+  PENDENTE
+  FINALIZADO
+}
+
+model Equalizacao {
+  id                   Int               @id @default(autoincrement())
+  idAvaliador          Int
+  idAvaliado           Int
+  mediaAutoavaliacao   Float
+  mediaAvaliacaoGestor Float
+  mediaAvaliacao360    Float
+  notaFinal            Float
+  justificativa        String
+  status               StatusEqualizacao
+  avaliador            User              @relation("AvaliadorEqualizacao", fields: [idAvaliador], references: [id], onDelete: Restrict)
+  avaliado             User              @relation("AvaliadoEqualizacao", fields: [idAvaliado], references: [id], onDelete: Restrict)
+
+  @@map("equalizacoes")
 }
