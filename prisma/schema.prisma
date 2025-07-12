@@ -153,7 +153,7 @@ model Autoavaliacao {
   @@index([idUser])
   @@index([criterioId])
   @@index([idCiclo])
-  @@map("mentoring")
+  @@map("autoavaliacao")
 }
 
 enum MotivacaoTrabalhoNovamente {
@@ -201,6 +201,7 @@ model Mentoring {
   ciclo     Ciclo @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
   mentor    User  @relation("MentorMentoring", fields: [idMentor], references: [id], onDelete: Restrict)
   mentorado User  @relation("MentoradoMentoring", fields: [idMentorado], references: [id], onDelete: Restrict)
+  @@map("mentoring")
 }
 
 enum StatusEqualizacao {
