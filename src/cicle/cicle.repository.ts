@@ -31,6 +31,13 @@ export class CicleRepository {
         year: Number(data.year),
         period: Number(data.period),
         status: data.status,
+        dataAberturaAvaliacao: "2025-07-11T10:30:45-03:00",      
+        dataFechamentoAvaliacao: "2025-07-11T10:30:45-03:00",    
+        dataAberturaRevisaoGestor: "2025-07-11T10:30:45-03:00",  
+        dataFechamentoRevisaoGestor: "2025-07-11T10:30:45-03:00",
+        dataAberturaRevisaoComite: "2025-07-11T10:30:45-03:00",  
+        dataFechamentoRevisaoComite: "2025-07-11T10:30:45-03:00",
+        dataFinalizacao: "2025-07-11T10:30:45-03:00",     
       },
     });
   }

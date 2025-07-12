@@ -58,6 +58,13 @@ export class CicleService {
           year: year.toString(),
           period: period.toString(),
           status: "aberto",
+          dataAberturaAvaliacao: "2025-07-11T10:30:45-03:00",      
+          dataFechamentoAvaliacao: "2025-07-11T10:30:45-03:00",    
+          dataAberturaRevisaoGestor: "2025-07-11T10:30:45-03:00",  
+          dataFechamentoRevisaoGestor: "2025-07-11T10:30:45-03:00",
+          dataAberturaRevisaoComite: "2025-07-11T10:30:45-03:00",  
+          dataFechamentoRevisaoComite: "2025-07-11T10:30:45-03:00",
+          dataFinalizacao: "2025-07-11T10:30:45-03:00",  
         });
       }
 
