@@ -114,37 +114,4 @@ export class UsersController {
     const cicloId = ciclo ? +ciclo : undefined;
     return this.usersService.getUserStatistics(+id, cicloId);
   }
-
-  @Get("statistics/ciclo/:cicloId")
-  @ApiOperation({
-    summary:
-      "Busca estatísticas de avaliações de todos os usuários em um ciclo",
-    description:
-      "Retorna médias de autoavaliação, avaliação do gestor e avaliação 360° para todos os usuários que possuem avaliações no ciclo especificado.",
-  })
-  @ApiParam({
-    name: "cicloId",
-    description: "ID do ciclo para buscar estatísticas",
-    type: "number",
-  })
-  @ApiResponse({
-    status: 200,
-    description:
-      "Estatísticas de todos os usuários no ciclo retornadas com sucesso.",
-    type: [UserStatisticsResponseDto],
-  })
-  @ApiResponse({
-    status: 200,
-    description: "Lista vazia se nenhum usuário possui avaliações no ciclo.",
-    schema: {
-      type: "array",
-      items: {},
-      example: [],
-    },
-  })
-  getAllUsersStatisticsByCycle(
-    @Param("cicloId") cicloId: string
-  ): Promise<UserStatisticsResponseDto[]> {
-    return this.usersService.getAllUsersStatisticsByCycle(+cicloId);
-  }
 }
