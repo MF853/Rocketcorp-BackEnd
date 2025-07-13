@@ -61,6 +61,7 @@ model Ciclo {
   criterios                   Criterio[]
   ResumoIA                    ResumoIA[]
   mentorings                  Mentoring[]
+  Equalizacao Equalizacao[]
 
   @@unique([year, period])
   @@index([year])
@@ -212,6 +213,7 @@ model Equalizacao {
   id                   Int               @id @default(autoincrement())
   idAvaliador          Int
   idAvaliado           Int
+  idCiclo              Int
   mediaAutoavaliacao   Float
   mediaAvaliacaoGestor Float
   mediaAvaliacao360    Float
@@ -220,6 +222,7 @@ model Equalizacao {
   status               StatusEqualizacao
   avaliador            User              @relation("AvaliadorEqualizacao", fields: [idAvaliador], references: [id], onDelete: Restrict)
   avaliado             User              @relation("AvaliadoEqualizacao", fields: [idAvaliado], references: [id], onDelete: Restrict)
+  ciclo                Ciclo             @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
 
   @@map("equalizacoes")
 }

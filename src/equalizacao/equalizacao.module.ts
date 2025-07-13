@@ -3,8 +3,10 @@ import { EqualizacaoService } from "./equalizacao.service";
 import { EqualizacaoController } from "./equalizacao.controller";
 import { EqualizacaoRepository } from "./equalizacao.repository";
 import { PrismaService } from "../prisma/prisma.service";
+import { UsersModule } from "../users/users.module";
 
 @Module({
+  imports: [UsersModule],
   controllers: [EqualizacaoController],
   providers: [EqualizacaoService, EqualizacaoRepository, PrismaService],
 })

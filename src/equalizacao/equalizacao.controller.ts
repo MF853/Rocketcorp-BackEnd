@@ -11,7 +11,13 @@ import { EqualizacaoService } from "./equalizacao.service";
 import { CreateEqualizacaoDto } from "./dto/create-equalizacao.dto";
 import { UpdateEqualizacaoDto } from "./dto/update-equalizacao.dto";
 import { EqualizacaoResponseDto } from "./dto/equalizacao-response.dto";
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from "@nestjs/swagger";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBody,
+} from "@nestjs/swagger";
 
 @ApiTags("Equalizacao")
 @Controller("equalizacao")
@@ -19,31 +25,11 @@ export class EqualizacaoController {
   constructor(private readonly equalizacaoService: EqualizacaoService) {}
 
   @Post()
+  @ApiOperation({ summary: "Create a new equalizacao" })
+  @ApiBody({ type: CreateEqualizacaoDto })
+  @ApiResponse({ status: 201, description: "Equalizacao created successfully" })
   create(@Body() createEqualizacaoDto: CreateEqualizacaoDto) {
     return this.equalizacaoService.create(createEqualizacaoDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.equalizacaoService.findAll();
-  }
-
-  @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.equalizacaoService.findOne(+id);
-  }
-
-  @Patch(":id")
-  update(
-    @Param("id") id: string,
-    @Body() updateEqualizacaoDto: UpdateEqualizacaoDto
-  ) {
-    return this.equalizacaoService.update(+id, updateEqualizacaoDto);
-  }
-
-  @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.equalizacaoService.remove(+id);
   }
 
   @Get("ciclo/:cicloId")
@@ -145,5 +131,27 @@ export class EqualizacaoController {
     @Param("cicloId") cicloId: string
   ): Promise<EqualizacaoResponseDto[]> {
     return this.equalizacaoService.getEqualizacoesByCycle(+cicloId);
+  }
+  @Get()
+  findAll() {
+    return this.equalizacaoService.findAll();
+  }
+
+  @Get(":id")
+  findOne(@Param("id") id: string) {
+    return this.equalizacaoService.findOne(+id);
+  }
+
+  @Patch(":id")
+  update(
+    @Param("id") id: string,
+    @Body() updateEqualizacaoDto: UpdateEqualizacaoDto
+  ) {
+    return this.equalizacaoService.update(+id, updateEqualizacaoDto);
+  }
+
+  @Delete(":id")
+  remove(@Param("id") id: string) {
+    return this.equalizacaoService.remove(+id);
   }
 }
