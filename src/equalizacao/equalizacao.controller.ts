@@ -142,12 +142,18 @@ export class EqualizacaoController {
     return this.equalizacaoService.findOne(+id);
   }
 
-  @Patch(":id")
-  update(
-    @Param("id") id: string,
-    @Body() updateEqualizacaoDto: UpdateEqualizacaoDto
-  ) {
-    return this.equalizacaoService.update(+id, updateEqualizacaoDto);
+  @Patch()
+  @ApiOperation({ summary: "Update an existing equalizacao" })
+  @ApiBody({ type: UpdateEqualizacaoDto })
+  @ApiResponse({
+    status: 200,
+    description: "Equalizacao updated successfully",
+    type: EqualizacaoResponseDto,
+  })
+  @ApiResponse({ status: 400, description: "ID is required in the DTO" })
+  @ApiResponse({ status: 404, description: "Equalizacao not found" })
+  update(@Body() updateEqualizacaoDto: UpdateEqualizacaoDto) {
+    return this.equalizacaoService.update(updateEqualizacaoDto);
   }
 
   @Delete(":id")

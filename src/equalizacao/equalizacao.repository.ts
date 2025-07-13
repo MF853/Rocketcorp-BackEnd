@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { EqualizacaoResponseDto } from "./dto/equalizacao-response.dto";
 import { CreateEqualizacaoDto } from "./dto/create-equalizacao.dto";
+import { UpdateEqualizacaoDto } from "./dto/update-equalizacao.dto";
 import { StatusEqualizacao } from "@prisma/client";
 
 @Injectable()
@@ -132,6 +133,70 @@ export class EqualizacaoRepository {
       notaAvaliacao360: createdEqualizacao.mediaAvaliacao360,
       notaFinal: createdEqualizacao.notaFinal,
       justificativa: createdEqualizacao.justificativa,
+      resumoIA: resumoIA?.resumo || "",
+      status: "Finalizado" as "Finalizado" | "Pendente",
+    };
+  }
+
+  async updateEqualizacao(
+    id: number,
+    updateEqualizacaoDto: UpdateEqualizacaoDto
+  ): Promise<EqualizacaoResponseDto> {
+    // Check if equalizacao exists
+    const existingEqualizacao = await this.prisma.equalizacao.findUnique({
+      where: { id },
+      include: {
+        avaliado: {
+          select: { name: true, cargo: true },
+        },
+      },
+    });
+
+    if (!existingEqualizacao) {
+      throw new Error(`Equalizacao with ID ${id} not found`);
+    }
+
+    // Update only the provided fields
+    const updatedEqualizacao = await this.prisma.equalizacao.update({
+      where: { id },
+      data: {
+        ...(updateEqualizacaoDto.notaFinal !== undefined && {
+          notaFinal: updateEqualizacaoDto.notaFinal,
+        }),
+        ...(updateEqualizacaoDto.justificativa !== undefined && {
+          justificativa: updateEqualizacaoDto.justificativa,
+        }),
+      },
+      include: {
+        avaliado: {
+          select: { name: true, cargo: true },
+        },
+      },
+    });
+
+    // Get resumo IA if exists
+    const resumoIA = await this.prisma.resumoIA.findUnique({
+      where: {
+        userId_idCiclo: {
+          userId: updatedEqualizacao.idAvaliado,
+          idCiclo: updatedEqualizacao.idCiclo,
+        },
+      },
+      select: { resumo: true },
+    });
+
+    // Return the EqualizacaoResponseDto format
+    return {
+      idEqualizacao: updatedEqualizacao.id.toString(),
+      idAvaliador: updatedEqualizacao.idAvaliador.toString(),
+      idAvaliado: updatedEqualizacao.idAvaliado.toString(),
+      nomeAvaliado: updatedEqualizacao.avaliado.name,
+      cargoAvaliado: updatedEqualizacao.avaliado.cargo || "Desenvolvedor",
+      notaAutoavaliacao: updatedEqualizacao.mediaAutoavaliacao,
+      notaGestor: updatedEqualizacao.mediaAvaliacaoGestor,
+      notaAvaliacao360: updatedEqualizacao.mediaAvaliacao360,
+      notaFinal: updatedEqualizacao.notaFinal,
+      justificativa: updatedEqualizacao.justificativa,
       resumoIA: resumoIA?.resumo || "",
       status: "Finalizado" as "Finalizado" | "Pendente",
     };

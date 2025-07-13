@@ -38,8 +38,16 @@ export class EqualizacaoService {
     return `This action returns a #${id} equalizacao`;
   }
 
-  update(id: number, updateEqualizacaoDto: UpdateEqualizacaoDto) {
-    return `This action updates a #${id} equalizacao`;
+  async update(
+    updateEqualizacaoDto: UpdateEqualizacaoDto
+  ): Promise<EqualizacaoResponseDto> {
+    if (!updateEqualizacaoDto.id) {
+      throw new Error("ID is required in the DTO");
+    }
+    return await this.equalizacaoRepository.updateEqualizacao(
+      updateEqualizacaoDto.id,
+      updateEqualizacaoDto
+    );
   }
 
   remove(id: number) {
