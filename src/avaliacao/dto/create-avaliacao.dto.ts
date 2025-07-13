@@ -9,7 +9,6 @@ import {
   IsInt,
   Min,
   Max,
-  IsNotEmpty,
 } from "class-validator";
 import { Type, Transform } from "class-transformer";
 import { ApiProperty } from "@nestjs/swagger";
@@ -32,17 +31,7 @@ export class CreateAutoavaliacaoDto {
   @Transform(({ value }) => Number(value))
   @IsNumber()
   @IsPositive()
-  idAvaliador: number;
-
-  @ApiProperty({
-    description: "ID do usuário que está sendo avaliado (mesmo que idAvaliador para autoavaliação)",
-    example: 1,
-    type: Number,
-  })
-  @Transform(({ value }) => Number(value))
-  @IsNumber()
-  @IsPositive()
-  idAvaliado: number;
+  idUser: number;
 
   @ApiProperty({
     description: "ID do ciclo de avaliação",
@@ -110,6 +99,9 @@ export class CreateAutoavaliacaoDto {
   @IsString()
   justificativaGestor?: string;
 }
+
+// ✅ Para compatibilidade com código existente (alias)
+export class CreateAvaliacaoDto extends CreateAutoavaliacaoDto {}
 
 // ✅ Manter CreateAvaliacao360Dto
 export class CreateAvaliacao360Dto {
@@ -209,9 +201,18 @@ export class CreateAvaliacao360Dto {
 // ✅ Classe CreateMentoringDto
 export class CreateMentoringDto {
   @ApiProperty({
-    description: "ID do mentor que está sendo avaliado",
-    example: 1,
-    type: Number,
+    description: "Array de avaliações tradicionais para criação em lote",
+    type: [CreateAvaliacaoDto],
+    required: false,
+    example: [
+      {
+        idUser: 1,
+        idCiclo: 1,
+        nota: 4,
+        justificativa: "Excelente desempenho técnico e liderança.",
+        criterioId: 1,
+      },
+    ],
   })
   @Transform(({ value }) => Number(value))
   @IsNumber()
@@ -420,6 +421,3 @@ export class BulkCreateAvaliacaoDto {
   @Type(() => CreateMentoringDto)
   mentoring?: CreateMentoringDto[];
 }
-
-// ✅ Para compatibilidade com código existente (alias)
-export class CreateAvaliacaoDto extends CreateAutoavaliacaoDto {}

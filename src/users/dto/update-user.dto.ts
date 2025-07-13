@@ -16,7 +16,7 @@ export class UpdateUserDto {
   @IsString()
   @IsEnum(["user", "admin"])
   @IsOptional()
-  role?: string;
+  role?: string[];
 
   @ApiProperty({ required: false, description: "Unidade do usuário" })
   @IsString()

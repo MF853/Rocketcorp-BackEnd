@@ -19,55 +19,45 @@ export class ReferenciaService {
 
   async create(
     createReferenciaDto: CreateReferenciaDto
-  ): Promise<ReferenciaWithBothUsers> {
+  ): Promise<ReferenciaWithBothUsers | null> {
     try {
-      // Check if referencia already exists
+      // Verifica se a referência já existe
       const exists = await this.referenciaRepository.referenciaExists(
         createReferenciaDto.idReferenciador,
         createReferenciaDto.idReferenciado,
         createReferenciaDto.idCiclo
       );
-
+  
       if (exists) {
-        throw new ConflictException(
+        console.warn(
           `Referência já existe: O usuário ${createReferenciaDto.idReferenciador} já fez uma referência para o usuário ${createReferenciaDto.idReferenciado} no ciclo ${createReferenciaDto.idCiclo}`
         );
+        return null; // ou return exists se você quiser retornar o registro já existente
       }
-
-      return await this.referenciaRepository.createReferencia(
-        createReferenciaDto
-      );
+  
+      return await this.referenciaRepository.createReferencia(createReferenciaDto);
     } catch (error) {
-      if (error instanceof ConflictException) {
-        throw error;
-      }
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === "P2002") {
-          // Extract field information from meta if available
-          const fields = (error.meta?.target as string[]) || [];
-          if (
-            fields.includes("idReferenciador") &&
-            fields.includes("idReferenciado") &&
-            fields.includes("idCiclo")
-          ) {
-            throw new ConflictException(
-              `Referência duplicada: O usuário ${createReferenciaDto.idReferenciador} já fez uma referência para o usuário ${createReferenciaDto.idReferenciado} no ciclo ${createReferenciaDto.idCiclo}`
-            );
-          }
-          throw new ConflictException(
-            `Violação de restrição única: Não é possível criar esta referência pois ela já existe`
+          // Violação de constraint única
+          console.warn(
+            `Violação de restrição única ao criar referência: ${JSON.stringify(error.meta)}`
           );
+          return null;
         }
+  
         if (error.code === "P2003") {
           throw new Error(
-            `Erro de chave estrangeira: Verifique se os IDs do referenciador, referenciado e ciclo existem no sistema`
+            `Erro de chave estrangeira: Verifique se os IDs do referenciador, referenciado e ciclo existem no sistema.`
           );
         }
-        throw new Error(`Falha ao criar referência: ${error.message}`);
+  
+        throw new Error(`Erro ao criar referência: ${error.message}`);
       }
-      throw new Error(`Falha ao criar referência: ${(error as Error).message}`);
+  
+      throw new Error(`Erro desconhecido ao criar referência: ${(error as Error).message}`);
     }
-  }
+  }  
 
   async createBulk(
     bulkCreateReferenciaDto: BulkCreateReferenciaDto

@@ -7,6 +7,10 @@ import { UserStatisticsResponseDto } from "./dto/user-statistics-response.dto";
 export class UsersService {
   constructor(private readonly usersRepository: UsersRepository) {}
 
+  async create(data: any) {
+    return this.usersRepository.create(data);
+  }
+
   async findAll() {
     return this.usersRepository.findAll();
   }
@@ -21,9 +25,9 @@ export class UsersService {
 
   async findByEmail(email: string) {
     const user = await this.usersRepository.findByEmail(email);
-    if (!user) {
-      throw new NotFoundException(`User with email ${email} not found`);
-    }
+    // if (!user) {
+    //   throw new NotFoundException(`User with email ${email} not found`);
+    // }
     return user;
   }
 

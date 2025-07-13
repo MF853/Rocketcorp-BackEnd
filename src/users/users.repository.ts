@@ -13,6 +13,12 @@ const userInclude = {
 export class UsersRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async create(data: any) {
+    return this.prisma.user.create({
+      data
+    });
+  }
+
   async findAll() {
     return this.prisma.user.findMany({
       include: this.getUserIncludes(),
@@ -86,8 +92,7 @@ export class UsersRepository {
 
     const autoavaliacaoStats = await this.prisma.autoavaliacao.aggregate({
       where: {
-        idAvaliado: userId,
-        idAvaliador: userId, // Self-evaluation
+        idUser: userId, // Self-evaluation
         nota: { not: null },
         ...whereClause,
       },
@@ -97,7 +102,7 @@ export class UsersRepository {
 
     const gestorAvaliacaoStats = await this.prisma.autoavaliacao.aggregate({
       where: {
-        idAvaliado: userId,
+        idUser: userId,
         notaGestor: { not: null },
         ...whereClause,
       },
@@ -153,8 +158,8 @@ export class UsersRepository {
             idCiclo,
             notaGestor: { not: null },
           },
-          select: { idAvaliado: true },
-          distinct: ["idAvaliado"],
+          select: { idUser: true },
+          distinct: ["idUser"],
         }),
         this.prisma.avaliacao360.findMany({
           where: {
@@ -168,7 +173,7 @@ export class UsersRepository {
 
     const allUserIds = [
       ...autoavaliacaoUsers.map((u) => u.idAvaliado),
-      ...gestorAvaliacaoUsers.map((u) => u.idAvaliado),
+      ...gestorAvaliacaoUsers.map((u) => u.idUser),
       ...avaliacao360Users.map((u) => u.idAvaliado),
     ];
 

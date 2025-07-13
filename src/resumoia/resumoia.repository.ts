@@ -8,12 +8,12 @@ export class ResumoiaRepository {
   async findUsersWithAvaliacoes(idCiclo: number) {
     return this.prisma.user.findMany({
       where: {
-        autoavaliacoesRecebidas: {
+        autoAvaliacoesFeitas: {
           some: { idCiclo },
         },
       },
       include: {
-        autoavaliacoesRecebidas: {
+        autoAvaliacoesFeitas: {
           where: { idCiclo },
           include: {
             criterio: true,

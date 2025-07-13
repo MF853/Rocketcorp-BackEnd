@@ -141,13 +141,12 @@ export class AvaliacaoController {
     console.log("Received bulk data:", JSON.stringify(bulkCreateDto, null, 2));
     console.log("Autoavaliacoes array:", bulkCreateDto.autoavaliacoes); // ✅ CORRIGIDO
 
-    if (bulkCreateDto.autoavaliacoes?.length) { // ✅ CORRIGIDO
-      console.log("First autoavaliacao types:", {
-        idAvaliador: typeof bulkCreateDto.autoavaliacoes[0].idAvaliador, // ✅ CORRIGIDO
-        idAvaliado: typeof bulkCreateDto.autoavaliacoes[0].idAvaliado, // ✅ CORRIGIDO
-        idCiclo: typeof bulkCreateDto.autoavaliacoes[0].idCiclo, // ✅ CORRIGIDO
-        nota: typeof bulkCreateDto.autoavaliacoes[0].nota, // ✅ CORRIGIDO
-        criterioId: typeof bulkCreateDto.autoavaliacoes[0].criterioId, // ✅ CORRIGIDO
+    if (bulkCreateDto.autoavaliacoes?.length) {
+      console.log("First avaliacao types:", {
+        idAvaliador: typeof bulkCreateDto.autoavaliacoes[0].idUser,
+        idCiclo: typeof bulkCreateDto.autoavaliacoes[0].idCiclo,
+        nota: typeof bulkCreateDto.autoavaliacoes[0].nota,
+        criterioId: typeof bulkCreateDto.autoavaliacoes[0].criterioId,
       });
     }
 
@@ -177,8 +176,7 @@ export class AvaliacaoController {
   testCreate(@Body() createDto: CreateAvaliacaoDto) {
     console.log("Received DTO:", createDto);
     console.log("DTO types:", {
-      idAvaliador: typeof createDto.idAvaliador,
-      idAvaliado: typeof createDto.idAvaliado,
+      idUser: typeof createDto.idUser,
       idCiclo: typeof createDto.idCiclo,
       nota: typeof createDto.nota,
       criterioId: typeof createDto.criterioId,

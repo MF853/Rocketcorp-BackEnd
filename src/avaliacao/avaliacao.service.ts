@@ -23,20 +23,20 @@ export class AvaliacaoService {
   async create(createAvaliacaoDto: CreateAvaliacaoDto) {
     if (createAvaliacaoDto.criterioId !== undefined) {
       const exists = await this.avaliacaoRepository.avaliacaoExists(
-        createAvaliacaoDto.idAvaliador,
-        createAvaliacaoDto.idAvaliado,
+        createAvaliacaoDto.idUser,
         createAvaliacaoDto.idCiclo,
         createAvaliacaoDto.criterioId
       );
 
       if (exists) {
-        throw new ConflictException(
-          "Já existe uma avaliação para este avaliador, avaliado, ciclo e critério"
+        console.warn(
+          `Auto Avaliação já existe: O usuário ${createAvaliacaoDto.idUser} já avaliou o critério ${createAvaliacaoDto.criterioId} no ciclo.`
         );
+        return null;
       }
     }
 
-    return this.avaliacaoRepository.create(createAvaliacaoDto);
+    return this.avaliacaoRepository.createAvaliacao(createAvaliacaoDto);
   }
 
   async create360(createAvaliacao360Dto: CreateAvaliacao360Dto) {
@@ -45,11 +45,12 @@ export class AvaliacaoService {
       createAvaliacao360Dto.idAvaliado,
       createAvaliacao360Dto.idCiclo
     );
-
+    
     if (exists) {
-      throw new ConflictException(
-        "Já existe uma avaliação 360 para este avaliador, avaliado e ciclo"
+      console.warn(
+        `Avaliação 360 já existe: O usuário ${createAvaliacao360Dto.idAvaliador} já fez uma referência para o usuário ${createAvaliacao360Dto.idAvaliado} no ciclo.`
       );
+      return null; 
     }
 
     return this.avaliacaoRepository.createAvaliacao360(createAvaliacao360Dto);
@@ -63,9 +64,10 @@ export class AvaliacaoService {
     );
 
     if (exists) {
-      throw new ConflictException(
-        "Já existe uma avaliação de mentoring para este mentor, mentorado e ciclo"
+      console.warn(
+        `Mentoring já existe: O mentor ${createMentoringDto.idMentor} já fez uma avaliação para o mentorado ${createMentoringDto.idMentorado} no ciclo ${createMentoringDto.idCiclo}.`
       );
+      return null;
     }
 
     return this.avaliacaoRepository.createMentoring(createMentoringDto);
@@ -89,15 +91,14 @@ export class AvaliacaoService {
       
       for (const item of bulkCreateDto.autoavaliacoes) {
         const exists = await this.avaliacaoRepository.avaliacaoExists(
-          item.idAvaliador,
-          item.idAvaliado,
+          item.idUser,
           item.idCiclo,
           item.criterioId
         );
         
         if (exists) {
           throw new BadRequestException(
-            `Já existe uma autoavaliação para avaliador ${item.idAvaliador}, avaliado ${item.idAvaliado}, ciclo ${item.idCiclo} e critério ${item.criterioId}`
+            `Já existe uma autoavaliação para usuário ${item.idUser}, ciclo ${item.idCiclo} e critério ${item.criterioId}`
           );
         }
       }
@@ -225,6 +226,11 @@ export class AvaliacaoService {
       id,
       updateAvaliacao360Dto
     );
+  }
+
+  async updateMentoring(id: number, updateMentoringDto: UpdateAvaliacaoDto) {
+    await this.findOneMentoring(id);
+    return this.avaliacaoRepository.updateMentoring(id, updateMentoringDto);
   }
 
   async remove(id: number) {

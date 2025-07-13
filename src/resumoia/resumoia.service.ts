@@ -118,8 +118,8 @@ export class ResumoiaService {
 
     const avaliacoes = [
       // Autoavaliações (self-evaluations)
-      ...user.autoavaliacoesRecebidas
-        .filter((a) => a.idAvaliador === a.idAvaliado)
+      ...user.autoAvaliacoesFeitas
+        .filter((a) => a.idUser === a.idUser)
         .map((a) => {
           const criterioInfo =
             a.criterio && a.criterio.name && a.criterio.tipo
@@ -129,6 +129,13 @@ export class ResumoiaService {
             a.nota ?? "N/A"
           }. "${a.justificativa}"`;
         }),
+
+      // Avaliações normais (regular evaluations from others)
+      ...user.autoAvaliacoesFeitas
+        .filter((a) => a.idUser !== a.idUser)
+        .map(
+          (a) => `[AVALIAÇÃO] Nota: ${a.nota ?? "N/A"}. "${a.justificativa}"`
+        ),
 
       // Avaliações 360 (360-degree evaluations)
       ...user.avaliacoes360Recebidas.map(

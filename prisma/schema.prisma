@@ -149,7 +149,7 @@ model Autoavaliacao {
   ciclo               Ciclo     @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
   criterio            Criterio? @relation(fields: [criterioId], references: [id], onDelete: Restrict)
 
-  @@unique([idUser, idCiclo])
+  @@unique([idUser, idCiclo, criterioId])
   @@index([idUser])
   @@index([criterioId])
   @@index([idCiclo])

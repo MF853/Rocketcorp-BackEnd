@@ -7,5 +7,6 @@ import { PrismaService } from "../prisma/prisma.service";
 @Module({
   controllers: [ReferenciaController],
   providers: [ReferenciaService, ReferenciaRepository, PrismaService],
+  exports: [ReferenciaService],
 })
 export class ReferenciaModule {}

@@ -10,23 +10,35 @@ import {
   UpdateAvaliacaoDto,
   UpdateAvaliacao360Dto,
 } from "./dto/update-avaliacao.dto";
+import { Prisma } from "@prisma/client";
+
+const avaliacaoInclude = {
+  user: { select: { id: true, name: true, email: true } },
+  criterio: { select: { id: true, name: true, enabled: true } },
+};
+
+const avaliacao360Include = {
+  avaliador: { select: { id: true, name: true, email: true } },
+  avaliado: { select: { id: true, name: true, email: true } },
+};
+
+type AvaliacaoWithIncludes = Prisma.AutoavaliacaoGetPayload<{
+  include: typeof avaliacaoInclude;
+}>;
+type Avaliacao360WithIncludes = Prisma.Avaliacao360GetPayload<{
+  include: typeof avaliacao360Include;
+}>;
 
 @Injectable()
 export class AvaliacaoRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: CreateAvaliacaoDto) {
-    // ✅ Validar criterioId obrigatório
-    if (!data.criterioId) {
-      throw new Error("criterioId é obrigatório");
-    }
-
+  async createAvaliacao(data: CreateAvaliacaoDto) {
     return this.prisma.autoavaliacao.create({
       data,
       include: {
         criterio: { select: { id: true, name: true, enabled: true } },
-        avaliador: { select: { id: true, name: true, email: true } },
-        avaliado: { select: { id: true, name: true, email: true } },
+        user: { select: { id: true, name: true, email: true } },
       },
     });
   }
@@ -65,11 +77,11 @@ export class AvaliacaoRepository {
     });
   }
 
-  async findAvaliacoesByAvaliador(idAvaliador: number) {
+  async findAvaliacoesByAvaliador(idUser: number) {
     return this.prisma.autoavaliacao.findMany({
-      where: { idAvaliador },
+      where: { idUser },
       include: {
-        avaliado: {
+        user: {
           select: { id: true, name: true, email: true },
         },
         criterio: {
@@ -80,11 +92,11 @@ export class AvaliacaoRepository {
     });
   }
 
-  async findAvaliacoesByAvaliado(idAvaliado: number) {
+  async findAvaliacoesByAvaliado(idUser: number) {
     return this.prisma.autoavaliacao.findMany({
-      where: { idAvaliado },
+      where: { idUser },
       include: {
-        avaliador: {
+        user: {
           select: { id: true, name: true, email: true },
         },
         criterio: {
@@ -104,15 +116,13 @@ export class AvaliacaoRepository {
   }
 
   async avaliacaoExists(
-    idAvaliador: number,
-    idAvaliado: number,
+    idUser: number,
     idCiclo: number,
     criterioId: number
   ) {
     const count = await this.prisma.autoavaliacao.count({
       where: {
-        idAvaliador,
-        idAvaliado,
+        idUser,
         idCiclo,
         criterioId,
       },
@@ -231,14 +241,14 @@ export class AvaliacaoRepository {
 
   async getUserPerformanceSummary(userId: number, idCiclo?: number) {
     const whereClause = idCiclo
-      ? { idAvaliado: userId, idCiclo }
-      : { idAvaliado: userId };
+      ? { idUser: userId, idCiclo }
+      : { idUser: userId };
 
     const [avaliacoesRecebidas, avaliacoes360Recebidas] = await Promise.all([
       this.prisma.autoavaliacao.findMany({
         where: whereClause,
         include: {
-          avaliador: { select: { id: true, name: true } },
+          user: { select: { id: true, name: true } },
           criterio: { select: { id: true, name: true } },
         },
       }),
@@ -441,15 +451,14 @@ export class AvaliacaoRepository {
       const createdAvaliacoes: any[] = []; // ✅ Fix: explicit type
 
       for (const avaliacao of avaliacoes) {
-        const created = await tx.autoavaliacao.create({
+        const result = await tx.autoavaliacao.create({
           data: avaliacao,
           include: {
             criterio: { select: { id: true, name: true, enabled: true } },
-            avaliador: { select: { id: true, name: true, email: true } },
-            avaliado: { select: { id: true, name: true, email: true } },
+            user: { select: { id: true, name: true, email: true } },
           },
         });
-        createdAvaliacoes.push(created);
+        createdAvaliacoes.push(result);
       }
 
       return createdAvaliacoes;
@@ -491,17 +500,17 @@ export class AvaliacaoRepository {
         avaliacoes360: [] as any[], // ✅ Fix: explicit type
       };
 
+      // Create regular evaluations
       if (data.autoavaliacoes && data.autoavaliacoes.length > 0) {
         for (const avaliacao of data.autoavaliacoes) {
-          const created = await tx.autoavaliacao.create({
+          const result = await tx.autoavaliacao.create({
             data: avaliacao,
             include: {
               criterio: { select: { id: true, name: true, enabled: true } },
-              avaliador: { select: { id: true, name: true, email: true } },
-              avaliado: { select: { id: true, name: true, email: true } },
+              user: { select: { id: true, name: true, email: true } },
             },
           });
-          results.autoavaliacoes.push(created);
+          results.autoavaliacoes.push(result);
         }
       }
 
@@ -549,8 +558,7 @@ export class AvaliacaoRepository {
       },
       include: {
         criterio: { select: { id: true, name: true, enabled: true } },
-        avaliador: { select: { id: true, name: true, email: true } },
-        avaliado: { select: { id: true, name: true, email: true } },
+        user: { select: { id: true, name: true, email: true } },
       },
     });
   }
