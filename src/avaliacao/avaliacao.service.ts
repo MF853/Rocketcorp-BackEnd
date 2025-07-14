@@ -1,12 +1,13 @@
 import {
   Injectable,
   NotFoundException,
-  ConflictException,
+  BadRequestException,
 } from "@nestjs/common";
 import { AvaliacaoRepository } from "./avaliacao.repository";
 import {
   CreateAvaliacaoDto,
   CreateAvaliacao360Dto,
+  CreateMentoringDto,
   BulkCreateAvaliacaoDto,
 } from "./dto/create-avaliacao.dto";
 import {
@@ -54,92 +55,117 @@ export class AvaliacaoService {
     return this.avaliacaoRepository.createAvaliacao360(createAvaliacao360Dto);
   }
 
+  async createMentoring(createMentoringDto: CreateMentoringDto) {
+    const exists = await this.avaliacaoRepository.mentoringExists(
+      createMentoringDto.idMentor,
+      createMentoringDto.idMentorado,
+      createMentoringDto.idCiclo
+    );
+
+    if (exists) {
+      console.warn(
+        `Mentoring já existe: O mentor ${createMentoringDto.idMentor} já fez uma avaliação para o mentorado ${createMentoringDto.idMentorado} no ciclo ${createMentoringDto.idCiclo}.`
+      );
+      return null;
+    }
+
+    return this.avaliacaoRepository.createMentoring(createMentoringDto);
+  }
+
   /**
-   * Creates multiple Avaliacoes and/or Avaliacoes360 in bulk
+   * Creates multiple Avaliacoes, Avaliacoes360 and Mentoring in bulk
    */
-  async createBulk(bulkCreateDto: BulkCreateAvaliacaoDto) {
+  async createBulk(bulkCreateDto: BulkCreateAvaliacaoDto): Promise<any> {
+    console.log('📦 Dados recebidos no bulk:', JSON.stringify(bulkCreateDto, null, 2));
+    
     const results = {
-      success: true,
-      created: {
-        avaliacoes: 0,
-        avaliacoes360: 0,
-      },
-      data: {
-        avaliacoes: [] as any[],
-        avaliacoes360: [] as any[],
-      },
-      errors: [] as string[],
+      autoavaliacoes: [] as any[],
+      avaliacoes360: [] as any[],
+      mentoring: [] as any[]
     };
 
-    try {
-      // Validate duplicates for regular evaluations
-      if (bulkCreateDto.avaliacoes && bulkCreateDto.avaliacoes.length > 0) {
-        for (const avaliacao of bulkCreateDto.avaliacoes) {
-          if (avaliacao.criterioId !== undefined) {
-            const exists = await this.avaliacaoRepository.avaliacaoExists(
-              avaliacao.idUser,
-              avaliacao.idCiclo,
-              avaliacao.criterioId
-            );
-            if (exists) {
-              results.errors.push(
-                `Já existe uma avaliação para avaliador ${avaliacao.idUser}, ciclo ${avaliacao.idCiclo} e critério ${avaliacao.criterioId}`
-              );
-            }
-          }
-        }
-      }
-
-      // Validate duplicates for 360 evaluations
-      if (
-        bulkCreateDto.avaliacoes360 &&
-        bulkCreateDto.avaliacoes360.length > 0
-      ) {
-        for (const avaliacao360 of bulkCreateDto.avaliacoes360) {
-          const exists = await this.avaliacaoRepository.avaliacao360Exists(
-            avaliacao360.idAvaliador,
-            avaliacao360.idAvaliado,
-            avaliacao360.idCiclo
+    // ✅ Processar autoavaliações
+    if (bulkCreateDto.autoavaliacoes && bulkCreateDto.autoavaliacoes.length > 0) {
+      console.log('🔄 Processando autoavaliações...');
+      
+      for (const item of bulkCreateDto.autoavaliacoes) {
+        const exists = await this.avaliacaoRepository.avaliacaoExists(
+          item.idUser,
+          item.idCiclo,
+          item.criterioId
+        );
+        
+        if (exists) {
+          throw new BadRequestException(
+            `Já existe uma autoavaliação para usuário ${item.idUser}, ciclo ${item.idCiclo} e critério ${item.criterioId}`
           );
-          if (exists) {
-            results.errors.push(
-              `Já existe uma avaliação 360 para avaliador ${avaliacao360.idAvaliador}, avaliado ${avaliacao360.idAvaliado} e ciclo ${avaliacao360.idCiclo}`
-            );
-          }
         }
       }
 
-      // If there are validation errors, don't proceed
-      if (results.errors.length > 0) {
-        results.success = false;
-        throw new ConflictException({
-          message: "Validation errors found",
-          errors: results.errors,
-        });
-      }
-
-      // Create in bulk using repository transaction
-      const createdData = await this.avaliacaoRepository.createBulkMixed({
-        avaliacoes: bulkCreateDto.avaliacoes,
-        avaliacoes360: bulkCreateDto.avaliacoes360,
-      });
-
-      results.data = createdData;
-      results.created.avaliacoes = createdData.avaliacoes.length;
-      results.created.avaliacoes360 = createdData.avaliacoes360.length;
-
-      return results;
-    } catch (error) {
-      results.success = false;
-      if (error instanceof ConflictException) {
-        throw error;
-      }
-      throw new Error(
-        `Failed to create bulk evaluations: ${
-          (error as Error).message || "Unknown error"
-        }`
+      const autoavaliacoes = await this.avaliacaoRepository.createBulkAvaliacoes(
+        bulkCreateDto.autoavaliacoes
       );
+      results.autoavaliacoes = autoavaliacoes;
+      console.log('✅ Autoavaliações criadas:', autoavaliacoes.length);
     }
+
+    // ✅ Processar avaliações 360
+    if (bulkCreateDto.avaliacoes360 && bulkCreateDto.avaliacoes360.length > 0) {
+      console.log('🔄 Processando avaliações 360...');
+      
+      for (const item of bulkCreateDto.avaliacoes360) {
+        const exists = await this.avaliacaoRepository.avaliacao360Exists(
+          item.idAvaliador,
+          item.idAvaliado,
+          item.idCiclo
+        );
+        
+        if (exists) {
+          throw new BadRequestException(
+            `Já existe uma avaliação 360 para avaliador ${item.idAvaliador}, avaliado ${item.idAvaliado} e ciclo ${item.idCiclo}`
+          );
+        }
+      }
+
+      const avaliacoes360 = await this.avaliacaoRepository.createBulkAvaliacoes360(
+        bulkCreateDto.avaliacoes360
+      );
+      results.avaliacoes360 = avaliacoes360;
+      console.log('✅ Avaliações 360 criadas:', avaliacoes360.length);
+    }
+
+    // ✅ Processar mentoring
+    if (bulkCreateDto.mentoring && bulkCreateDto.mentoring.length > 0) {
+      console.log('🔄 Processando mentoring...');
+      
+      for (const item of bulkCreateDto.mentoring) {
+        const exists = await this.avaliacaoRepository.mentoringExists(
+          item.idMentor,
+          item.idMentorado,
+          item.idCiclo
+        );
+        
+        if (exists) {
+          throw new BadRequestException(
+            `Já existe uma avaliação de mentoring para mentor ${item.idMentor}, mentorado ${item.idMentorado} e ciclo ${item.idCiclo}`
+          );
+        }
+      }
+
+      const mentoring = await this.avaliacaoRepository.createBulkMentoring(
+        bulkCreateDto.mentoring
+      );
+      results.mentoring = mentoring;
+      console.log('✅ Mentoring criado:', mentoring.length);
+    }
+
+    console.log('✅ Resultados do bulk:', {
+      autoavaliacoes: results.autoavaliacoes.length,
+      avaliacoes360: results.avaliacoes360.length,
+      mentoring: results.mentoring.length
+    });
+    
+    return results;
   }
 
   // ==================== QUERY METHODS ====================
@@ -150,6 +176,10 @@ export class AvaliacaoService {
 
   findAll360() {
     return this.avaliacaoRepository.findAllAvaliacoes360();
+  }
+
+  findAllMentoring() {
+    return this.avaliacaoRepository.findAllMentoring();
   }
 
   async findOne(id: number) {
@@ -174,17 +204,32 @@ export class AvaliacaoService {
     return avaliacao360;
   }
 
+  async findOneMentoring(id: number) {
+    const mentoring = await this.avaliacaoRepository.findMentoringById(id);
+
+    if (!mentoring) {
+      throw new NotFoundException(`Mentoring com ID ${id} não encontrado`);
+    }
+
+    return mentoring;
+  }
+
   async update(id: number, updateAvaliacaoDto: UpdateAvaliacaoDto) {
     await this.findOne(id);
     return this.avaliacaoRepository.updateAvaliacao(id, updateAvaliacaoDto);
   }
 
   async update360(id: number, updateAvaliacao360Dto: UpdateAvaliacao360Dto) {
-    await this.findOne360(id); // Verifica se existe
+    await this.findOne360(id);
     return this.avaliacaoRepository.updateAvaliacao360(
       id,
       updateAvaliacao360Dto
     );
+  }
+
+  async updateMentoring(id: number, updateMentoringDto: UpdateAvaliacaoDto) {
+    await this.findOneMentoring(id);
+    return this.avaliacaoRepository.updateMentoring(id, updateMentoringDto);
   }
 
   async remove(id: number) {
@@ -195,6 +240,15 @@ export class AvaliacaoService {
   async remove360(id: number) {
     await this.findOne360(id);
     return this.avaliacaoRepository.deleteAvaliacao360(id);
+  }
+
+  async removeMentoring(id: number) {
+    await this.findOneMentoring(id);
+    return this.avaliacaoRepository.deleteMentoring(id);
+  }
+
+  findByUser(idUser: number) {
+    return this.avaliacaoRepository.findAvaliacoesByUser(idUser);
   }
 
   findByAvaliador(idAvaliador: number) {
@@ -221,11 +275,28 @@ export class AvaliacaoService {
     return this.avaliacaoRepository.findAvaliacoes360ByCiclo(idCiclo);
   }
 
+  findMentoringByMentor(idMentor: number) {
+    return this.avaliacaoRepository.findMentoringByMentor(idMentor);
+  }
+
+  findMentoringByMentorado(idMentorado: number) {
+    return this.avaliacaoRepository.findMentoringByMentorado(idMentorado);
+  }
+
+  findMentoringByCiclo(idCiclo: number) {
+    return this.avaliacaoRepository.findMentoringByCiclo(idCiclo);
+  }
+
   getCycleStatistics(idCiclo: number) {
     return this.avaliacaoRepository.getCycleStatistics(idCiclo);
   }
 
   getUserPerformanceSummary(userId: number, idCiclo?: number) {
     return this.avaliacaoRepository.getUserPerformanceSummary(userId, idCiclo);
+  }
+
+  // Método para atualizar nota do gestor em avaliação existente
+  async updateNotaGestor(id: number, notaGestor: number, justificativa?: string) {
+    return await this.avaliacaoRepository.updateNotaGestor(id, notaGestor, justificativa);
   }
 }

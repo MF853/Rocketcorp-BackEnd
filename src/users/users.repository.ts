@@ -7,6 +7,7 @@ const userInclude = {
   mentor: { select: { id: true, name: true, email: true } },
   mentorados: { select: { id: true, name: true, email: true } },
   trilha: { select: { id: true, name: true } },
+  equipe: { select: { id: true, nome: true, descricao: true } },
 };
 
 @Injectable()
@@ -54,6 +55,39 @@ export class UsersRepository {
       include: this.getUserIncludes(),
       orderBy: { name: "asc" },
     });
+  }
+
+  async findByEquipe(_equipeId: number) {
+    // TODO: Descomentar após regenerar o Prisma Client com o campo idEquipe
+    // return this.prisma.user.findMany({
+    //   where: { idEquipe: equipeId },
+    //   include: this.getUserIncludes(),
+    //   orderBy: { name: "asc" },
+    // });
+    console.log('🔧 Método findByEquipe temporariamente desabilitado - aguardando regeneração do Prisma Client');
+    return [];
+  }
+
+  async findEquipeById(idEquipe: number) {
+    return this.prisma.equipe.findUnique({ where: { id: idEquipe } });
+  }
+
+  async findMembrosAndGestorByEquipe(equipeId: number) {
+    // Busca a equipe, incluindo gestor e membros
+    const equipe = await this.prisma.equipe.findUnique({
+      where: { id: equipeId },
+      include: {
+        gestor: true,
+        membros: true,
+      },
+    });
+    if (!equipe) return [];
+    // Retorna gestor + membros (sem duplicidade)
+    const allUsers = [
+      equipe.gestor,
+      ...equipe.membros.filter((m) => m.id !== equipe.gestor.id),
+    ];
+    return allUsers;
   }
 
   async update(
@@ -148,7 +182,7 @@ export class UsersRepository {
       await Promise.all([
         this.prisma.$queryRaw<{ idAvaliado: number }[]>`
         SELECT DISTINCT "idAvaliado" 
-        FROM avaliacoes 
+        FROM Autoavaliacao 
         WHERE "idCiclo" = ${idCiclo} 
         AND "idAvaliador" = "idAvaliado" 
         AND nota IS NOT NULL

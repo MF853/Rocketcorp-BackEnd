@@ -43,8 +43,22 @@ export class UsersService {
     return this.usersRepository.findByTrilha(trilhaId);
   }
 
+  async findByEquipe(equipeId: number) {
+    return this.usersRepository.findByEquipe(equipeId);
+  }
+
   async update(id: number, updateUserDto: UpdateUserDto) {
     await this.findOne(id); // Check if user exists
+    // Se idEquipe for alterado, atualize gestorId
+    if (updateUserDto.idEquipe !== undefined) {
+      let novoGestorId: number | null = null;
+      if (updateUserDto.idEquipe !== null) {
+        // Buscar equipe para pegar o gestor
+        const equipe = await this.usersRepository.findEquipeById(updateUserDto.idEquipe);
+        novoGestorId = equipe?.idGestor ?? null;
+      }
+      return this.usersRepository.update(id, { ...updateUserDto, gestorId: novoGestorId });
+    }
     return this.usersRepository.update(id, updateUserDto);
   }
 
@@ -71,5 +85,9 @@ export class UsersService {
     idCiclo: number
   ): Promise<UserStatisticsResponseDto[]> {
     return this.usersRepository.getAllUsersStatisticsByCycle(idCiclo);
+  }
+
+  async getMembrosAndGestorByEquipe(equipeId: number) {
+    return this.usersRepository.findMembrosAndGestorByEquipe(equipeId);
   }
 }

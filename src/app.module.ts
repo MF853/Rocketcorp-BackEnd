@@ -13,6 +13,8 @@ import { ExcelModule } from "./excel/excel.module";
 import { CicleModule } from "./cicle/cicle.module";
 import { ResumoiaModule } from "./resumoia/resumoia.module";
 import { EqualizacaoModule } from "./equalizacao/equalizacao.module";
+import { ResumoiaModule } from './resumoia/resumoia.module';
+import { EquipeModule } from './equipe/equipe.module';
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { EqualizacaoModule } from "./equalizacao/equalizacao.module";
     ResumoiaModule,
     EqualizacaoModule,
     ExcelModule,
+    ResumoiaModule,
+    EquipeModule
   ],
   controllers: [AppController],
   providers: [AppService, ExcelService],

@@ -62,8 +62,8 @@ async function main() {
 
   // 3. Cria as Trilhas de desenvolvimento
   console.log("🛤️ Criando trilhas...");
-  const [devTrilha, dadosTrilha, infraTrilha, gestaoTrilha] = await Promise.all(
-    [
+  const [devTrilha, dadosTrilha, infraTrilha, gestaoTrilha] =
+    await Promise.all([
       prisma.trilha.create({ data: { name: "Desenvolvimento" } }),
       prisma.trilha.create({ data: { name: "Análise de Dados" } }),
       prisma.trilha.create({ data: { name: "Infraestrutura" } }),
@@ -128,96 +128,16 @@ async function main() {
   // 5. Cria os Usuários
   console.log("👥 Criando usuários...");
   const usersData = [
-    {
-      name: "Raylandson Cesário",
-      email: "raylandson.cesario@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["admin"],
-      cargo: "Desenvolvimento",
-      unidade: "Recife",
-      trilhaId: devTrilha.id,
-    },
-    {
-      name: "Alice Cadete",
-      email: "alice.cadete@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["manager"],
-      cargo: "Desenvolvimento",
-      unidade: "Recife",
-      trilhaId: devTrilha.id,
-    },
-    {
-      name: "Arthur Lins",
-      email: "arthur.lins@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["user"],
-      cargo: "Análise de Dados",
-      unidade: "São Paulo",
-      trilhaId: dadosTrilha.id,
-    },
-    {
-      name: "Erico Chen",
-      email: "erico.chen@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["user"],
-      cargo: "Infraestrutura",
-      unidade: "Belo Horizonte",
-      trilhaId: infraTrilha.id,
-    },
-    {
-      name: "Luan Bezerra",
-      email: "luan.bezerra@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["user"],
-      cargo: "Desenvolvimento",
-      unidade: "Recife",
-      trilhaId: devTrilha.id,
-    },
-    {
-      name: "José Mário",
-      email: "jose.mario@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["manager"],
-      cargo: "Gestão",
-      unidade: "Rio de Janeiro",
-      trilhaId: gestaoTrilha.id,
-    },
-    {
-      name: "Maria Santos",
-      email: "maria.santos@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["user"],
-      cargo: "Desenvolvimento",
-      unidade: "São Paulo",
-      trilhaId: devTrilha.id,
-    },
-    {
-      name: "Pedro Costa",
-      email: "pedro.costa@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["user"],
-      cargo: "Análise de Dados",
-      unidade: "Porto Alegre",
-      trilhaId: dadosTrilha.id,
-    },
-    {
-      name: "Ana Oliveira",
-      email: "ana.oliveira@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["user"],
-      cargo: "Infraestrutura",
-      unidade: "Curitiba",
-      trilhaId: infraTrilha.id,
-    },
-    {
-      name: "Carlos Silva",
-      email: "carlos.silva@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["manager"],
-      cargo: "Gestão",
-      unidade: "Rio de Janeiro",
-      trilhaId: gestaoTrilha.id,
-    },
+    { name: "Raylandson Cesário", email: "raylandson.cesario@rocketcorp.com", password: await hashPassword("password123"), role: ["admin"], cargo: "Desenvolvimento", unidade: "Recife", trilhaId: devTrilha.id },
+    { name: "Alice Cadete", email: "alice.cadete@rocketcorp.com", password: await hashPassword("password123"), role: ["manager"], cargo: "Desenvolvimento", unidade: "Recife", trilhaId: devTrilha.id },
+    { name: "Arthur Lins", email: "arthur.lins@rocketcorp.com", password: await hashPassword("password123"), role: ["user"], cargo: "Análise de Dados", unidade: "São Paulo", trilhaId: dadosTrilha.id },
+    { name: "Erico Chen", email: "erico.chen@rocketcorp.com", password: await hashPassword("password123"), role: ["user"], cargo: "Infraestrutura", unidade: "Belo Horizonte", trilhaId: infraTrilha.id },
+    { name: "Luan Bezerra", email: "luan.bezerra@rocketcorp.com", password: await hashPassword("password123"), role: ["user"], cargo: "Desenvolvimento", unidade: "Recife", trilhaId: devTrilha.id },
+    { name: "José Mário", email: "jose.mario@rocketcorp.com", password: await hashPassword("password123"), role: ["manager"], cargo: "Gestão", unidade: "Rio de Janeiro", trilhaId: gestaoTrilha.id },
+    { name: "Maria Santos", email: "maria.santos@rocketcorp.com", password: await hashPassword("password123"), role: ["user"], cargo: "Desenvolvimento", unidade: "São Paulo", trilhaId: devTrilha.id },
+    { name: "Pedro Costa", email: "pedro.costa@rocketcorp.com", password: await hashPassword("password123"), role: ["user"], cargo: "Análise de Dados", unidade: "Porto Alegre", trilhaId: dadosTrilha.id },
+    { name: "Ana Oliveira", email: "ana.oliveira@rocketcorp.com", password: await hashPassword("password123"), role: ["user"], cargo: "Infraestrutura", unidade: "Curitiba", trilhaId: infraTrilha.id },
+    { name: "Carlos Silva", email: "carlos.silva@rocketcorp.com", password: await hashPassword("password123"), role: ["manager"], cargo: "Gestão", unidade: "Rio de Janeiro", trilhaId: gestaoTrilha.id },
   ];
   const users: User[] = await prisma.$transaction(
     usersData.map((user) => prisma.user.create({ data: user }))
@@ -532,7 +452,6 @@ async function main() {
   console.log("\n📊 Resumo do Banco de Dados:");
   console.table(summary);
 }
-
 // Executa a função principal e trata possíveis erros
 main()
   .catch((e) => {
