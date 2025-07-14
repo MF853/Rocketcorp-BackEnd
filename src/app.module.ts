@@ -12,9 +12,10 @@ import { ExcelService } from './excel/excel.service';
 import { ExcelModule } from './excel/excel.module';
 import { CicleModule } from './cicle/cicle.module';
 import { ResumoiaModule } from './resumoia/resumoia.module';
+import { EquipeModule } from './equipe/equipe.module';
 
 @Module({
-  imports: [AuthModule, ConfigModule.forRoot({}), AvaliacaoModule, ReferenciaModule, UsersModule, TrilhaModule, CriterioModule, CicleModule, ExcelModule, ResumoiaModule],
+  imports: [AuthModule, ConfigModule.forRoot({}), AvaliacaoModule, ReferenciaModule, UsersModule, TrilhaModule, CriterioModule, CicleModule, ExcelModule, ResumoiaModule, EquipeModule],
   controllers: [AppController],
   providers: [AppService, ExcelService],
 })

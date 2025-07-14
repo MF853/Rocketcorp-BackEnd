@@ -67,6 +67,16 @@ export class UsersController {
     return this.usersService.findByTrilha(+trilhaId);
   }
 
+  @Get("equipe/:equipeId")
+  @ApiOperation({ summary: "Lista todos os usuários de uma equipe" })
+  @ApiResponse({
+    status: 200,
+    description: "Lista de usuários da equipe retornada com sucesso.",
+  })
+  findByEquipe(@Param("equipeId") equipeId: string) {
+    return this.usersService.findByEquipe(+equipeId);
+  }
+
   @Patch(":id")
   @ApiOperation({ summary: "Atualiza um usuário pelo ID" })
   @ApiResponse({ status: 200, description: "Usuário atualizado com sucesso." })
@@ -146,5 +156,15 @@ export class UsersController {
     @Param("cicloId") cicloId: string
   ): Promise<UserStatisticsResponseDto[]> {
     return this.usersService.getAllUsersStatisticsByCycle(+cicloId);
+  }
+
+  @Get('by-equipe-com-gestor/:equipeId')
+  @ApiOperation({ summary: 'Lista todos os membros e o gestor de uma equipe' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de membros e gestor da equipe retornada com sucesso.',
+  })
+  getMembrosAndGestorByEquipe(@Param('equipeId') equipeId: string) {
+    return this.usersService.getMembrosAndGestorByEquipe(+equipeId);
   }
 }

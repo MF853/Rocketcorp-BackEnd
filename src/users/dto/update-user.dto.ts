@@ -32,4 +32,9 @@ export class UpdateUserDto {
   @IsNumber()
   @IsOptional()
   trilhaId?: number;
+
+  @ApiProperty({ required: false, description: "ID da equipe do usuário" })
+  @IsNumber()
+  @IsOptional()
+  idEquipe?: number;
 } 
