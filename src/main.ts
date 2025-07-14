@@ -32,7 +32,10 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api", app, document);
 
-  app.enableCors();
+  app.enableCors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  });
 
   // 👇 This line is crucial for graceful shutdown
   app.enableShutdownHooks();
