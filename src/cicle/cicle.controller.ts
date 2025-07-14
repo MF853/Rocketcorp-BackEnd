@@ -60,6 +60,7 @@ export class CicleController {
     @Param("id") id: number,
     @Body() updateCicleDto: UpdateCicleDto
   ) {
-    return await this.cicleService.update(id, updateCicleDto);
+    const updated = await this.cicleService.update(id, updateCicleDto);
+    return { message: "Ciclo atualizado com sucesso", ciclo: updated };
   }
 }
