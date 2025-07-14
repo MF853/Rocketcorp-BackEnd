@@ -10,24 +10,6 @@ import {
   UpdateAvaliacaoDto,
   UpdateAvaliacao360Dto,
 } from "./dto/update-avaliacao.dto";
-import { Prisma } from "@prisma/client";
-
-const avaliacaoInclude = {
-  user: { select: { id: true, name: true, email: true } },
-  criterio: { select: { id: true, name: true, enabled: true } },
-};
-
-const avaliacao360Include = {
-  avaliador: { select: { id: true, name: true, email: true } },
-  avaliado: { select: { id: true, name: true, email: true } },
-};
-
-type AvaliacaoWithIncludes = Prisma.AutoavaliacaoGetPayload<{
-  include: typeof avaliacaoInclude;
-}>;
-type Avaliacao360WithIncludes = Prisma.Avaliacao360GetPayload<{
-  include: typeof avaliacao360Include;
-}>;
 
 @Injectable()
 export class AvaliacaoRepository {
@@ -44,8 +26,7 @@ export class AvaliacaoRepository {
   }
 
   async findAllAvaliacoes(filters?: {
-    idAvaliador?: number;
-    idAvaliado?: number;
+    idUser?: number;
     idCiclo?: number;
     criterioId?: number;
   }) {
@@ -74,6 +55,21 @@ export class AvaliacaoRepository {
   async deleteAvaliacao(id: number) {
     return this.prisma.autoavaliacao.delete({
       where: { id },
+    });
+  }
+
+  async findAvaliacoesByUser(idUser: number) {
+    return this.prisma.autoavaliacao.findMany({
+      where: { idUser },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true },
+        },
+        criterio: {
+          select: { id: true, name: true, enabled: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
     });
   }
 
@@ -446,19 +442,44 @@ export class AvaliacaoRepository {
   /**
    * Creates multiple Avaliacoes in a single transaction
    */
-  async createBulkAvaliacoes(avaliacoes: CreateAvaliacaoDto[]) {
+  async createBulkAvaliacoes(avaliacoes: CreateAvaliacaoDto[]): Promise<any[]> {
     return this.prisma.$transaction(async (tx) => {
-      const createdAvaliacoes: any[] = []; // ✅ Fix: explicit type
+      const createdAvaliacoes: any[] = [];
 
       for (const avaliacao of avaliacoes) {
-        const result = await tx.autoavaliacao.create({
-          data: avaliacao,
-          include: {
-            criterio: { select: { id: true, name: true, enabled: true } },
-            user: { select: { id: true, name: true, email: true } },
-          },
-        });
-        createdAvaliacoes.push(result);
+                  // Check if autoavaliacao already exists for this user, cycle, and criterion
+          const existingAvaliacao = await tx.autoavaliacao.findUnique({
+            where: {
+              idUser_idCiclo_criterioId: {
+                idUser: avaliacao.idUser,
+                idCiclo: avaliacao.idCiclo,
+                criterioId: avaliacao.criterioId,
+              },
+            },
+          });
+
+        if (existingAvaliacao) {
+          // Update existing autoavaliacao
+          const result = await tx.autoavaliacao.update({
+            where: { id: existingAvaliacao.id },
+            data: avaliacao,
+            include: {
+              criterio: { select: { id: true, name: true, enabled: true } },
+              user: { select: { id: true, name: true, email: true } },
+            },
+          });
+          createdAvaliacoes.push(result);
+        } else {
+          // Create new autoavaliacao
+          const result = await tx.autoavaliacao.create({
+            data: avaliacao,
+            include: {
+              criterio: { select: { id: true, name: true, enabled: true } },
+              user: { select: { id: true, name: true, email: true } },
+            },
+          });
+          createdAvaliacoes.push(result);
+        }
       }
 
       return createdAvaliacoes;
@@ -468,9 +489,9 @@ export class AvaliacaoRepository {
   /**
    * Creates multiple Avaliacoes360 in a single transaction
    */
-  async createBulkAvaliacoes360(avaliacoes360: CreateAvaliacao360Dto[]) {
+  async createBulkAvaliacoes360(avaliacoes360: CreateAvaliacao360Dto[]): Promise<any[]> {
     return this.prisma.$transaction(async (tx) => {
-      const createdAvaliacoes360: any[] = []; // ✅ Fix: explicit type
+      const createdAvaliacoes360: any[] = [];
 
       for (const avaliacao360 of avaliacoes360) {
         const created = await tx.avaliacao360.create({
@@ -493,24 +514,49 @@ export class AvaliacaoRepository {
   async createBulkMixed(data: {
     autoavaliacoes?: CreateAvaliacaoDto[];
     avaliacoes360?: CreateAvaliacao360Dto[];
-  }) {
+  }): Promise<{ autoavaliacoes: any[]; avaliacoes360: any[] }> {
     return this.prisma.$transaction(async (tx) => {
       const results = {
-        autoavaliacoes: [] as any[], // ✅ Fix: explicit type
-        avaliacoes360: [] as any[], // ✅ Fix: explicit type
+        autoavaliacoes: [] as any[],
+        avaliacoes360: [] as any[],
       };
 
       // Create regular evaluations
       if (data.autoavaliacoes && data.autoavaliacoes.length > 0) {
         for (const avaliacao of data.autoavaliacoes) {
-          const result = await tx.autoavaliacao.create({
-            data: avaliacao,
-            include: {
-              criterio: { select: { id: true, name: true, enabled: true } },
-              user: { select: { id: true, name: true, email: true } },
+          // Check if autoavaliacao already exists for this user, cycle, and criterion
+          const existingAvaliacao = await tx.autoavaliacao.findUnique({
+            where: {
+              idUser_idCiclo_criterioId: {
+                idUser: avaliacao.idUser,
+                idCiclo: avaliacao.idCiclo,
+                criterioId: avaliacao.criterioId,
+              },
             },
           });
-          results.autoavaliacoes.push(result);
+
+          if (existingAvaliacao) {
+            // Update existing autoavaliacao
+            const result = await tx.autoavaliacao.update({
+              where: { id: existingAvaliacao.id },
+              data: avaliacao,
+              include: {
+                criterio: { select: { id: true, name: true, enabled: true } },
+                user: { select: { id: true, name: true, email: true } },
+              },
+            });
+            results.autoavaliacoes.push(result);
+          } else {
+            // Create new autoavaliacao
+            const result = await tx.autoavaliacao.create({
+              data: avaliacao,
+              include: {
+                criterio: { select: { id: true, name: true, enabled: true } },
+                user: { select: { id: true, name: true, email: true } },
+              },
+            });
+            results.autoavaliacoes.push(result);
+          }
         }
       }
 
@@ -536,8 +582,7 @@ export class AvaliacaoRepository {
   private getAvaliacaoIncludes() {
     return {
       criterio: { select: { id: true, name: true, enabled: true } },
-      avaliador: { select: { id: true, name: true, email: true } },
-      avaliado: { select: { id: true, name: true, email: true } },
+      user : { select: { id: true, name: true, email: true } },
     };
   }
 

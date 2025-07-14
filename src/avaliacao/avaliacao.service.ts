@@ -1,7 +1,6 @@
 import {
   Injectable,
   NotFoundException,
-  ConflictException,
   BadRequestException,
 } from "@nestjs/common";
 import { AvaliacaoRepository } from "./avaliacao.repository";
@@ -246,6 +245,10 @@ export class AvaliacaoService {
   async removeMentoring(id: number) {
     await this.findOneMentoring(id);
     return this.avaliacaoRepository.deleteMentoring(id);
+  }
+
+  findByUser(idUser: number) {
+    return this.avaliacaoRepository.findAvaliacoesByUser(idUser);
   }
 
   findByAvaliador(idAvaliador: number) {

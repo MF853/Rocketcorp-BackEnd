@@ -11,6 +11,7 @@ import { AvaliacaoService } from "./avaliacao.service";
 import {
   CreateAvaliacaoDto,
   CreateAvaliacao360Dto,
+  CreateMentoringDto,
   BulkCreateAvaliacaoDto,
 } from "./dto/create-avaliacao.dto";
 import {
@@ -57,23 +58,33 @@ export class AvaliacaoController {
   }
 
   @Get("360/avaliador/:id")
-  @ApiOperation({ summary: "Busca uma avaliação 360 pelo ID" })
+  @ApiOperation({ summary: "Lista avaliações 360 por avaliador" })
   @ApiResponse({
     status: 200,
-    description: "Avaliação 360 retornada com sucesso.",
+    description: "Avaliações 360 do avaliador retornadas com sucesso.",
   })
   find360ByAvaliadorId(@Param("id") id: string) {
-    return this.avaliacaoService.findOne360(+id);
+    return this.avaliacaoService.findAvaliacoes360ByAvaliador(+id);
   }
 
   @Get("360/avaliado/:id")
-  @ApiOperation({ summary: "Busca uma avaliação 360 pelo ID" })
+  @ApiOperation({ summary: "Lista avaliações 360 por avaliado" })
   @ApiResponse({
     status: 200,
-    description: "Avaliação 360 retornada com sucesso.",
+    description: "Avaliações 360 do avaliado retornadas com sucesso.",
   })
   find360ByAvaliadoId(@Param("id") id: string) {
-    return this.avaliacaoService.findOne360(+id);
+    return this.avaliacaoService.findAvaliacoes360ByAvaliado(+id);
+  }
+
+  @Get("360/ciclo/:id")
+  @ApiOperation({ summary: "Lista avaliações 360 por ciclo" })
+  @ApiResponse({
+    status: 200,
+    description: "Avaliações 360 do ciclo retornadas com sucesso.",
+  })
+  find360ByCicloId(@Param("id") id: string) {
+    return this.avaliacaoService.findAvaliacoes360ByCiclo(+id);
   }
 
   @Patch("360/:id")
@@ -99,15 +110,102 @@ export class AvaliacaoController {
     return this.avaliacaoService.remove360(+id);
   }
 
+  // ==================== MENTORING ENDPOINTS ====================
+
+  @Post("mentoring")
+  @ApiOperation({ summary: "Cria uma nova avaliação de mentoring" })
+  @ApiResponse({
+    status: 201,
+    description: "Avaliação de mentoring criada com sucesso.",
+  })
+  createMentoring(@Body() createMentoringDto: CreateMentoringDto) {
+    return this.avaliacaoService.createMentoring(createMentoringDto);
+  }
+
+  @Get("mentoring")
+  @ApiOperation({ summary: "Lista todas as avaliações de mentoring" })
+  @ApiResponse({
+    status: 200,
+    description: "Lista de avaliações de mentoring retornada com sucesso.",
+  })
+  findAllMentoring() {
+    return this.avaliacaoService.findAllMentoring();
+  }
+
+  @Get("mentoring/:id")
+  @ApiOperation({ summary: "Busca uma avaliação de mentoring pelo ID" })
+  @ApiResponse({
+    status: 200,
+    description: "Avaliação de mentoring retornada com sucesso.",
+  })
+  findOneMentoring(@Param("id") id: string) {
+    return this.avaliacaoService.findOneMentoring(+id);
+  }
+
+  @Get("mentoring/mentor/:id")
+  @ApiOperation({ summary: "Lista avaliações de mentoring por mentor" })
+  @ApiResponse({
+    status: 200,
+    description: "Avaliações de mentoring do mentor retornadas com sucesso.",
+  })
+  findMentoringByMentor(@Param("id") id: string) {
+    return this.avaliacaoService.findMentoringByMentor(+id);
+  }
+
+  @Get("mentoring/mentorado/:id")
+  @ApiOperation({ summary: "Lista avaliações de mentoring por mentorado" })
+  @ApiResponse({
+    status: 200,
+    description: "Avaliações de mentoring do mentorado retornadas com sucesso.",
+  })
+  findMentoringByMentorado(@Param("id") id: string) {
+    return this.avaliacaoService.findMentoringByMentorado(+id);
+  }
+
+  @Get("mentoring/ciclo/:id")
+  @ApiOperation({ summary: "Lista avaliações de mentoring por ciclo" })
+  @ApiResponse({
+    status: 200,
+    description: "Avaliações de mentoring do ciclo retornadas com sucesso.",
+  })
+  findMentoringByCiclo(@Param("id") id: string) {
+    return this.avaliacaoService.findMentoringByCiclo(+id);
+  }
+
+  @Patch("mentoring/:id")
+  @ApiOperation({ summary: "Atualiza uma avaliação de mentoring pelo ID" })
+  @ApiResponse({
+    status: 200,
+    description: "Avaliação de mentoring atualizada com sucesso.",
+  })
+  updateMentoring(
+    @Param("id") id: string,
+    @Body() updateMentoringDto: UpdateAvaliacaoDto
+  ) {
+    return this.avaliacaoService.updateMentoring(+id, updateMentoringDto);
+  }
+
+  @Delete("mentoring/:id")
+  @ApiOperation({ summary: "Remove uma avaliação de mentoring pelo ID" })
+  @ApiResponse({
+    status: 200,
+    description: "Avaliação de mentoring removida com sucesso.",
+  })
+  removeMentoring(@Param("id") id: string) {
+    return this.avaliacaoService.removeMentoring(+id);
+  }
+
+  // ==================== AUTOAVALIAÇÃO ENDPOINTS ====================
+
   @Post()
-  @ApiOperation({ summary: "Cria uma nova avaliação" })
-  @ApiResponse({ status: 201, description: "Avaliação criada com sucesso." })
+  @ApiOperation({ summary: "Cria uma nova autoavaliação" })
+  @ApiResponse({ status: 201, description: "Autoavaliação criada com sucesso." })
   create(@Body() createAvaliacaoDto: CreateAvaliacaoDto) {
     return this.avaliacaoService.create(createAvaliacaoDto);
   }
 
   @Post("bulk")
-  @ApiOperation({ summary: "Cria múltiplas avaliações em lote" })
+  @ApiOperation({ summary: "Cria múltiplas autoavaliações, avaliações 360 e mentoring em lote" })
   @ApiResponse({
     status: 201,
     description: "Avaliações criadas com sucesso.",
@@ -118,15 +216,17 @@ export class AvaliacaoController {
         created: {
           type: "object",
           properties: {
-            avaliacoes: { type: "number" },
+            autoavaliacoes: { type: "number" },
             avaliacoes360: { type: "number" },
+            mentoring: { type: "number" },
           },
         },
         data: {
           type: "object",
           properties: {
-            avaliacoes: { type: "array" },
+            autoavaliacoes: { type: "array" },
             avaliacoes360: { type: "array" },
+            mentoring: { type: "array" },
           },
         },
         errors: { type: "array", items: { type: "string" } },
@@ -172,7 +272,7 @@ export class AvaliacaoController {
   }
 
   @Post("test")
-  @ApiOperation({ summary: "Testa criação de avaliação simples" })
+  @ApiOperation({ summary: "Testa criação de autoavaliação simples" })
   testCreate(@Body() createDto: CreateAvaliacaoDto) {
     console.log("Received DTO:", createDto);
     console.log("DTO types:", {
@@ -186,27 +286,20 @@ export class AvaliacaoController {
   }
 
   @Get()
-  @ApiOperation({ summary: "Lista todas as avaliações" })
+  @ApiOperation({ summary: "Lista todas as autoavaliações" })
   @ApiResponse({
     status: 200,
-    description: "Lista de avaliações retornada com sucesso.",
+    description: "Lista de autoavaliações retornada com sucesso.",
   })
   findAll() {
     return this.avaliacaoService.findAll();
   }
 
-  @Get(":id")
-  @ApiOperation({ summary: "Busca uma avaliação pelo ID" })
-  @ApiResponse({ status: 200, description: "Avaliação retornada com sucesso." })
-  findOne(@Param("id") id: string) {
-    return this.avaliacaoService.findOne(+id);
-  }
-
   @Patch(":id")
-  @ApiOperation({ summary: "Atualiza uma avaliação pelo ID" })
+  @ApiOperation({ summary: "Atualiza uma autoavaliação pelo ID" })
   @ApiResponse({
     status: 200,
-    description: "Avaliação atualizada com sucesso.",
+    description: "Autoavaliação atualizada com sucesso.",
   })
   update(
     @Param("id") id: string,
@@ -216,42 +309,39 @@ export class AvaliacaoController {
   }
 
   @Delete(":id")
-  @ApiOperation({ summary: "Remove uma avaliação pelo ID" })
-  @ApiResponse({ status: 200, description: "Avaliação removida com sucesso." })
+  @ApiOperation({ summary: "Remove uma autoavaliação pelo ID" })
+  @ApiResponse({ status: 200, description: "Autoavaliação removida com sucesso." })
   remove(@Param("id") id: string) {
     return this.avaliacaoService.remove(+id);
   }
 
-  // ==================== QUERY ENDPOINTS ====================
+  // ==================== AUTOAVALIAÇÃO QUERY ENDPOINTS ====================
 
-  @Get("avaliador/:id")
-  @ApiOperation({ summary: "Lista avaliações por avaliador" })
+  @Get("user/:id")
+  @ApiOperation({ summary: "Lista autoavaliações por user" })
   @ApiResponse({
     status: 200,
-    description: "Avaliações do avaliador retornadas com sucesso.",
+    description: "Autoavaliações do usuário retornadas com sucesso.",
   })
-  findByAvaliador(@Param("id") id: string) {
-    return this.avaliacaoService.findByAvaliador(+id);
-  }
-
-  @Get("avaliado/:id")
-  @ApiOperation({ summary: "Lista avaliações por avaliado" })
-  @ApiResponse({
-    status: 200,
-    description: "Avaliações do avaliado retornadas com sucesso.",
-  })
-  findByAvaliado(@Param("id") id: string) {
-    return this.avaliacaoService.findByAvaliado(+id);
+  findByUser(@Param("id") id: string) {
+    return this.avaliacaoService.findByUser(+id);
   }
 
   @Get("ciclo/:id")
-  @ApiOperation({ summary: "Lista avaliações por ciclo" })
+  @ApiOperation({ summary: "Lista autoavaliações por ciclo" })
   @ApiResponse({
     status: 200,
-    description: "Avaliações do ciclo retornadas com sucesso.",
+    description: "Autoavaliações do ciclo retornadas com sucesso.",
   })
   findByCiclo(@Param("id") id: string) {
     return this.avaliacaoService.findByCiclo(+id);
+  }
+
+  @Get(":id")
+  @ApiOperation({ summary: "Busca uma autoavaliação pelo ID" })
+  @ApiResponse({ status: 200, description: "Autoavaliação retornada com sucesso." })
+  findOne(@Param("id") id: string) {
+    return this.avaliacaoService.findOne(+id);
   }
 
   // ==================== ANALYTICS ENDPOINTS ====================
