@@ -21,16 +21,16 @@ export class AvaliacaoService {
   async create(createAvaliacaoDto: CreateAvaliacaoDto) {
     if (createAvaliacaoDto.criterioId !== undefined) {
       const exists = await this.avaliacaoRepository.avaliacaoExists(
-        createAvaliacaoDto.idAvaliador,
-        createAvaliacaoDto.idAvaliado,
+        createAvaliacaoDto.idUser,
         createAvaliacaoDto.idCiclo,
         createAvaliacaoDto.criterioId
       );
 
       if (exists) {
-        throw new ConflictException(
-          "Já existe uma avaliação para este avaliador, avaliado, ciclo e critério"
+        console.warn(
+          `Auto Avaliação já existe: O usuário ${createAvaliacaoDto.idUser} já avaliou o critério ${createAvaliacaoDto.criterioId} no ciclo.`
         );
+        return null;
       }
     }
 
@@ -43,11 +43,12 @@ export class AvaliacaoService {
       createAvaliacao360Dto.idAvaliado,
       createAvaliacao360Dto.idCiclo
     );
-
+    
     if (exists) {
-      throw new ConflictException(
-        "Já existe uma avaliação 360 para este avaliador, avaliado e ciclo"
+      console.warn(
+        `Avaliação 360 já existe: O usuário ${createAvaliacao360Dto.idAvaliador} já fez uma referência para o usuário ${createAvaliacao360Dto.idAvaliado} no ciclo.`
       );
+      return null; 
     }
 
     return this.avaliacaoRepository.createAvaliacao360(createAvaliacao360Dto);
@@ -76,14 +77,13 @@ export class AvaliacaoService {
         for (const avaliacao of bulkCreateDto.avaliacoes) {
           if (avaliacao.criterioId !== undefined) {
             const exists = await this.avaliacaoRepository.avaliacaoExists(
-              avaliacao.idAvaliador,
-              avaliacao.idAvaliado,
+              avaliacao.idUser,
               avaliacao.idCiclo,
               avaliacao.criterioId
             );
             if (exists) {
               results.errors.push(
-                `Já existe uma avaliação para avaliador ${avaliacao.idAvaliador}, avaliado ${avaliacao.idAvaliado}, ciclo ${avaliacao.idCiclo} e critério ${avaliacao.criterioId}`
+                `Já existe uma avaliação para avaliador ${avaliacao.idUser}, ciclo ${avaliacao.idCiclo} e critério ${avaliacao.criterioId}`
               );
             }
           }

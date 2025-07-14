@@ -30,17 +30,7 @@ export class CreateAvaliacaoDto {
   @Transform(({ value }) => Number(value)) // Convert string to number
   @IsNumber()
   @IsPositive()
-  idAvaliador: number;
-
-  @ApiProperty({
-    description: "ID do usuário que está sendo avaliado",
-    example: 2,
-    type: Number,
-  })
-  @Transform(({ value }) => Number(value))
-  @IsNumber()
-  @IsPositive()
-  idAvaliado: number;
+  idUser: number;
 
   @ApiProperty({
     description: "ID do ciclo de avaliação",
@@ -191,8 +181,7 @@ export class BulkCreateAvaliacaoDto {
     required: false,
     example: [
       {
-        idAvaliador: 1,
-        idAvaliado: 2,
+        idUser: 1,
         idCiclo: 1,
         nota: 4,
         justificativa: "Excelente desempenho técnico e liderança.",

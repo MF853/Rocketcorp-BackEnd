@@ -144,8 +144,7 @@ export class AvaliacaoController {
 
     if (bulkCreateDto.avaliacoes?.length) {
       console.log("First avaliacao types:", {
-        idAvaliador: typeof bulkCreateDto.avaliacoes[0].idAvaliador,
-        idAvaliado: typeof bulkCreateDto.avaliacoes[0].idAvaliado,
+        idAvaliador: typeof bulkCreateDto.avaliacoes[0].idUser,
         idCiclo: typeof bulkCreateDto.avaliacoes[0].idCiclo,
         nota: typeof bulkCreateDto.avaliacoes[0].nota,
         criterioId: typeof bulkCreateDto.avaliacoes[0].criterioId,
@@ -169,8 +168,7 @@ export class AvaliacaoController {
   testCreate(@Body() createDto: CreateAvaliacaoDto) {
     console.log("Received DTO:", createDto);
     console.log("DTO types:", {
-      idAvaliador: typeof createDto.idAvaliador,
-      idAvaliado: typeof createDto.idAvaliado,
+      idUser: typeof createDto.idUser,
       idCiclo: typeof createDto.idCiclo,
       nota: typeof createDto.nota,
       criterioId: typeof createDto.criterioId,

@@ -11,8 +11,7 @@ import {
 import { Prisma } from "@prisma/client";
 
 const avaliacaoInclude = {
-  avaliador: { select: { id: true, name: true, email: true } },
-  avaliado: { select: { id: true, name: true, email: true } },
+  user: { select: { id: true, name: true, email: true } },
   criterio: { select: { id: true, name: true, enabled: true } },
 };
 
@@ -21,7 +20,7 @@ const avaliacao360Include = {
   avaliado: { select: { id: true, name: true, email: true } },
 };
 
-type AvaliacaoWithIncludes = Prisma.AvaliacaoGetPayload<{
+type AvaliacaoWithIncludes = Prisma.AutoavaliacaoGetPayload<{
   include: typeof avaliacaoInclude;
 }>;
 type Avaliacao360WithIncludes = Prisma.Avaliacao360GetPayload<{
@@ -33,7 +32,7 @@ export class AvaliacaoRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async createAvaliacao(data: CreateAvaliacaoDto) {
-    return this.prisma.avaliacao.create({
+    return this.prisma.autoavaliacao.create({
       data,
       include: this.getAvaliacaoIncludes(),
     });
@@ -45,7 +44,7 @@ export class AvaliacaoRepository {
     idCiclo?: number;
     criterioId?: number;
   }) {
-    return this.prisma.avaliacao.findMany({
+    return this.prisma.autoavaliacao.findMany({
       where: filters,
       include: this.getAvaliacaoIncludes(),
       orderBy: { createdAt: "desc" },
@@ -53,14 +52,14 @@ export class AvaliacaoRepository {
   }
 
   async findAvaliacaoById(id: number) {
-    return this.prisma.avaliacao.findUnique({
+    return this.prisma.autoavaliacao.findUnique({
       where: { id },
       include: this.getAvaliacaoIncludes(),
     });
   }
 
   async updateAvaliacao(id: number, data: UpdateAvaliacaoDto) {
-    return this.prisma.avaliacao.update({
+    return this.prisma.autoavaliacao.update({
       where: { id },
       data,
       include: this.getAvaliacaoIncludes(),
@@ -68,16 +67,16 @@ export class AvaliacaoRepository {
   }
 
   async deleteAvaliacao(id: number) {
-    return this.prisma.avaliacao.delete({
+    return this.prisma.autoavaliacao.delete({
       where: { id },
     });
   }
 
-  async findAvaliacoesByAvaliador(idAvaliador: number) {
-    return this.prisma.avaliacao.findMany({
-      where: { idAvaliador },
+  async findAvaliacoesByAvaliador(idUser: number) {
+    return this.prisma.autoavaliacao.findMany({
+      where: { idUser },
       include: {
-        avaliado: {
+        user: {
           select: { id: true, name: true, email: true },
         },
         criterio: {
@@ -88,11 +87,11 @@ export class AvaliacaoRepository {
     });
   }
 
-  async findAvaliacoesByAvaliado(idAvaliado: number) {
-    return this.prisma.avaliacao.findMany({
-      where: { idAvaliado },
+  async findAvaliacoesByAvaliado(idUser: number) {
+    return this.prisma.autoavaliacao.findMany({
+      where: { idUser },
       include: {
-        avaliador: {
+        user: {
           select: { id: true, name: true, email: true },
         },
         criterio: {
@@ -104,7 +103,7 @@ export class AvaliacaoRepository {
   }
 
   async findAvaliacoesByCiclo(idCiclo: number) {
-    return this.prisma.avaliacao.findMany({
+    return this.prisma.autoavaliacao.findMany({
       where: { idCiclo },
       include: this.getAvaliacaoIncludes(),
       orderBy: { createdAt: "desc" },
@@ -112,15 +111,13 @@ export class AvaliacaoRepository {
   }
 
   async avaliacaoExists(
-    idAvaliador: number,
-    idAvaliado: number,
+    idUser: number,
     idCiclo: number,
     criterioId: number
   ) {
-    const count = await this.prisma.avaliacao.count({
+    const count = await this.prisma.autoavaliacao.count({
       where: {
-        idAvaliador,
-        idAvaliado,
+        idUser,
         idCiclo,
         criterioId,
       },
@@ -217,9 +214,9 @@ export class AvaliacaoRepository {
   async getCycleStatistics(idCiclo: number) {
     const [totalAvaliacoes, totalAvaliacoes360, avgNota, avgNota360] =
       await Promise.all([
-        this.prisma.avaliacao.count({ where: { idCiclo } }),
+        this.prisma.autoavaliacao.count({ where: { idCiclo } }),
         this.prisma.avaliacao360.count({ where: { idCiclo } }),
-        this.prisma.avaliacao.aggregate({
+        this.prisma.autoavaliacao.aggregate({
           where: { idCiclo, nota: { not: null } },
           _avg: { nota: true },
         }),
@@ -239,14 +236,14 @@ export class AvaliacaoRepository {
 
   async getUserPerformanceSummary(userId: number, idCiclo?: number) {
     const whereClause = idCiclo
-      ? { idAvaliado: userId, idCiclo }
-      : { idAvaliado: userId };
+      ? { idUser: userId, idCiclo }
+      : { idUser: userId };
 
     const [avaliacoesRecebidas, avaliacoes360Recebidas] = await Promise.all([
-      this.prisma.avaliacao.findMany({
+      this.prisma.autoavaliacao.findMany({
         where: whereClause,
         include: {
-          avaliador: { select: { id: true, name: true } },
+          user: { select: { id: true, name: true } },
           criterio: { select: { id: true, name: true } },
         },
       }),
@@ -275,7 +272,7 @@ export class AvaliacaoRepository {
     return this.prisma.$transaction(async (tx) => {
       const results: AvaliacaoWithIncludes[] = [];
       for (const avaliacao of avaliacoes) {
-        const result = await tx.avaliacao.create({
+        const result = await tx.autoavaliacao.create({
           data: avaliacao,
           include: this.getAvaliacaoIncludes(),
         });
@@ -321,7 +318,7 @@ export class AvaliacaoRepository {
       // Create regular evaluations
       if (data.avaliacoes && data.avaliacoes.length > 0) {
         for (const avaliacao of data.avaliacoes) {
-          const result = await tx.avaliacao.create({
+          const result = await tx.autoavaliacao.create({
             data: avaliacao,
             include: this.getAvaliacaoIncludes(),
           });

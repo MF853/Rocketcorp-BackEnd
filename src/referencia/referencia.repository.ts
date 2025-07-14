@@ -8,7 +8,7 @@ import {
 import { UpdateReferenciaDto } from "./dto/update-referencia.dto";
 
 // Define the return types using Prisma payload types
-export type ReferenciaWithBothUsers = Prisma.referenciaGetPayload<{
+export type ReferenciaWithBothUsers = Prisma.ReferenciaGetPayload<{
   include: {
     referenciador: {
       select: {
@@ -27,7 +27,7 @@ export type ReferenciaWithBothUsers = Prisma.referenciaGetPayload<{
   };
 }>;
 
-export type ReferenciaWithReferenciador = Prisma.referenciaGetPayload<{
+export type ReferenciaWithReferenciador = Prisma.ReferenciaGetPayload<{
   include: {
     referenciador: {
       select: {
@@ -39,7 +39,7 @@ export type ReferenciaWithReferenciador = Prisma.referenciaGetPayload<{
   };
 }>;
 
-export type ReferenciaWithReferenciado = Prisma.referenciaGetPayload<{
+export type ReferenciaWithReferenciado = Prisma.ReferenciaGetPayload<{
   include: {
     referenciado: {
       select: {
