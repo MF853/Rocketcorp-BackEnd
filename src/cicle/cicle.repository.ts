@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Prisma, Ciclo } from "@prisma/client";
+import { Ciclo } from "@prisma/client";
 import { UpdateCicleDto } from "./dto/update-cicle.dto";
 import { CreateCicleDto } from "./dto/create-cicle.dto";
 
@@ -31,13 +31,13 @@ export class CicleRepository {
         year: Number(data.year),
         period: Number(data.period),
         status: data.status,
-        dataAberturaAvaliacao: "2025-07-11T10:30:45-03:00",      
-        dataFechamentoAvaliacao: "2025-07-11T10:30:45-03:00",    
-        dataAberturaRevisaoGestor: "2025-07-11T10:30:45-03:00",  
+        dataAberturaAvaliacao: "2025-07-11T10:30:45-03:00",
+        dataFechamentoAvaliacao: "2025-07-11T10:30:45-03:00",
+        dataAberturaRevisaoGestor: "2025-07-11T10:30:45-03:00",
         dataFechamentoRevisaoGestor: "2025-07-11T10:30:45-03:00",
-        dataAberturaRevisaoComite: "2025-07-11T10:30:45-03:00",  
+        dataAberturaRevisaoComite: "2025-07-11T10:30:45-03:00",
         dataFechamentoRevisaoComite: "2025-07-11T10:30:45-03:00",
-        dataFinalizacao: "2025-07-11T10:30:45-03:00",     
+        dataFinalizacao: "2025-07-11T10:30:45-03:00",
       },
     });
   }
@@ -67,6 +67,13 @@ export class CicleRepository {
         year: data.year !== undefined ? Number(data.year) : undefined,
         period: data.period !== undefined ? Number(data.period) : undefined,
         status: data.status,
+        dataAberturaAvaliacao: data.dataAberturaAvaliacao,
+        dataFechamentoAvaliacao: data.dataFechamentoAvaliacao,
+        dataAberturaRevisaoGestor: data.dataAberturaRevisaoGestor,
+        dataFechamentoRevisaoGestor: data.dataFechamentoRevisaoGestor,
+        dataAberturaRevisaoComite: data.dataAberturaRevisaoComite,
+        dataFechamentoRevisaoComite: data.dataFechamentoRevisaoComite,
+        dataFinalizacao: data.dataFinalizacao,
       },
     });
   }
