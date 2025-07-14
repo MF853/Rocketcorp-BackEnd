@@ -20,6 +20,12 @@ export class EqualizacaoResponseDto {
   idAvaliado: string;
 
   @ApiProperty({
+    description: "ID do ciclo de equalização",
+    example: "1",
+  })
+  idCiclo: string;
+
+  @ApiProperty({
     description: "Nome do usuário avaliado",
     example: "Luan Bezerra",
   })

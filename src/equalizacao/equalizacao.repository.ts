@@ -9,10 +9,7 @@ import { StatusEqualizacao } from "@prisma/client";
 export class EqualizacaoRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getEqualizacoesByCycle(
-    idCiclo: number
-  ): Promise<EqualizacaoResponseDto[]> {
-    // Get all users with evaluations in the cycle
+  async getEqualizacoesByCycle(idCiclo: number) {
     const users = await this.prisma.user.findMany({
       where: {
         OR: [
@@ -33,55 +30,28 @@ export class EqualizacaoRepository {
           where: { idCiclo },
           select: { resumo: true },
         },
-        equalizacoesRecebidas: true,
+        equalizacoesRecebidas: {
+          where: { idCiclo },
+        },
       },
     });
 
-    return users
-      .map((user) => {
-        // Check if user has an existing equalizacao for this specific cycle
-        const existingEqualizacao = user.equalizacoesRecebidas.find(
-          (eq) => eq.idAvaliado === user.id && eq.idCiclo === idCiclo
-        );
+    return users.map((user) => {
+      const existingEqualizacao = user.equalizacoesRecebidas.find(
+        (eq) => eq.idAvaliado === user.id && eq.idCiclo === idCiclo
+      );
 
-        if (existingEqualizacao) {
-          // Return existing equalizacao data
-          return {
-            idEqualizacao: existingEqualizacao.id.toString(),
-            idAvaliador: existingEqualizacao.idAvaliador.toString(),
-            idAvaliado: existingEqualizacao.idAvaliado.toString(),
-            nomeAvaliado: user.name,
-            cargoAvaliado: user.cargo || "Desenvolvedor",
-            notaAutoavaliacao: existingEqualizacao.mediaAutoavaliacao,
-            notaGestor: existingEqualizacao.mediaAvaliacaoGestor,
-            notaAvaliacao360: existingEqualizacao.mediaAvaliacao360,
-            notaFinal: existingEqualizacao.notaFinal,
-            justificativa: existingEqualizacao.justificativa,
-            resumoIA: user.ResumoIA?.[0]?.resumo || "",
-            status:
-              existingEqualizacao.status === StatusEqualizacao.FINALIZADO
-                ? "Finalizado"
-                : ("Pendente" as "Finalizado" | "Pendente"),
-          };
-        } else {
-          // Return placeholder data - will be filled by service layer
-          return {
-            idEqualizacao: `temp_${user.id}_${idCiclo}`,
-            idAvaliador: user.id.toString(),
-            idAvaliado: user.id.toString(),
-            nomeAvaliado: user.name,
-            cargoAvaliado: user.cargo || "Desenvolvedor",
-            notaAutoavaliacao: null,
-            notaGestor: null,
-            notaAvaliacao360: null,
-            notaFinal: null,
-            justificativa: null,
-            resumoIA: user.ResumoIA?.[0]?.resumo || "",
-            status: "Pendente" as "Pendente" | "Finalizado",
-          };
-        }
-      })
-      .sort((a, b) => a.nomeAvaliado.localeCompare(b.nomeAvaliado));
+      return {
+        user: {
+          id: user.id,
+          name: user.name,
+          cargo: user.cargo || "Desenvolvedor",
+          resumoIA: user.ResumoIA?.[0]?.resumo || "",
+        },
+        existingEqualizacao,
+        idCiclo,
+      };
+    });
   }
 
   async createEqualizacao(
@@ -90,7 +60,6 @@ export class EqualizacaoRepository {
     mediaAvaliacaoGestor: number,
     mediaAvaliacao360: number
   ): Promise<EqualizacaoResponseDto> {
-    // Create the equalizacao with the provided statistics
     const createdEqualizacao = await this.prisma.equalizacao.create({
       data: {
         idAvaliador: createEqualizacaoDto.idAvaliador,
@@ -110,7 +79,6 @@ export class EqualizacaoRepository {
       },
     });
 
-    // Get resumo IA if exists
     const resumoIA = await this.prisma.resumoIA.findUnique({
       where: {
         userId_idCiclo: {
@@ -121,11 +89,11 @@ export class EqualizacaoRepository {
       select: { resumo: true },
     });
 
-    // Return the EqualizacaoResponseDto format
     return {
       idEqualizacao: createdEqualizacao.id.toString(),
       idAvaliador: createdEqualizacao.idAvaliador.toString(),
       idAvaliado: createdEqualizacao.idAvaliado.toString(),
+      idCiclo: createdEqualizacao.idCiclo.toString(),
       nomeAvaliado: createdEqualizacao.avaliado.name,
       cargoAvaliado: createdEqualizacao.avaliado.cargo || "Desenvolvedor",
       notaAutoavaliacao: createdEqualizacao.mediaAutoavaliacao,
@@ -142,7 +110,6 @@ export class EqualizacaoRepository {
     id: number,
     updateEqualizacaoDto: UpdateEqualizacaoDto
   ): Promise<EqualizacaoResponseDto> {
-    // Check if equalizacao exists
     const existingEqualizacao = await this.prisma.equalizacao.findUnique({
       where: { id },
       include: {
@@ -156,7 +123,6 @@ export class EqualizacaoRepository {
       throw new Error(`Equalizacao with ID ${id} not found`);
     }
 
-    // Update only the provided fields
     const updatedEqualizacao = await this.prisma.equalizacao.update({
       where: { id },
       data: {
@@ -174,7 +140,6 @@ export class EqualizacaoRepository {
       },
     });
 
-    // Get resumo IA if exists
     const resumoIA = await this.prisma.resumoIA.findUnique({
       where: {
         userId_idCiclo: {
@@ -185,11 +150,11 @@ export class EqualizacaoRepository {
       select: { resumo: true },
     });
 
-    // Return the EqualizacaoResponseDto format
     return {
       idEqualizacao: updatedEqualizacao.id.toString(),
       idAvaliador: updatedEqualizacao.idAvaliador.toString(),
       idAvaliado: updatedEqualizacao.idAvaliado.toString(),
+      idCiclo: updatedEqualizacao.idCiclo.toString(),
       nomeAvaliado: updatedEqualizacao.avaliado.name,
       cargoAvaliado: updatedEqualizacao.avaliado.cargo || "Desenvolvedor",
       notaAutoavaliacao: updatedEqualizacao.mediaAutoavaliacao,

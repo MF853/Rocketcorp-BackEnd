@@ -132,6 +132,26 @@ export class EqualizacaoController {
   ): Promise<EqualizacaoResponseDto[]> {
     return this.equalizacaoService.getEqualizacoesByCycle(+cicloId);
   }
+
+  @Get("current-cycle")
+  @ApiOperation({
+    summary: "Get equalizações for current cycle in revisao comite phase",
+    description:
+      "Returns equalizações for the cycle that is currently in 'revisao comite' phase based on current date",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Equalizações for current cycle in revisao comite",
+    type: [EqualizacaoResponseDto],
+  })
+  @ApiResponse({
+    status: 404,
+    description: "No cycle found in 'revisao comite' phase for current date",
+  })
+  async getCurrentCycleInRevisao(): Promise<EqualizacaoResponseDto[]> {
+    return this.equalizacaoService.getEqualizacoesCycleInRevisao();
+  }
+
   @Get()
   findAll() {
     return this.equalizacaoService.findAll();

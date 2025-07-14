@@ -224,5 +224,6 @@ model Equalizacao {
   avaliado             User              @relation("AvaliadoEqualizacao", fields: [idAvaliado], references: [id], onDelete: Restrict)
   ciclo                Ciclo             @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
 
+  @@unique([idAvaliado, idCiclo])
   @@map("equalizacoes")
 }
