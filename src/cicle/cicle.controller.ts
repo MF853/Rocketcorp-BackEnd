@@ -43,6 +43,16 @@ export class CicleController {
     return this.cicleService.findOne(+id);
   }
 
+  @Get(":id/users")
+  @ApiOperation({ summary: "Lista todos os colaboradores de um ciclo" })
+  @ApiResponse({
+    status: 200,
+    description: "Colaboradores retornados com sucesso.",
+  })
+  async getUsersByCiclo(@Param("id") id: string) {
+    return this.cicleService.getUsersByCiclo(+id);
+  }
+
   @Patch(":id")
   @ApiOperation({ summary: "Atualiza um ciclo por ID" })
   @ApiResponse({ status: 200, description: "Ciclo atualizado com sucesso" })

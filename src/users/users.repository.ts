@@ -13,9 +13,9 @@ const userInclude = {
 export class UsersRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: any) {
+  async create(data: Prisma.UserCreateInput) {
     return this.prisma.user.create({
-      data
+      data,
     });
   }
 
@@ -191,6 +191,22 @@ export class UsersRepository {
     return validStatistics.sort((a, b) =>
       a.user.name.localeCompare(b.user.name)
     );
+  }
+
+  async findUsersWithAutoavaliacaoByCiclo(idCiclo: number) {
+    // Busca todos os usuários que fizeram autoavaliação no ciclo
+    const autoavaliacoes = await this.prisma.autoavaliacao.findMany({
+      where: { idCiclo },
+      select: { idUser: true },
+      distinct: ["idUser"],
+    });
+    const userIds = autoavaliacoes.map((a) => a.idUser);
+    if (userIds.length === 0) return [];
+    return this.prisma.user.findMany({
+      where: { id: { in: userIds } },
+      include: this.getUserIncludes(),
+      orderBy: { name: "asc" },
+    });
   }
 
   private getUserIncludes() {

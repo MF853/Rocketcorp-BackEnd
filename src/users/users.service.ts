@@ -72,4 +72,8 @@ export class UsersService {
   ): Promise<UserStatisticsResponseDto[]> {
     return this.usersRepository.getAllUsersStatisticsByCycle(idCiclo);
   }
+
+  async findUsersWithAutoavaliacaoByCiclo(idCiclo: number) {
+    return this.usersRepository.findUsersWithAutoavaliacaoByCiclo(idCiclo);
+  }
 }

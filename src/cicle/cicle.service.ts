@@ -2,10 +2,14 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { CicleRepository } from "./cicle.repository";
 import { CreateCicleDto } from "./dto/create-cicle.dto";
 import { UpdateCicleDto } from "./dto/update-cicle.dto";
+import { UsersService } from "../users/users.service";
 
 @Injectable()
 export class CicleService {
-  constructor(private readonly cicleRepository: CicleRepository) {}
+  constructor(
+    private readonly cicleRepository: CicleRepository,
+    private readonly usersService: UsersService
+  ) {}
   async create(createCicleDto: CreateCicleDto) {
     await this.cicleRepository.create(createCicleDto);
     return "Ciclo criado com sucesso";
@@ -58,13 +62,13 @@ export class CicleService {
           year: year.toString(),
           period: period.toString(),
           status: "aberto",
-          dataAberturaAvaliacao: "2025-07-11T10:30:45-03:00",      
-          dataFechamentoAvaliacao: "2025-07-11T10:30:45-03:00",    
-          dataAberturaRevisaoGestor: "2025-07-11T10:30:45-03:00",  
+          dataAberturaAvaliacao: "2025-07-11T10:30:45-03:00",
+          dataFechamentoAvaliacao: "2025-07-11T10:30:45-03:00",
+          dataAberturaRevisaoGestor: "2025-07-11T10:30:45-03:00",
           dataFechamentoRevisaoGestor: "2025-07-11T10:30:45-03:00",
-          dataAberturaRevisaoComite: "2025-07-11T10:30:45-03:00",  
+          dataAberturaRevisaoComite: "2025-07-11T10:30:45-03:00",
           dataFechamentoRevisaoComite: "2025-07-11T10:30:45-03:00",
-          dataFinalizacao: "2025-07-11T10:30:45-03:00",  
+          dataFinalizacao: "2025-07-11T10:30:45-03:00",
         });
       }
 
@@ -76,5 +80,10 @@ export class CicleService {
     await this.findOne(id);
     await this.cicleRepository.update(id, updateCicleDto);
     return "Ciclo atualizado com sucesso";
+  }
+
+  async getUsersByCiclo(id: number) {
+    // Retorna apenas os usuários que fizeram autoavaliação no ciclo
+    return this.usersService.findUsersWithAutoavaliacaoByCiclo(id);
   }
 }
