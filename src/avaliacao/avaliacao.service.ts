@@ -295,15 +295,19 @@ export class AvaliacaoService {
     return this.avaliacaoRepository.getUserPerformanceSummary(userId, idCiclo);
   }
 
-  async getGestorCiclo(idCiclo: number) {
-    const avaliacoes = await this.avaliacaoRepository.findAvaliacoesByCiclo(idCiclo);
-
+  async getGestorCiclo(gestorId: number, idCiclo: number) {
+    const avaliacoes = await this.avaliacaoRepository.findAvaliacoesByGestorCiclo(gestorId, idCiclo);
+    console.log(`📊 Avaliações encontradas para gestor ${gestorId} no ciclo ${idCiclo}:`, avaliacoes.length);
+    for (const a of avaliacoes) {
+      console.log(`Avaliação: ${a.id}, Avaliado: ${a.user.name}, Nota: ${a.nota}, Nota Gestor: ${a.notaGestor}`);
+    }
     // Group by user
     const grouped = new Map<number, any>();
     for (const a of avaliacoes) {
       const userId = a.user.id;
       if (!grouped.has(userId)) {
         grouped.set(userId, {
+          id: userId,
           name: a.user.name,
           cargo: a.user.cargo,
           notas: [],

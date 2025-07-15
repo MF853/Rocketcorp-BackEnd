@@ -351,14 +351,14 @@ export class AvaliacaoController {
     return this.avaliacaoService.findOne(+id);
   }
 
-  @Get("gestor/ciclo/:id")
+  @Get("gestor/:gestorId/ciclo/:id")
   @ApiOperation({ summary: "Lista avaliações agrupadas por usuário para o ciclo (gestor view)" })
   @ApiResponse({
     status: 200,
     description: "Lista agrupada por usuário retornada com sucesso.",
   })
-  async getGestorCiclo(@Param("id") id: string) {
-    return this.avaliacaoService.getGestorCiclo(+id);
+  async getGestorCiclo(@Param("gestorId") gestorId: string, @Param("id") id: string) {
+    return this.avaliacaoService.getGestorCiclo(+gestorId, +id);
   }
 
   // ==================== ANALYTICS ENDPOINTS ====================

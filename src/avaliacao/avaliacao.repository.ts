@@ -615,4 +615,17 @@ export class AvaliacaoRepository {
   async createBulk(data: BulkCreateAvaliacaoDto) {
     return this.createBulkMixed(data);
   }
+
+  async findAvaliacoesByGestorCiclo(gestorId: number, idCiclo: number) {
+    return this.prisma.autoavaliacao.findMany({
+      where: {
+        idCiclo,
+        user: {
+          gestorId: gestorId,
+        },
+      },
+      include: this.getAvaliacaoIncludes(),
+      orderBy: { createdAt: "desc" },
+    });
+  }
 }

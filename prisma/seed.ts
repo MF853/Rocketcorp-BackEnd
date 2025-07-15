@@ -136,6 +136,7 @@ async function main() {
       cargo: "Desenvolvimento",
       unidade: "Recife",
       trilhaId: devTrilha.id,
+      gestorId: null,
     },
     {
       name: "Alice Cadete",
@@ -145,6 +146,7 @@ async function main() {
       cargo: "Desenvolvimento",
       unidade: "Recife",
       trilhaId: devTrilha.id,
+      gestorId: null,
     },
     {
       name: "Arthur Lins",
@@ -154,6 +156,7 @@ async function main() {
       cargo: "Análise de Dados",
       unidade: "São Paulo",
       trilhaId: dadosTrilha.id,
+      gestorId: 2, // Alice as gestor
     },
     {
       name: "Erico Chen",
@@ -163,6 +166,7 @@ async function main() {
       cargo: "Infraestrutura",
       unidade: "Belo Horizonte",
       trilhaId: infraTrilha.id,
+      gestorId: 2, // Alice as gestor
     },
     {
       name: "Luan Bezerra",
@@ -172,6 +176,7 @@ async function main() {
       cargo: "Desenvolvimento",
       unidade: "Recife",
       trilhaId: devTrilha.id,
+      gestorId: 2, // Alice as gestor
     },
     {
       name: "José Mário",
@@ -181,6 +186,7 @@ async function main() {
       cargo: "Gestão",
       unidade: "Rio de Janeiro",
       trilhaId: gestaoTrilha.id,
+      gestorId: null,
     },
     {
       name: "Maria Santos",
@@ -190,6 +196,7 @@ async function main() {
       cargo: "Desenvolvimento",
       unidade: "São Paulo",
       trilhaId: devTrilha.id,
+      gestorId: 2, // Alice as gestor
     },
     {
       name: "Pedro Costa",
@@ -199,6 +206,7 @@ async function main() {
       cargo: "Análise de Dados",
       unidade: "Porto Alegre",
       trilhaId: dadosTrilha.id,
+      gestorId: 2, // Alice as gestor
     },
     {
       name: "Ana Oliveira",
@@ -208,6 +216,7 @@ async function main() {
       cargo: "Infraestrutura",
       unidade: "Curitiba",
       trilhaId: infraTrilha.id,
+      gestorId: 2, // Alice as gestor
     },
     {
       name: "Carlos Silva",
@@ -217,6 +226,7 @@ async function main() {
       cargo: "Gestão",
       unidade: "Rio de Janeiro",
       trilhaId: gestaoTrilha.id,
+      gestorId: null,
     },
   ];
   const users: User[] = await prisma.$transaction(
@@ -565,6 +575,66 @@ async function main() {
         justificativaGestor:
           "Qualidade técnica excepcional em todas as entregas.",
       },
+
+      // Ana Oliveira (users[8]) - Infraestrutura
+      {
+        idUser: users[8].id,
+        idCiclo: cicloQ1_2025.id,
+        criterioId: infraTrilha.id ? allCriterios.find((c) => c.trilhaId === infraTrilha.id && c.name === "Produtividade")?.id : undefined,
+        nota: 4.1,
+        justificativa: "Tenho buscado automatizar processos e melhorar a infraestrutura.",
+        notaGestor: 4.3,
+        justificativaGestor: "Boa evolução em automação e confiabilidade dos sistemas.",
+      },
+      {
+        idUser: users[8].id,
+        idCiclo: cicloQ1_2025.id,
+        criterioId: infraTrilha.id ? allCriterios.find((c) => c.trilhaId === infraTrilha.id && c.name === "Organização")?.id : undefined,
+        nota: 4.0,
+        justificativa: "Organizo bem as tarefas e mantenho a documentação atualizada.",
+        notaGestor: 4.2,
+        justificativaGestor: "Documentação sempre em dia e processos claros.",
+      },
+
+      // Erico Chen (users[3]) - Infraestrutura
+      {
+        idUser: users[3].id,
+        idCiclo: cicloQ1_2025.id,
+        criterioId: infraTrilha.id ? allCriterios.find((c) => c.trilhaId === infraTrilha.id && c.name === "Qualidade")?.id : undefined,
+        nota: 4.4,
+        justificativa: "Busco sempre entregar soluções estáveis e seguras.",
+        notaGestor: 4.5,
+        justificativaGestor: "Entrega técnica consistente e confiável.",
+      },
+      {
+        idUser: users[3].id,
+        idCiclo: cicloQ1_2025.id,
+        criterioId: infraTrilha.id ? allCriterios.find((c) => c.trilhaId === infraTrilha.id && c.name === "Trabalho em Equipe")?.id : undefined,
+        nota: 4.2,
+        justificativa: "Colaboro com a equipe para garantir a estabilidade dos sistemas.",
+        notaGestor: 4.1,
+        justificativaGestor: "Bom trabalho em equipe, sempre disposto a ajudar.",
+      },
+
+      // Arthur Lins (users[2]) - Análise de Dados
+      {
+        idUser: users[2].id,
+        idCiclo: cicloQ1_2025.id,
+        criterioId: dadosTrilha.id ? allCriterios.find((c) => c.trilhaId === dadosTrilha.id && c.name === "Foco no Cliente")?.id : undefined,
+        nota: 4.3,
+        justificativa: "Procuro alinhar as análises com as necessidades do cliente.",
+        notaGestor: 4.4,
+        justificativaGestor: "Entende bem as demandas do cliente e entrega valor.",
+      },
+      {
+        idUser: users[2].id,
+        idCiclo: cicloQ1_2025.id,
+        criterioId: dadosTrilha.id ? allCriterios.find((c) => c.trilhaId === dadosTrilha.id && c.name === "Produtividade")?.id : undefined,
+        nota: 4.0,
+        justificativa: "Mantenho boa produtividade mesmo em projetos complexos.",
+        notaGestor: 4.2,
+        justificativaGestor: "Produtivo e focado em resultados.",
+      },
     ],
   });
   console.log("✅ Autoavaliações criadas.");
@@ -671,7 +741,7 @@ main()
     // Garante que a conexão com o banco de dados seja fechada
     prisma
       .$disconnect()
-      .then(() => {})
+      .then(() => { })
       .catch((e) => {
         console.error("Erro ao desconectar do banco de dados:", e);
       });
