@@ -54,10 +54,15 @@ export class UsersService {
       let novoGestorId: number | null = null;
       if (updateUserDto.idEquipe !== null) {
         // Buscar equipe para pegar o gestor
-        const equipe = await this.usersRepository.findEquipeById(updateUserDto.idEquipe);
+        const equipe = await this.usersRepository.findEquipeById(
+          updateUserDto.idEquipe
+        );
         novoGestorId = equipe?.idGestor ?? null;
       }
-      return this.usersRepository.update(id, { ...updateUserDto, gestorId: novoGestorId });
+      return this.usersRepository.update(id, {
+        ...updateUserDto,
+        gestorId: novoGestorId,
+      });
     }
     return this.usersRepository.update(id, updateUserDto);
   }
@@ -89,5 +94,13 @@ export class UsersService {
 
   async getMembrosAndGestorByEquipe(equipeId: number) {
     return this.usersRepository.findMembrosAndGestorByEquipe(equipeId);
+  }
+
+  async findMentores() {
+    return this.usersRepository.findMentores();
+  }
+
+  async findLideradosByGestor(gestorId: number) {
+    return this.usersRepository.findLideradosByGestor(gestorId);
   }
 }

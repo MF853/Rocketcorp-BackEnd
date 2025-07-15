@@ -16,7 +16,7 @@ export class UsersRepository {
 
   async create(data: any) {
     return this.prisma.user.create({
-      data
+      data,
     });
   }
 
@@ -64,7 +64,9 @@ export class UsersRepository {
     //   include: this.getUserIncludes(),
     //   orderBy: { name: "asc" },
     // });
-    console.log('🔧 Método findByEquipe temporariamente desabilitado - aguardando regeneração do Prisma Client');
+    console.log(
+      "🔧 Método findByEquipe temporariamente desabilitado - aguardando regeneração do Prisma Client"
+    );
     return [];
   }
 
@@ -225,6 +227,26 @@ export class UsersRepository {
     return validStatistics.sort((a, b) =>
       a.user.name.localeCompare(b.user.name)
     );
+  }
+
+  async findMentores() {
+    return this.prisma.user.findMany({
+      where: {
+        role: {
+          has: "mentor",
+        },
+      },
+      include: this.getUserIncludes(),
+      orderBy: { name: "asc" },
+    });
+  }
+
+  async findLideradosByGestor(gestorId: number) {
+    return this.prisma.user.findMany({
+      where: { gestorId },
+      include: this.getUserIncludes(),
+      orderBy: { name: "asc" },
+    });
   }
 
   private getUserIncludes() {

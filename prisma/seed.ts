@@ -5,6 +5,7 @@ import {
   Trilha,
   Ciclo,
   Criterio,
+  StatusEqualizacao, // Importado o enum StatusEqualizacao
 } from "@prisma/client";
 import * as argon from "argon2";
 import { execSync } from "child_process";
@@ -73,198 +74,260 @@ async function main() {
   const trilhas: Trilha[] = [devTrilha, dadosTrilha, infraTrilha, gestaoTrilha];
   console.log(`✅ Criadas ${trilhas.length} trilhas.`);
 
-  // 4. Cria os Ciclos de avaliação
+  // 4. Cria os Ciclos de avaliação com datas relativas à data atual
   console.log("🔄 Criando ciclos...");
-  const [cicloQ1_2025, cicloQ2_2025, cicloQ4_2024] = await Promise.all([
-    prisma.ciclo.create({
-      data: {
-        name: "Q1 2025",
-        year: 2025,
-        period: 1,
-        status: "aberto",
-        dataAberturaAvaliacao: new Date("2025-01-15T00:00:00Z"),
-        dataFechamentoAvaliacao: new Date("2025-02-15T23:59:59Z"),
-        dataAberturaRevisaoGestor: new Date("2025-02-16T00:00:00Z"),
-        dataFechamentoRevisaoGestor: new Date("2025-02-28T23:59:59Z"),
-        dataAberturaRevisaoComite: new Date("2025-03-01T00:00:00Z"),
-        dataFechamentoRevisaoComite: new Date("2025-03-10T23:59:59Z"),
-        dataFinalizacao: new Date("2025-03-15T23:59:59Z"),
-      },
-    }),
-    prisma.ciclo.create({
-      data: {
-        name: "Q2 2025",
-        year: 2025,
-        period: 2,
-        status: "revisao-gestor",
-        dataAberturaAvaliacao: new Date("2025-04-15T00:00:00Z"),
-        dataFechamentoAvaliacao: new Date("2025-05-15T23:59:59Z"),
-        dataAberturaRevisaoGestor: new Date("2025-05-16T00:00:00Z"),
-        dataFechamentoRevisaoGestor: new Date("2025-05-30T23:59:59Z"),
-        dataAberturaRevisaoComite: new Date("2025-06-01T00:00:00Z"),
-        dataFechamentoRevisaoComite: new Date("2025-06-10T23:59:59Z"),
-        dataFinalizacao: new Date("2025-06-15T23:59:59Z"),
-      },
-    }),
-    prisma.ciclo.create({
-      data: {
-        name: "Q4 2024",
-        year: 2024,
-        period: 4,
-        status: "finalizado",
-        dataAberturaAvaliacao: new Date("2024-10-15T00:00:00Z"),
-        dataFechamentoAvaliacao: new Date("2024-11-15T23:59:59Z"),
-        dataAberturaRevisaoGestor: new Date("2024-11-16T00:00:00Z"),
-        dataFechamentoRevisaoGestor: new Date("2024-11-30T23:59:59Z"),
-        dataAberturaRevisaoComite: new Date("2024-12-01T00:00:00Z"),
-        dataFechamentoRevisaoComite: new Date("2024-12-10T23:59:59Z"),
-        dataFinalizacao: new Date("2024-12-15T23:59:59Z"),
-      },
-    }),
-    prisma.ciclo.create({
-      data: {
-        name: "Q4 2024",
-        year: 2024,
-        period: 4,
-        status: "revisao-comite",
-        dataAberturaAvaliacao: new Date("2024-10-15T00:00:00Z"),
-        dataFechamentoAvaliacao: new Date("2024-11-15T23:59:59Z"),
-        dataAberturaRevisaoGestor: new Date("2024-11-16T00:00:00Z"),
-        dataFechamentoRevisaoGestor: new Date("2024-11-30T23:59:59Z"),
-        dataAberturaRevisaoComite: new Date("2024-12-01T00:00:00Z"),
-        dataFechamentoRevisaoComite: new Date("2024-12-10T23:59:59Z"),
-        dataFinalizacao: new Date("2024-12-15T23:59:59Z"),
-      },
-    }),
-  ]);
-  const ciclos: Ciclo[] = [cicloQ1_2025, cicloQ2_2025, cicloQ4_2024];
+  const now = new Date();
+
+  // Ciclo Aberto (Estágio Avaliações)
+  const cicloAberto = await prisma.ciclo.create({
+    data: {
+      name: "2025.2",
+      year: 2025,
+      period: 2,
+      status: "aberto",
+      dataAberturaAvaliacao: now,
+      dataFechamentoAvaliacao: new Date(
+        now.getTime() + 7 * 24 * 60 * 60 * 1000
+      ),
+      dataAberturaRevisaoGestor: new Date(
+        now.getTime() + 8 * 24 * 60 * 60 * 1000
+      ),
+      dataFechamentoRevisaoGestor: new Date(
+        now.getTime() + 14 * 24 * 60 * 60 * 1000
+      ),
+      dataAberturaRevisaoComite: new Date(
+        now.getTime() + 15 * 24 * 60 * 60 * 1000
+      ),
+      dataFechamentoRevisaoComite: new Date(
+        now.getTime() + 21 * 24 * 60 * 60 * 1000
+      ),
+      dataFinalizacao: new Date(now.getTime() + 27 * 24 * 60 * 60 * 1000),
+    },
+  });
+
+  // Ciclo Revisão Gestor (Estágio Revisão de Gestor)
+  const cicloRevisaoGestor = await prisma.ciclo.create({
+    data: {
+      name: "2025.1",
+      year: 2025,
+      period: 1,
+      status: "revisao_gestor",
+      dataAberturaAvaliacao: new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000),
+      dataFechamentoAvaliacao: new Date(
+        now.getTime() - 53 * 24 * 60 * 60 * 1000
+      ),
+      dataAberturaRevisaoGestor: new Date(
+        now.getTime() - 52 * 24 * 60 * 60 * 1000
+      ),
+      dataFechamentoRevisaoGestor: new Date(
+        now.getTime() - 46 * 24 * 60 * 60 * 1000
+      ),
+      dataAberturaRevisaoComite: new Date(
+        now.getTime() - 45 * 24 * 60 * 60 * 1000
+      ),
+      dataFechamentoRevisaoComite: new Date(
+        now.getTime() - 39 * 24 * 60 * 60 * 1000
+      ),
+      dataFinalizacao: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
+    },
+  });
+
+  // Ciclo Revisão Comitê (Estágio Revisão de Comitê)
+  const cicloRevisaoComite = await prisma.ciclo.create({
+    data: {
+      name: "2024.2",
+      year: 2024,
+      period: 2,
+      status: "revisao_comite",
+      dataAberturaAvaliacao: new Date(
+        now.getTime() - 120 * 24 * 60 * 60 * 1000
+      ),
+      dataFechamentoAvaliacao: new Date(
+        now.getTime() - 113 * 24 * 60 * 60 * 1000
+      ),
+      dataAberturaRevisaoGestor: new Date(
+        now.getTime() - 112 * 24 * 60 * 60 * 1000
+      ),
+      dataFechamentoRevisaoGestor: new Date(
+        now.getTime() - 106 * 24 * 60 * 60 * 1000
+      ),
+      dataAberturaRevisaoComite: new Date(
+        now.getTime() - 105 * 24 * 60 * 60 * 1000
+      ),
+      dataFechamentoRevisaoComite: new Date(
+        now.getTime() - 99 * 24 * 60 * 60 * 1000
+      ),
+      dataFinalizacao: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000),
+    },
+  });
+
+  // Ciclo Finalizado (Estágio Finalizado)
+  const cicloFinalizado = await prisma.ciclo.create({
+    data: {
+      name: "2024.1",
+      year: 2024,
+      period: 1,
+      status: "finalizado",
+      dataAberturaAvaliacao: new Date(
+        now.getTime() - 240 * 24 * 60 * 60 * 1000
+      ),
+      dataFechamentoAvaliacao: new Date(
+        now.getTime() - 233 * 24 * 60 * 60 * 1000
+      ),
+      dataAberturaRevisaoGestor: new Date(
+        now.getTime() - 232 * 24 * 60 * 60 * 1000
+      ),
+      dataFechamentoRevisaoGestor: new Date(
+        now.getTime() - 226 * 24 * 60 * 60 * 1000
+      ),
+      dataAberturaRevisaoComite: new Date(
+        now.getTime() - 225 * 24 * 60 * 60 * 1000
+      ),
+      dataFechamentoRevisaoComite: new Date(
+        now.getTime() - 219 * 24 * 60 * 60 * 1000
+      ),
+      dataFinalizacao: new Date(now.getTime() - 210 * 24 * 60 * 60 * 1000),
+    },
+  });
+
+  const ciclos: Ciclo[] = [
+    cicloAberto,
+    cicloRevisaoGestor,
+    cicloRevisaoComite,
+    cicloFinalizado,
+  ];
   console.log(`✅ Criados ${ciclos.length} ciclos.`);
 
   // 5. Cria os Usuários
   console.log("👥 Criando usuários...");
-  const usersData = [
-    {
-      name: "Raylandson Cesário",
-      email: "raylandson.cesario@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["admin"],
-      cargo: "Desenvolvimento",
-      unidade: "Recife",
-      trilhaId: devTrilha.id,
-    },
-    {
-      name: "Alice Cadete",
-      email: "alice.cadete@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["manager"],
-      cargo: "Desenvolvimento",
-      unidade: "Recife",
-      trilhaId: devTrilha.id,
-    },
-    {
-      name: "Arthur Lins",
-      email: "arthur.lins@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["user"],
-      cargo: "Análise de Dados",
-      unidade: "São Paulo",
-      trilhaId: dadosTrilha.id,
-    },
-    {
-      name: "Erico Chen",
-      email: "erico.chen@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["user"],
-      cargo: "Infraestrutura",
-      unidade: "Belo Horizonte",
-      trilhaId: infraTrilha.id,
-    },
-    {
-      name: "Luan Bezerra",
-      email: "luan.bezerra@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["user"],
-      cargo: "Desenvolvimento",
-      unidade: "Recife",
-      trilhaId: devTrilha.id,
-    },
-    {
-      name: "José Mário",
-      email: "jose.mario@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["manager"],
-      cargo: "Gestão",
-      unidade: "Rio de Janeiro",
-      trilhaId: gestaoTrilha.id,
-    },
-    {
-      name: "Maria Santos",
-      email: "maria.santos@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["user"],
-      cargo: "Desenvolvimento",
-      unidade: "São Paulo",
-      trilhaId: devTrilha.id,
-    },
-    {
-      name: "Pedro Costa",
-      email: "pedro.costa@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["user"],
-      cargo: "Análise de Dados",
-      unidade: "Porto Alegre",
-      trilhaId: dadosTrilha.id,
-    },
-    {
-      name: "Ana Oliveira",
-      email: "ana.oliveira@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["user"],
-      cargo: "Infraestrutura",
-      unidade: "Curitiba",
-      trilhaId: infraTrilha.id,
-    },
-    {
-      name: "Carlos Silva",
-      email: "carlos.silva@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["manager"],
-      cargo: "Gestão",
-      unidade: "Rio de Janeiro",
-      trilhaId: gestaoTrilha.id,
-    },
-    {
-      name: "Bruno Santos",
-      email: "bruno.santos@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["mentor"],
-      cargo: "Mentor",
-      unidade: "Rio de Janeiro",
-      trilhaId: gestaoTrilha.id,
-    },
-  ];
-  const users: User[] = await prisma.$transaction(
-    usersData.map((user) => prisma.user.create({ data: user }))
-  );
+  const users: User[] = await Promise.all([
+    // Usuário admin (Raylandson Cesário)
+    prisma.user.create({
+      data: {
+        name: "Raylandson Cesário",
+        email: "raylandson.cesario@rocketcorp.com",
+        password: await hashPassword("password123"),
+        role: ["user", "admin"],
+        unidade: "sao paulo",
+        cargo: "fullstack",
+        trilhaId: devTrilha.id,
+      },
+    }),
+    // Usuário gestor (Alice Cadete)
+    prisma.user.create({
+      data: {
+        name: "Alice Cadete",
+        email: "alice.cadete@rocketcorp.com",
+        password: await hashPassword("password123"),
+        role: ["manager"],
+        unidade: "recife",
+        cargo: "Gestão",
+        trilhaId: devTrilha.id,
+      },
+    }),
+    // Usuários colaboradores (Arthur Lins)
+    prisma.user.create({
+      data: {
+        name: "Arthur Lins",
+        email: "arthur.lins@rocketcorp.com",
+        password: await hashPassword("password123"),
+        role: ["user"],
+        cargo: "front",
+        unidade: "recife",
+        trilhaId: dadosTrilha.id,
+      },
+    }),
+    // Usuários colaboradores (Erico Chen)
+    prisma.user.create({
+      data: {
+        name: "Erico Chen",
+        email: "erico.chen@rocketcorp.com",
+        password: await hashPassword("password123"),
+        role: ["user"],
+        cargo: "Back",
+        unidade: "recife",
+        trilhaId: infraTrilha.id,
+      },
+    }),
+    // Usuários colaboradores (Luan Bezerra)
+    prisma.user.create({
+      data: {
+        name: "Luan Bezerra",
+        email: "luan.bezerra@rocketcorp.com",
+        password: await hashPassword("password123"),
+        role: ["user"],
+        cargo: "Dados",
+        unidade: "rio de janeiro",
+        trilhaId: devTrilha.id,
+      },
+    }),
+    // Usuário comitê (Fernanda Lima)
+    prisma.user.create({
+      data: {
+        name: "Fernanda Lima",
+        email: "fernanda.lima@rocketcorp.com",
+        password: await hashPassword("password123"),
+        role: ["comite"],
+        cargo: "Gestão",
+        unidade: "sao paulo",
+        trilhaId: gestaoTrilha.id,
+      },
+    }),
+    // Usuário mentor (Bruno Souza)
+    prisma.user.create({
+      data: {
+        name: "Bruno Souza",
+        email: "bruno.souza@rocketcorp.com",
+        password: await hashPassword("password123"),
+        role: ["mentor"],
+        cargo: "Mentor",
+        unidade: "recife",
+        trilhaId: devTrilha.id,
+      },
+    }),
+  ]);
   console.log(`✅ Criados ${users.length} usuários.`);
+
+  // Mapeamento de usuários para facilitar o acesso
+  const adminUser = users[0]; // Raylandson Cesário
+  const managerUser = users[1]; // Alice Cadete
+  const arthurUser = users[2]; // Arthur Lins
+  const ericoUser = users[3]; // Erico Chen
+  const luanUser = users[4]; // Luan Bezerra
+  const comiteUser = users[5]; // Fernanda Lima
+  const mentorUser = users[6]; // Bruno Souza
+
+  const nonMentorUsers = users.filter((user) => !user.role.includes("mentor")); // Todos menos o mentor
 
   // 6. Define as relações de mentoria
   console.log("🤝 Configurando relações de mentoria...");
+  // Bruno deve ser mentor de todos os outros usuários (não-mentores)
+  for (const user of nonMentorUsers) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { mentorId: mentorUser.id },
+    });
+  }
+  // Alice é gestora de Erico, Luan, Arthur e Raylandson
   await prisma.user.update({
-    where: { id: users[4].id },
-    data: { mentorId: users[10].id },
-  }); // Bruno -> Luan
+    where: { id: ericoUser.id },
+    data: { gestorId: managerUser.id },
+  });
   await prisma.user.update({
-    where: { id: users[6].id },
-    data: { mentorId: users[10].id },
-  }); // Bruno -> Maria
+    where: { id: luanUser.id },
+    data: { gestorId: managerUser.id },
+  });
   await prisma.user.update({
-    where: { id: users[7].id },
-    data: { mentorId: users[10].id },
-  }); // Bruno -> Pedro
+    where: { id: arthurUser.id },
+    data: { gestorId: managerUser.id },
+  });
+  await prisma.user.update({
+    where: { id: adminUser.id },
+    data: { gestorId: managerUser.id },
+  });
   console.log("✅ Relações de mentoria estabelecidas.");
 
-  // 7. Cria os Critérios de avaliação
+  // 7. Cria os Critérios de avaliação (associados ao ciclo aberto para simplificação, podem ser reutilizados)
   console.log("📋 Criando critérios...");
   const baseCriterios = [
     {
@@ -388,7 +451,7 @@ async function main() {
         data: {
           ...criterio,
           trilhaId: trilha.id,
-          idCiclo: cicloQ1_2025.id, // Associando ao ciclo principal
+          idCiclo: cicloAberto.id, // Associando ao ciclo principal para reuso nos exemplos
         },
       });
       allCriterios.push(createdCriterio);
@@ -398,147 +461,661 @@ async function main() {
     `✅ Criados ${allCriterios.length} critérios para ${trilhas.length} trilhas.`
   );
 
-  // 8. Cria as Referências
-  console.log("📝 Criando referências...");
-  await prisma.referencia.createMany({
-    data: [
-      {
-        idReferenciador: users[1].id,
-        idReferenciado: users[4].id,
-        idCiclo: cicloQ1_2025.id,
-        justificativa:
-          "Luan demonstrou excelente crescimento técnico e é muito colaborativo.",
-      },
-      {
-        idReferenciador: users[0].id,
-        idReferenciado: users[6].id,
-        idCiclo: cicloQ1_2025.id,
-        justificativa:
-          "Maria é uma desenvolvedora excepcional com forte capacidade de resolver problemas complexos.",
-      },
-      {
-        idReferenciador: users[2].id,
-        idReferenciado: users[7].id,
-        idCiclo: cicloQ1_2025.id,
-        justificativa:
-          "Pedro possui conhecimento sólido em análise de dados e grande potencial.",
-      },
-      {
-        idReferenciador: users[5].id,
-        idReferenciado: users[3].id,
-        idCiclo: cicloQ1_2025.id,
-        justificativa:
-          "Erico tem mostrado excelente trabalho em DevOps e infraestrutura.",
-      },
-    ],
-  });
-  console.log("✅ Referências criadas.");
-
-  // 9. Cria as Autoavaliações
-  console.log("📊 Criando autoavaliações...");
+  // Filtra os critérios de acordo com as trilhas para uso nas avaliações
   const devCriterios = allCriterios.filter((c) => c.trilhaId === devTrilha.id);
   const dadosCriterios = allCriterios.filter(
     (c) => c.trilhaId === dadosTrilha.id
   );
+  const infraCriterios = allCriterios.filter(
+    (c) => c.trilhaId === infraTrilha.id
+  );
+  const gestaoCriterios = allCriterios.filter(
+    (c) => c.trilhaId === gestaoTrilha.id
+  );
 
-  await prisma.autoavaliacao.createMany({
+  // --- DADOS PARA CADA ESTÁGIO DE CICLO ---
+
+  // ESTÁGIO 1: CICLO ABERTO (2025.2) - Avaliações (Autoavaliação, 360, Mentoring, Referências Opcionais)
+  console.log("\n--- Populando dados para o Ciclo Aberto (2025.2) ---");
+
+  // 8. Cria as Referências (Opcional)
+  console.log("📝 Criando referências para ciclo aberto...");
+  await prisma.referencia.createMany({
     data: [
       {
-        idUser: users[4].id,
-        idCiclo: cicloQ1_2025.id,
-        criterioId: devCriterios.find((c) => c.name === "Qualidade")?.id,
-        nota: 4.0,
+        idReferenciador: managerUser.id,
+        idReferenciado: luanUser.id,
+        idCiclo: cicloAberto.id,
         justificativa:
-          "Tenho me esforçado para escrever código limpo e bem documentado.",
-        notaGestor: 4.5,
-        justificativaGestor: "Código muito bem estruturado.",
+          "Luan demonstrou excelente crescimento técnico e é muito colaborativo.",
       },
       {
-        idUser: users[6].id,
-        idCiclo: cicloQ1_2025.id,
-        criterioId: devCriterios.find((c) => c.name === "Iniciativa")?.id,
-        nota: 4.5,
-        justificativa: "Sempre busco antecipar problemas e propor soluções.",
-        notaGestor: 4.8,
-        justificativaGestor: "Proatividade excepcional.",
+        idReferenciador: adminUser.id,
+        idReferenciado: arthurUser.id,
+        idCiclo: cicloAberto.id,
+        justificativa:
+          "Arthur é um desenvolvedor front-end muito dedicado e proativo.",
       },
       {
-        idUser: users[7].id,
-        idCiclo: cicloQ1_2025.id,
-        criterioId: dadosCriterios.find((c) => c.name === "Produtividade")?.id,
-        nota: 4.0,
+        idReferenciador: comiteUser.id,
+        idReferenciado: managerUser.id,
+        idCiclo: cicloAberto.id,
         justificativa:
-          "Tenho boa capacidade analítica, mas ainda estou aprendendo técnicas mais avançadas.",
-        notaGestor: 4.4,
-        justificativaGestor: "Excelente capacidade analítica.",
+          "Alice tem uma excelente capacidade de gestão e liderança.",
       },
     ],
   });
-  console.log("✅ Autoavaliações criadas.");
+  console.log("✅ Referências criadas para ciclo aberto.");
 
-  // 10. Cria as Avaliações 360
-  console.log("🔄 Criando avaliações 360...");
+  // 9. Cria as Autoavaliações (Obrigatório para não-mentores)
+  console.log("📊 Criando autoavaliações para ciclo aberto...");
+  for (const user of nonMentorUsers) {
+    let criterioParaAvaliar: Criterio | undefined;
+    if (user.trilhaId === devTrilha.id) {
+      criterioParaAvaliar = devCriterios.find((c) => c.name === "Qualidade");
+    } else if (user.trilhaId === dadosTrilha.id) {
+      criterioParaAvaliar = dadosCriterios.find(
+        (c) => c.name === "Produtividade"
+      );
+    } else if (user.trilhaId === infraTrilha.id) {
+      criterioParaAvaliar = infraCriterios.find(
+        (c) => c.name === "Produtividade"
+      );
+    } else if (user.trilhaId === gestaoTrilha.id) {
+      criterioParaAvaliar = gestaoCriterios.find(
+        (c) => c.name === "Gestão de Pessoas"
+      );
+    }
+
+    if (criterioParaAvaliar) {
+      await prisma.autoavaliacao.create({
+        data: {
+          idUser: user.id,
+          idCiclo: cicloAberto.id,
+          criterioId: criterioParaAvaliar.id,
+          nota: 4.0,
+          justificativa: `Autoavaliação de ${user.name} para o critério ${criterioParaAvaliar.name}.`,
+          notaGestor: null, // Ainda não avaliado pelo gestor
+          justificativaGestor: null,
+        },
+      });
+    } else {
+      console.warn(
+        `⚠️ Critério não encontrado para a trilha do usuário ${user.name}.`
+      );
+    }
+  }
+  console.log("✅ Autoavaliações criadas para ciclo aberto.");
+
+  // 10. Cria as Avaliações 360 (Obrigatório para não-mentores)
+  console.log("🔄 Criando avaliações 360 para ciclo aberto...");
+  await prisma.avaliacao360.createMany({
+    data: [
+      // Luan avalia Alice (gestor)
+      {
+        idAvaliador: luanUser.id,
+        idAvaliado: managerUser.id,
+        idCiclo: cicloAberto.id,
+        nota: 4.8,
+        pontosFortes: "Excelente liderança e suporte.",
+        pontosMelhora: "Nenhum ponto de melhoria significativo.",
+        nomeProjeto: "Projeto X",
+        periodoMeses: 6,
+        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+      },
+
+      // Arthur avalia Erico
+      {
+        idAvaliador: arthurUser.id,
+        idAvaliado: ericoUser.id,
+        idCiclo: cicloAberto.id,
+        nota: 4.0,
+        pontosFortes: "Conhecimento técnico sólido em infra.",
+        pontosMelhora: "Melhorar comunicação em equipe.",
+        nomeProjeto: "Infraestrutura Cloud",
+        periodoMeses: 5,
+        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+      },
+      // Erico avalia Arthur
+      {
+        idAvaliador: ericoUser.id,
+        idAvaliado: arthurUser.id,
+        idCiclo: cicloAberto.id,
+        nota: 4.3,
+        pontosFortes: "Ótimo em front-end, muito criativo.",
+        pontosMelhora: "Organização de tarefas.",
+        nomeProjeto: "Portal Web",
+        periodoMeses: 5,
+        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+      },
+      {
+        idAvaliador: ericoUser.id,
+        idAvaliado: comiteUser.id,
+        idCiclo: cicloAberto.id,
+        nota: 4.3,
+        pontosFortes: "Ótimo em front-end, muito criativo.",
+        pontosMelhora: "Organização de tarefas.",
+        nomeProjeto: "Portal Web",
+        periodoMeses: 5,
+        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+      },
+      // Raylandson (admin) avalia Fernanda (comitê)
+      {
+        idAvaliador: adminUser.id,
+        idAvaliado: comiteUser.id,
+        idCiclo: cicloAberto.id,
+        nota: 4.9,
+        pontosFortes: "Visão estratégica e tomada de decisão excelentes.",
+        pontosMelhora: "Nenhum.",
+        nomeProjeto: "Planejamento Estratégico",
+        periodoMeses: 12,
+        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+      },
+    ],
+  });
+  console.log("✅ Avaliações 360 criadas para ciclo aberto.");
+
+  // 11. Cria Mentoring (Obrigatório para não-mentores no estágio 1)
+  console.log("👨‍🏫 Criando registros de mentoring para ciclo aberto...");
+  for (const user of nonMentorUsers) {
+    await prisma.mentoring.create({
+      data: {
+        idMentorado: user.id,
+        idMentor: mentorUser.id,
+        idCiclo: cicloAberto.id,
+        nota: 4.5,
+        justificativa: `Sessão de mentoria inicial para ${user.name} sobre objetivos de carreira e desenvolvimento. Bruno forneceu feedback construtivo.`,
+      },
+    });
+  }
+  console.log("✅ Registros de mentoring criados para ciclo aberto.");
+
+  // 12. Cria Resumos de IA (para ciclo aberto)
+  console.log("🤖 Gerando resumos de IA para ciclo aberto...");
+  await prisma.resumoIA.createMany({
+    data: [
+      {
+        userId: luanUser.id,
+        idCiclo: cicloAberto.id,
+        resumo:
+          "Luan Bezerra é um desenvolvedor em ascensão com fortes habilidades em colaboração e qualidade de código.",
+      },
+      {
+        userId: arthurUser.id,
+        idCiclo: cicloAberto.id,
+        resumo:
+          "Arthur Lins demonstra grande criatividade e habilidade no desenvolvimento front-end.",
+      },
+      {
+        userId: ericoUser.id,
+        idCiclo: cicloAberto.id,
+        resumo:
+          "Erico Chen é um especialista em infraestrutura com grande potencial de crescimento.",
+      },
+    ],
+  });
+  console.log("✅ Resumos de IA gerados para ciclo aberto.");
+
+  // ESTÁGIO 2: CICLO REVISÃO GESTOR (2025.1) - Gestores avaliam subordinados
+  console.log("\n--- Populando dados para o Ciclo Revisão Gestor (2025.1) ---");
+
+  // Replicar dados do Estágio 1 para o Ciclo Revisão Gestor (assumindo que já passaram pelo Estágio 1)
+  console.log("📝 Criando referências para ciclo revisão gestor...");
+  await prisma.referencia.createMany({
+    data: [
+      {
+        idReferenciador: managerUser.id,
+        idReferenciado: luanUser.id,
+        idCiclo: cicloRevisaoGestor.id,
+        justificativa:
+          "Luan demonstrou excelente crescimento técnico e é muito colaborativo no ciclo anterior.",
+      },
+      {
+        idReferenciador: adminUser.id,
+        idReferenciado: arthurUser.id,
+        idCiclo: cicloRevisaoGestor.id,
+        justificativa:
+          "Arthur foi um desenvolvedor front-end muito dedicado e proativo no ciclo anterior.",
+      },
+    ],
+  });
+  console.log("✅ Referências criadas para ciclo revisão gestor.");
+
+  console.log("📊 Criando autoavaliações para ciclo revisão gestor...");
+  for (const user of nonMentorUsers) {
+    let criterioParaAvaliar: Criterio | undefined;
+    if (user.trilhaId === devTrilha.id) {
+      criterioParaAvaliar = devCriterios.find((c) => c.name === "Qualidade");
+    } else if (user.trilhaId === dadosTrilha.id) {
+      criterioParaAvaliar = dadosCriterios.find(
+        (c) => c.name === "Produtividade"
+      );
+    } else if (user.trilhaId === infraTrilha.id) {
+      criterioParaAvaliar = infraCriterios.find(
+        (c) => c.name === "Produtividade"
+      );
+    } else if (user.trilhaId === gestaoTrilha.id) {
+      criterioParaAvaliar = gestaoCriterios.find(
+        (c) => c.name === "Gestão de Pessoas"
+      );
+    }
+
+    if (criterioParaAvaliar) {
+      await prisma.autoavaliacao.create({
+        data: {
+          idUser: user.id,
+          idCiclo: cicloRevisaoGestor.id,
+          criterioId: criterioParaAvaliar.id,
+          nota: 4.0,
+          justificativa: `Autoavaliação de ${user.name} para o ciclo de revisão gestor.`,
+          notaGestor: null, // Ainda não avaliado pelo gestor neste ciclo
+          justificativaGestor: null,
+        },
+      });
+    }
+  }
+  console.log("✅ Autoavaliações criadas para ciclo revisão gestor.");
+
+  console.log("🔄 Criando avaliações 360 para ciclo revisão gestor...");
+  await prisma.avaliacao360.createMany({
+    data: [
+      // Luan avalia Alice (gestor)
+      {
+        idAvaliador: luanUser.id,
+        idAvaliado: managerUser.id,
+        idCiclo: cicloRevisaoGestor.id,
+        nota: 4.7,
+        pontosFortes: "Liderança exemplar.",
+        pontosMelhora: "Nenhum.",
+        nomeProjeto: "Projeto Y",
+        periodoMeses: 6,
+        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+      },
+      // Arthur avalia Erico
+      {
+        idAvaliador: arthurUser.id,
+        idAvaliado: ericoUser.id,
+        idCiclo: cicloRevisaoGestor.id,
+        nota: 4.1,
+        pontosFortes: "Sólido conhecimento técnico.",
+        pontosMelhora: "Comunicação.",
+        nomeProjeto: "Infraestrutura Cloud",
+        periodoMeses: 5,
+        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+      },
+    ],
+  });
+  console.log("✅ Avaliações 360 criadas para ciclo revisão gestor.");
+
+  // Avaliações do Gestor para seus subordinados (Obrigatório)
+  console.log("👨‍💼 Gerando avaliações de gestor para ciclo revisão gestor...");
+  // Assumindo que Alice (managerUser) é gestora de Arthur, Erico e Luan
+  const gestaoCriterio = gestaoCriterios.find(
+    (c) => c.name === "Gestão de Pessoas"
+  );
+  if (gestaoCriterio) {
+    await prisma.autoavaliacao.updateMany({
+      // Atualiza as autoavaliações com a nota do gestor
+      where: {
+        idCiclo: cicloRevisaoGestor.id,
+        idUser: { in: [arthurUser.id, ericoUser.id, luanUser.id] },
+      },
+      data: {
+        notaGestor: 4.5,
+        justificativaGestor: "Avaliação do gestor para o ciclo de revisão.",
+      },
+    });
+
+    // Criação de avaliações 360 adicionais onde o gestor avalia
+    await prisma.avaliacao360.createMany({
+      data: [
+        {
+          idAvaliador: managerUser.id,
+          idAvaliado: arthurUser.id,
+          idCiclo: cicloRevisaoGestor.id,
+          nota: 4.5,
+          pontosFortes:
+            "Arthur é muito criativo e entrega interfaces de alta qualidade.",
+          pontosMelhora: "Poderia melhorar a documentação de componentes.",
+          nomeProjeto: "Portal do Cliente",
+          periodoMeses: 4,
+          trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+        },
+        {
+          idAvaliador: managerUser.id,
+          idAvaliado: ericoUser.id,
+          idCiclo: cicloRevisaoGestor.id,
+          nota: 4.4,
+          pontosFortes:
+            "Erico tem mostrado excelente trabalho em DevOps e infraestrutura.",
+          pontosMelhora: "Melhorar a comunicação proativa.",
+          nomeProjeto: "Automação de Infra",
+          periodoMeses: 7,
+          trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+        },
+        {
+          idAvaliador: managerUser.id,
+          idAvaliado: luanUser.id,
+          idCiclo: cicloRevisaoGestor.id,
+          nota: 4.6,
+          pontosFortes:
+            "Luan é um desenvolvedor muito dedicado e com rápido aprendizado.",
+          pontosMelhora: "Buscar mais autonomia em decisões técnicas.",
+          nomeProjeto: "Refatoração de API",
+          periodoMeses: 8,
+          trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+        },
+      ],
+    });
+  }
+  console.log("✅ Avaliações de gestor criadas para ciclo revisão gestor.");
+
+  // Mentoring para ciclo revisão gestor (assumindo que já foi feito no estágio 1)
+  console.log("👨‍🏫 Criando registros de mentoring para ciclo revisão gestor...");
+  for (const user of nonMentorUsers) {
+    await prisma.mentoring.create({
+      data: {
+        idMentorado: user.id,
+        idMentor: mentorUser.id,
+        idCiclo: cicloRevisaoGestor.id,
+        nota: 4.0,
+        justificativa: `Sessão de mentoria de acompanhamento para ${user.name} no ciclo de revisão gestor.`,
+      },
+    });
+  }
+  console.log("✅ Registros de mentoring criados para ciclo revisão gestor.");
+
+  console.log("🤖 Gerando resumos de IA para ciclo revisão gestor...");
+  await prisma.resumoIA.createMany({
+    data: [
+      {
+        userId: luanUser.id,
+        idCiclo: cicloRevisaoGestor.id,
+        resumo:
+          "Luan Bezerra demonstrou grande evolução e é um recurso valioso para a equipe. O gestor recomenda foco em autonomia.",
+      },
+      {
+        userId: arthurUser.id,
+        idCiclo: cicloRevisaoGestor.id,
+        resumo:
+          "Arthur Lins continua a impressionar com sua criatividade no front-end, com sugestão de aprimorar documentação.",
+      },
+      {
+        userId: ericoUser.id,
+        idCiclo: cicloRevisaoGestor.id,
+        resumo:
+          "Erico Chen é um pilar na infraestrutura, com potencial para se destacar ainda mais na comunicação.",
+      },
+    ],
+  });
+  console.log("✅ Resumos de IA gerados para ciclo revisão gestor.");
+
+  // ESTÁGIO 3: CICLO REVISÃO COMITÊ (2024.2) - Comitê faz equalizações
+  console.log("\n--- Populando dados para o Ciclo Revisão Comitê (2024.2) ---");
+
+  // Replicar dados dos Estágios 1 e 2 para o Ciclo Revisão Comitê
+  console.log("📝 Criando referências para ciclo revisão comitê...");
+  await prisma.referencia.createMany({
+    data: [
+      {
+        idReferenciador: managerUser.id,
+        idReferenciado: luanUser.id,
+        idCiclo: cicloRevisaoComite.id,
+        justificativa:
+          "Luan manteve seu excelente desempenho no ciclo de revisão comitê.",
+      },
+    ],
+  });
+  console.log("✅ Referências criadas para ciclo revisão comitê.");
+
+  console.log("📊 Criando autoavaliações para ciclo revisão comitê...");
+  for (const user of nonMentorUsers) {
+    let criterioParaAvaliar: Criterio | undefined;
+    if (user.trilhaId === devTrilha.id) {
+      criterioParaAvaliar = devCriterios.find((c) => c.name === "Qualidade");
+    } else if (user.trilhaId === dadosTrilha.id) {
+      criterioParaAvaliar = dadosCriterios.find(
+        (c) => c.name === "Produtividade"
+      );
+    } else if (user.trilhaId === infraTrilha.id) {
+      criterioParaAvaliar = infraCriterios.find(
+        (c) => c.name === "Produtividade"
+      );
+    } else if (user.trilhaId === gestaoTrilha.id) {
+      criterioParaAvaliar = gestaoCriterios.find(
+        (c) => c.name === "Gestão de Pessoas"
+      );
+    }
+
+    if (criterioParaAvaliar) {
+      await prisma.autoavaliacao.create({
+        data: {
+          idUser: user.id,
+          idCiclo: cicloRevisaoComite.id,
+          criterioId: criterioParaAvaliar.id,
+          nota: 4.0,
+          justificativa: `Autoavaliação de ${user.name} para o ciclo de revisão comitê.`,
+          notaGestor: 4.5, // Assumindo que o gestor já avaliou
+          justificativaGestor: "Avaliação do gestor já realizada neste ciclo.",
+        },
+      });
+    }
+  }
+  console.log("✅ Autoavaliações criadas para ciclo revisão comitê.");
+
+  console.log("🔄 Criando avaliações 360 para ciclo revisão comitê...");
   await prisma.avaliacao360.createMany({
     data: [
       {
-        idAvaliador: users[4].id,
-        idAvaliado: users[1].id,
-        idCiclo: cicloQ1_2025.id,
-        nota: 4.8,
-        pontosFortes:
-          "Excelente liderança técnica, sempre disponível para mentoria.",
-        pontosMelhora: "Poderia delegar mais tarefas.",
-        nomeProjeto: "Sistema de Gestão",
+        idAvaliador: luanUser.id,
+        idAvaliado: managerUser.id,
+        idCiclo: cicloRevisaoComite.id,
+        nota: 4.7,
+        pontosFortes: "Liderança exemplar.",
+        pontosMelhora: "Nenhum.",
+        nomeProjeto: "Projeto Z",
         periodoMeses: 6,
         trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
       },
       {
-        idAvaliador: users[6].id,
-        idAvaliado: users[0].id,
-        idCiclo: cicloQ1_2025.id,
-        nota: 4.9,
-        pontosFortes:
-          "Visão estratégica excepcional, capacidade de resolver problemas complexos.",
-        pontosMelhora: "Poderia focar mais na visão macro.",
-        nomeProjeto: "Plataforma de Avaliação",
-        periodoMeses: 8,
-        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
-      },
-      {
-        idAvaliador: users[1].id,
-        idAvaliado: users[4].id,
-        idCiclo: cicloQ1_2025.id,
-        nota: 4.2,
-        pontosFortes:
-          "Muito dedicado, aprende rapidamente, código bem estruturado.",
-        pontosMelhora: "Precisa ganhar mais confiança para propor soluções.",
+        idAvaliador: managerUser.id,
+        idAvaliado: luanUser.id,
+        idCiclo: cicloRevisaoComite.id,
+        nota: 4.3,
+        pontosFortes: "Crescimento notável.",
+        pontosMelhora: "Melhorar proatividade.",
         nomeProjeto: "Sistema de Avaliação",
         periodoMeses: 6,
         trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
       },
     ],
   });
-  console.log("✅ Avaliações 360 criadas.");
+  console.log("✅ Avaliações 360 criadas para ciclo revisão comitê.");
 
-  // 11. Cria Resumos de IA
-  console.log("🤖 Gerando resumos de IA...");
+  // Mentoring para ciclo revisão comitê (assumindo que já foi feito nos estágios anteriores)
+  console.log("👨‍🏫 Criando registros de mentoring para ciclo revisão comitê...");
+  for (const user of nonMentorUsers) {
+    await prisma.mentoring.create({
+      data: {
+        idMentorado: user.id,
+        idMentor: mentorUser.id,
+        idCiclo: cicloRevisaoComite.id,
+        nota: 4.2,
+        justificativa: `Sessão de mentoria final para ${user.name} no ciclo de revisão comitê.`,
+      },
+    });
+  }
+  console.log("✅ Registros de mentoring criados para ciclo revisão comitê.");
+
+  // 13. Cria Equalizações (Obrigatório para não-mentores, feito pelo comitê)
+  console.log("⚖️ Gerando equalizações para ciclo revisão comitê...");
+  for (const user of nonMentorUsers) {
+    await prisma.equalizacao.create({
+      data: {
+        idAvaliador: comiteUser.id, // O comitê é o avaliador da equalização
+        idAvaliado: user.id,
+        mediaAutoavaliacao: 4.0, // Exemplo de média
+        mediaAvaliacaoGestor: 4.5, // Exemplo de média
+        mediaAvaliacao360: 4.3, // Exemplo de média
+        notaFinal: 4.5, // Exemplo de nota final equalizada
+        justificativa: `Equalização do comitê para ${user.name}: Desempenho alinhado com as expectativas.`,
+        status: StatusEqualizacao.FINALIZADO, // Definindo o status
+      },
+    });
+  }
+  console.log("✅ Equalizações criadas para ciclo revisão comitê.");
+
+  console.log("🤖 Gerando resumos de IA para ciclo revisão comitê...");
   await prisma.resumoIA.createMany({
     data: [
       {
-        userId: users[4].id,
-        idCiclo: cicloQ1_2025.id,
+        userId: luanUser.id,
+        idCiclo: cicloRevisaoComite.id,
         resumo:
-          "Luan Bezerra é um desenvolvedor em ascensão com fortes habilidades em colaboração e qualidade de código. As avaliações indicam uma necessidade de desenvolvimento em proatividade e testes automatizados para atingir o próximo nível.",
+          "Luan Bezerra teve seu desempenho validado pelo comitê, com excelente potencial de carreira.",
       },
       {
-        userId: users[6].id,
-        idCiclo: cicloQ1_2025.id,
+        userId: arthurUser.id,
+        idCiclo: cicloRevisaoComite.id,
         resumo:
-          "Maria Santos é uma desenvolvedora sênior exemplar, destacando-se pela qualidade técnica e proatividade. O feedback sugere que ela pode ampliar seu impacto compartilhando mais seu conhecimento com a equipe.",
+          "Arthur Lins foi equalizado com um forte reconhecimento de suas habilidades técnicas.",
       },
     ],
   });
-  console.log("✅ Resumos de IA gerados.");
+  console.log("✅ Resumos de IA gerados para ciclo revisão comitê.");
+
+  // ESTÁGIO 4: CICLO FINALIZADO (2024.1) - Todos os estágios anteriores finalizados
+  console.log("\n--- Populando dados para o Ciclo Finalizado (2024.1) ---");
+
+  // Replicar dados de todos os estágios anteriores para o Ciclo Finalizado
+  console.log("📝 Criando referências para ciclo finalizado...");
+  await prisma.referencia.createMany({
+    data: [
+      {
+        idReferenciador: managerUser.id,
+        idReferenciado: luanUser.id,
+        idCiclo: cicloFinalizado.id,
+        justificativa:
+          "Luan teve um desempenho excepcional no ciclo finalizado.",
+      },
+    ],
+  });
+  console.log("✅ Referências criadas para ciclo finalizado.");
+
+  console.log("📊 Criando autoavaliações para ciclo finalizado...");
+  for (const user of nonMentorUsers) {
+    let criterioParaAvaliar: Criterio | undefined;
+    if (user.trilhaId === devTrilha.id) {
+      criterioParaAvaliar = devCriterios.find((c) => c.name === "Qualidade");
+    } else if (user.trilhaId === dadosTrilha.id) {
+      criterioParaAvaliar = dadosCriterios.find(
+        (c) => c.name === "Produtividade"
+      );
+    } else if (user.trilhaId === infraTrilha.id) {
+      criterioParaAvaliar = infraCriterios.find(
+        (c) => c.name === "Produtividade"
+      );
+    } else if (user.trilhaId === gestaoTrilha.id) {
+      criterioParaAvaliar = gestaoCriterios.find(
+        (c) => c.name === "Gestão de Pessoas"
+      );
+    }
+
+    if (criterioParaAvaliar) {
+      await prisma.autoavaliacao.create({
+        data: {
+          idUser: user.id,
+          idCiclo: cicloFinalizado.id,
+          criterioId: criterioParaAvaliar.id,
+          nota: 4.0,
+          justificativa: `Autoavaliação de ${user.name} para o ciclo finalizado.`,
+          notaGestor: 4.5,
+          justificativaGestor: "Avaliação do gestor finalizada neste ciclo.",
+        },
+      });
+    }
+  }
+  console.log("✅ Autoavaliações criadas para ciclo finalizado.");
+
+  console.log("🔄 Criando avaliações 360 para ciclo finalizado...");
+  await prisma.avaliacao360.createMany({
+    data: [
+      {
+        idAvaliador: luanUser.id,
+        idAvaliado: managerUser.id,
+        idCiclo: cicloFinalizado.id,
+        nota: 4.9,
+        pontosFortes: "Liderança e impacto excepcionais.",
+        pontosMelhora: "Nenhum.",
+        nomeProjeto: "Projeto W",
+        periodoMeses: 6,
+        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+      },
+      {
+        idAvaliador: managerUser.id,
+        idAvaliado: luanUser.id,
+        idCiclo: cicloFinalizado.id,
+        nota: 4.5,
+        pontosFortes: "Desempenho consolidado e proativo.",
+        pontosMelhora: "Nenhum.",
+        nomeProjeto: "Sistema de Avaliação",
+        periodoMeses: 6,
+        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+      },
+    ],
+  });
+  console.log("✅ Avaliações 360 criadas para ciclo finalizado.");
+
+  // Mentoring para ciclo finalizado (assumindo que já foi feito nos estágios anteriores)
+  console.log("👨‍🏫 Criando registros de mentoring para ciclo finalizado...");
+  for (const user of nonMentorUsers) {
+    await prisma.mentoring.create({
+      data: {
+        idMentorado: user.id,
+        idMentor: mentorUser.id,
+        idCiclo: cicloFinalizado.id,
+        nota: 4.7,
+        justificativa: `Sessão de mentoria de encerramento para ${user.name} no ciclo finalizado.`,
+      },
+    });
+  }
+  console.log("✅ Registros de mentoring criados para ciclo finalizado.");
+
+  console.log("⚖️ Gerando equalizações para ciclo finalizado...");
+  for (const user of nonMentorUsers) {
+    await prisma.equalizacao.create({
+      data: {
+        idAvaliador: comiteUser.id, // O comitê é o avaliador da equalização
+        idAvaliado: user.id,
+        mediaAutoavaliacao: 4.2, // Exemplo de média
+        mediaAvaliacaoGestor: 4.6, // Exemplo de média
+        mediaAvaliacao360: 4.4, // Exemplo de média
+        notaFinal: 4.7, // Exemplo de nota final equalizada
+        justificativa: `Equalização finalizada para ${user.name}: Desempenho excelente e consistente.`,
+        status: StatusEqualizacao.FINALIZADO, // Definindo o status
+      },
+    });
+  }
+  console.log("✅ Equalizações criadas para ciclo finalizado.");
+
+  console.log("🤖 Gerando resumos de IA para ciclo finalizado...");
+  await prisma.resumoIA.createMany({
+    data: [
+      {
+        userId: luanUser.id,
+        idCiclo: cicloFinalizado.id,
+        resumo:
+          "Luan Bezerra concluiu o ciclo com um desempenho excepcional, superando todas as expectativas.",
+      },
+      {
+        userId: arthurUser.id,
+        idCiclo: cicloFinalizado.id,
+        resumo:
+          "Arthur Lins teve um ciclo de sucesso, com todas as avaliações e equalizações finalizadas positivamente.",
+      },
+    ],
+  });
+  console.log("✅ Resumos de IA gerados para ciclo finalizado.");
 
   // --- Resumo Final ---
   console.log("\n🎉 Seeding concluído com sucesso!");
@@ -551,6 +1128,8 @@ async function main() {
     autoavaliacoes: await prisma.autoavaliacao.count(),
     avaliacoes360: await prisma.avaliacao360.count(),
     resumosIA: await prisma.resumoIA.count(),
+    equalizacoes: await prisma.equalizacao.count(),
+    mentorings: await prisma.mentoring.count(),
   };
 
   console.log("\n📊 Resumo do Banco de Dados:");

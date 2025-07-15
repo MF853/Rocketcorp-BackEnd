@@ -31,13 +31,13 @@ export class CicleRepository {
         year: Number(data.year),
         period: Number(data.period),
         status: data.status,
-        dataAberturaAvaliacao: "2025-07-11T10:30:45-03:00",      
-        dataFechamentoAvaliacao: "2025-07-11T10:30:45-03:00",    
-        dataAberturaRevisaoGestor: "2025-07-11T10:30:45-03:00",  
+        dataAberturaAvaliacao: "2025-07-11T10:30:45-03:00",
+        dataFechamentoAvaliacao: "2025-07-11T10:30:45-03:00",
+        dataAberturaRevisaoGestor: "2025-07-11T10:30:45-03:00",
         dataFechamentoRevisaoGestor: "2025-07-11T10:30:45-03:00",
-        dataAberturaRevisaoComite: "2025-07-11T10:30:45-03:00",  
+        dataAberturaRevisaoComite: "2025-07-11T10:30:45-03:00",
         dataFechamentoRevisaoComite: "2025-07-11T10:30:45-03:00",
-        dataFinalizacao: "2025-07-11T10:30:45-03:00",     
+        dataFinalizacao: "2025-07-11T10:30:45-03:00",
       },
     });
   }
@@ -68,6 +68,13 @@ export class CicleRepository {
         period: data.period !== undefined ? Number(data.period) : undefined,
         status: data.status,
       },
+    });
+  }
+
+  async findLastFinalizado() {
+    return this.prisma.ciclo.findFirst({
+      where: { status: "finalizado" },
+      orderBy: { dataFinalizacao: "desc" },
     });
   }
 }
