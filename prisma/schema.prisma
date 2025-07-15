@@ -78,6 +78,7 @@ model Ciclo {
   ResumoIA                    ResumoIA[]
   mentorings                  Mentoring[]
   Equalizacao Equalizacao[]
+  ResumoProcessamento         ResumoProcessamento[]
 
   @@unique([year, period])
   @@index([year])
@@ -243,4 +244,20 @@ model Equalizacao {
 
   @@unique([idAvaliado, idCiclo])
   @@map("equalizacoes")
+}
+
+model ResumoProcessamento {
+  id         String   @id @default(uuid())
+  cicloId    Int
+  status     statusProcessamento
+  criadoEm   DateTime @default(now())
+
+  ciclo      Ciclo    @relation(fields: [cicloId], references: [id], onDelete: Cascade)
+}
+
+enum statusProcessamento {
+  PENDENTE
+  PROCESSANDO
+  CONCLUIDO
+  ERRO
 }

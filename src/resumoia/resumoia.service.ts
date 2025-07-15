@@ -117,41 +117,58 @@ export class ResumoiaService {
     }
 
     const avaliacoes = [
-      // Autoavaliações (self-evaluations)
+      // Autoavaliações (self-evaluations) - evaluations the user made about themselves
       ...user.autoAvaliacoesFeitas
-        .filter((a) => a.idUser === a.idUser)
+        .filter((a) => a.idUser === user.id && a.idCiclo === idCiclo)
         .map((a) => {
           const criterioInfo =
             a.criterio && a.criterio.name && a.criterio.tipo
               ? `${a.criterio.name} (${a.criterio.tipo})`
               : "Geral";
-          return `[AUTOAVALIAÇÃO - ${criterioInfo}] Nota: ${
+
+          let avaliacaoText = `[AUTOAVALIAÇÃO - ${criterioInfo}] Nota: ${
             a.nota ?? "N/A"
           }. "${a.justificativa}"`;
+
+          // Add manager's feedback if available
+          if (a.notaGestor !== null && a.notaGestor !== undefined) {
+            avaliacaoText += ` | GESTOR: Nota: ${a.notaGestor}`;
+            if (a.justificativaGestor) {
+              avaliacaoText += `. "${a.justificativaGestor}"`;
+            }
+          }
+
+          return avaliacaoText;
         }),
 
-      // Avaliações normais (regular evaluations from others)
-      ...user.autoAvaliacoesFeitas
-        .filter((a) => a.idUser !== a.idUser)
+      // Avaliações 360 (360-degree evaluations) - evaluations others made about this user
+      ...user.avaliacoes360Recebidas
+        .filter((a) => a.idCiclo === idCiclo)
         .map(
-          (a) => `[AVALIAÇÃO] Nota: ${a.nota ?? "N/A"}. "${a.justificativa}"`
+          (a) =>
+            `[360°] Nota: ${a.nota ?? "N/A"}. Fortes: "${
+              a.pontosFortes
+            }". Melhorar: "${a.pontosMelhora}". Projeto: "${a.nomeProjeto}".`
         ),
 
-      // Avaliações 360 (360-degree evaluations)
-      ...user.avaliacoes360Recebidas.map(
-        (a) =>
-          `[360°] Nota: ${a.nota ?? "N/A"}. Fortes: "${
-            a.pontosFortes
-          }". Melhorar: "${a.pontosMelhora}". Projeto: "${a.nomeProjeto}".`
-      ),
+      // Mentoring received - evaluations from mentors
+      ...user.mentoringsRecebidos
+        .filter((m) => m.idCiclo === idCiclo)
+        .map(
+          (m) => `[MENTORING] Nota: ${m.nota ?? "N/A"}. "${m.justificativa}"`
+        ),
     ].filter(Boolean);
 
-    if (avaliacoes.length < 2) {
+    if (avaliacoes.length === 0) {
       console.log(
-        `❌ [RESUMOIA] ${user.name} possui menos de 2 avaliações, pulando...`
+        `❌ [RESUMOIA] ${user.name} não possui avaliações no ciclo ${idCiclo}, pulando...`
       );
       return false;
     }
+
+    console.log(
+      `📊 [RESUMOIA] ${user.name} possui ${avaliacoes.length} avaliação(ões) para processar`
+    );
 
     const prompt = this.montarPrompt(user.name, avaliacoes);
     const model = this.getConfiguredModel();
@@ -192,8 +209,9 @@ ${avaliacoes.map((a, i) => `${i + 1}. ${a}`).join("\n")}
 
 LEGENDA:
 - [AUTOAVALIAÇÃO - Critério]: Percepção do colaborador sobre critério específico
-- [AVALIAÇÃO]: Feedback de supervisores/colegas
+- [AUTOAVALIAÇÃO - Critério] | GESTOR: Inclui feedback do gestor quando disponível
 - [360°]: Avaliação multidirecional com pontos específicos
+- [MENTORING]: Avaliação do mentor sobre o mentorado
 
 Exemplo: "Maria demonstra excelente capacidade técnica conforme suas autoavaliações em Liderança e Comunicação. Destacada pelas avaliações 360° por sua gestão de projetos. Suas autoavaliações mostram autocrítica saudável sobre desenvolvimento técnico. Pontos de atenção identificados pelos colegas: necessita melhorar gestão de conflitos. Profissional comprometida com grande potencial para crescimento."
 

@@ -62,8 +62,8 @@ async function main() {
 
   // 3. Cria as Trilhas de desenvolvimento
   console.log("🛤️ Criando trilhas...");
-  const [devTrilha, dadosTrilha, infraTrilha, gestaoTrilha] =
-    await Promise.all([
+  const [devTrilha, dadosTrilha, infraTrilha, gestaoTrilha] = await Promise.all(
+    [
       prisma.trilha.create({ data: { name: "Desenvolvimento" } }),
       prisma.trilha.create({ data: { name: "Análise de Dados" } }),
       prisma.trilha.create({ data: { name: "Infraestrutura" } }),
@@ -128,16 +128,96 @@ async function main() {
   // 5. Cria os Usuários
   console.log("👥 Criando usuários...");
   const usersData = [
-    { name: "Raylandson Cesário", email: "raylandson.cesario@rocketcorp.com", password: await hashPassword("password123"), role: ["admin"], cargo: "Desenvolvimento", unidade: "Recife", trilhaId: devTrilha.id },
-    { name: "Alice Cadete", email: "alice.cadete@rocketcorp.com", password: await hashPassword("password123"), role: ["manager"], cargo: "Desenvolvimento", unidade: "Recife", trilhaId: devTrilha.id },
-    { name: "Arthur Lins", email: "arthur.lins@rocketcorp.com", password: await hashPassword("password123"), role: ["user"], cargo: "Análise de Dados", unidade: "São Paulo", trilhaId: dadosTrilha.id },
-    { name: "Erico Chen", email: "erico.chen@rocketcorp.com", password: await hashPassword("password123"), role: ["user"], cargo: "Infraestrutura", unidade: "Belo Horizonte", trilhaId: infraTrilha.id },
-    { name: "Luan Bezerra", email: "luan.bezerra@rocketcorp.com", password: await hashPassword("password123"), role: ["user"], cargo: "Desenvolvimento", unidade: "Recife", trilhaId: devTrilha.id },
-    { name: "José Mário", email: "jose.mario@rocketcorp.com", password: await hashPassword("password123"), role: ["manager"], cargo: "Gestão", unidade: "Rio de Janeiro", trilhaId: gestaoTrilha.id },
-    { name: "Maria Santos", email: "maria.santos@rocketcorp.com", password: await hashPassword("password123"), role: ["user"], cargo: "Desenvolvimento", unidade: "São Paulo", trilhaId: devTrilha.id },
-    { name: "Pedro Costa", email: "pedro.costa@rocketcorp.com", password: await hashPassword("password123"), role: ["user"], cargo: "Análise de Dados", unidade: "Porto Alegre", trilhaId: dadosTrilha.id },
-    { name: "Ana Oliveira", email: "ana.oliveira@rocketcorp.com", password: await hashPassword("password123"), role: ["user"], cargo: "Infraestrutura", unidade: "Curitiba", trilhaId: infraTrilha.id },
-    { name: "Carlos Silva", email: "carlos.silva@rocketcorp.com", password: await hashPassword("password123"), role: ["manager"], cargo: "Gestão", unidade: "Rio de Janeiro", trilhaId: gestaoTrilha.id },
+    {
+      name: "Raylandson Cesário",
+      email: "raylandson.cesario@rocketcorp.com",
+      password: await hashPassword("password123"),
+      role: ["admin"],
+      cargo: "Desenvolvimento",
+      unidade: "Recife",
+      trilhaId: devTrilha.id,
+    },
+    {
+      name: "Alice Cadete",
+      email: "alice.cadete@rocketcorp.com",
+      password: await hashPassword("password123"),
+      role: ["manager"],
+      cargo: "Desenvolvimento",
+      unidade: "Recife",
+      trilhaId: devTrilha.id,
+    },
+    {
+      name: "Arthur Lins",
+      email: "arthur.lins@rocketcorp.com",
+      password: await hashPassword("password123"),
+      role: ["user"],
+      cargo: "Análise de Dados",
+      unidade: "São Paulo",
+      trilhaId: dadosTrilha.id,
+    },
+    {
+      name: "Erico Chen",
+      email: "erico.chen@rocketcorp.com",
+      password: await hashPassword("password123"),
+      role: ["user"],
+      cargo: "Infraestrutura",
+      unidade: "Belo Horizonte",
+      trilhaId: infraTrilha.id,
+    },
+    {
+      name: "Luan Bezerra",
+      email: "luan.bezerra@rocketcorp.com",
+      password: await hashPassword("password123"),
+      role: ["user"],
+      cargo: "Desenvolvimento",
+      unidade: "Recife",
+      trilhaId: devTrilha.id,
+    },
+    {
+      name: "José Mário",
+      email: "jose.mario@rocketcorp.com",
+      password: await hashPassword("password123"),
+      role: ["manager"],
+      cargo: "Gestão",
+      unidade: "Rio de Janeiro",
+      trilhaId: gestaoTrilha.id,
+    },
+    {
+      name: "Maria Santos",
+      email: "maria.santos@rocketcorp.com",
+      password: await hashPassword("password123"),
+      role: ["user"],
+      cargo: "Desenvolvimento",
+      unidade: "São Paulo",
+      trilhaId: devTrilha.id,
+    },
+    {
+      name: "Pedro Costa",
+      email: "pedro.costa@rocketcorp.com",
+      password: await hashPassword("password123"),
+      role: ["user"],
+      cargo: "Análise de Dados",
+      unidade: "Porto Alegre",
+      trilhaId: dadosTrilha.id,
+    },
+    {
+      name: "Ana Oliveira",
+      email: "ana.oliveira@rocketcorp.com",
+      password: await hashPassword("password123"),
+      role: ["user"],
+      cargo: "Infraestrutura",
+      unidade: "Curitiba",
+      trilhaId: infraTrilha.id,
+    },
+    {
+      name: "Carlos Silva",
+      email: "carlos.silva@rocketcorp.com",
+      password: await hashPassword("password123"),
+      role: ["manager"],
+      cargo: "Gestão",
+      unidade: "Rio de Janeiro",
+      trilhaId: gestaoTrilha.id,
+    },
   ];
   const users: User[] = await prisma.$transaction(
     usersData.map((user) => prisma.user.create({ data: user }))
@@ -339,6 +419,7 @@ async function main() {
 
   await prisma.autoavaliacao.createMany({
     data: [
+      // Luan Bezerra (users[4]) - Desenvolvimento
       {
         idUser: users[4].id,
         idCiclo: cicloQ1_2025.id,
@@ -350,6 +431,29 @@ async function main() {
         justificativaGestor: "Código muito bem estruturado.",
       },
       {
+        idUser: users[4].id,
+        idCiclo: cicloQ1_2025.id,
+        criterioId: devCriterios.find((c) => c.name === "Trabalho em Equipe")
+          ?.id,
+        nota: 4.5,
+        justificativa:
+          "Colaboro ativamente com a equipe e compartilho conhecimento.",
+        notaGestor: 4.3,
+        justificativaGestor: "Muito colaborativo, sempre disposto a ajudar.",
+      },
+      {
+        idUser: users[4].id,
+        idCiclo: cicloQ1_2025.id,
+        criterioId: devCriterios.find((c) => c.name === "Aprendizagem Contínua")
+          ?.id,
+        nota: 4.8,
+        justificativa: "Estou sempre estudando novas tecnologias e práticas.",
+        notaGestor: 4.7,
+        justificativaGestor: "Demonstra curiosidade e vontade de aprender.",
+      },
+
+      // Maria Santos (users[6]) - Desenvolvimento
+      {
         idUser: users[6].id,
         idCiclo: cicloQ1_2025.id,
         criterioId: devCriterios.find((c) => c.name === "Iniciativa")?.id,
@@ -359,6 +463,29 @@ async function main() {
         justificativaGestor: "Proatividade excepcional.",
       },
       {
+        idUser: users[6].id,
+        idCiclo: cicloQ1_2025.id,
+        criterioId: devCriterios.find((c) => c.name === "Produtividade")?.id,
+        nota: 4.2,
+        justificativa: "Mantenho um ritmo consistente de entrega.",
+        notaGestor: 4.4,
+        justificativaGestor: "Entrega sempre dentro do prazo com qualidade.",
+      },
+      {
+        idUser: users[6].id,
+        idCiclo: cicloQ1_2025.id,
+        criterioId: devCriterios.find(
+          (c) => c.name === "Criatividade e Inovação"
+        )?.id,
+        nota: 4.6,
+        justificativa:
+          "Gosto de pensar em soluções criativas para problemas complexos.",
+        notaGestor: 4.5,
+        justificativaGestor: "Sempre traz ideias inovadoras para o projeto.",
+      },
+
+      // Pedro Costa (users[7]) - Análise de Dados
+      {
         idUser: users[7].id,
         idCiclo: cicloQ1_2025.id,
         criterioId: dadosCriterios.find((c) => c.name === "Produtividade")?.id,
@@ -367,6 +494,76 @@ async function main() {
           "Tenho boa capacidade analítica, mas ainda estou aprendendo técnicas mais avançadas.",
         notaGestor: 4.4,
         justificativaGestor: "Excelente capacidade analítica.",
+      },
+      {
+        idUser: users[7].id,
+        idCiclo: cicloQ1_2025.id,
+        criterioId: dadosCriterios.find((c) => c.name === "Qualidade")?.id,
+        nota: 4.3,
+        justificativa:
+          "Busco sempre validar meus resultados e entregar análises precisas.",
+        notaGestor: 4.2,
+        justificativaGestor: "Análises bem fundamentadas e precisas.",
+      },
+      {
+        idUser: users[7].id,
+        idCiclo: cicloQ1_2025.id,
+        criterioId: dadosCriterios.find((c) => c.name === "Foco no Cliente")
+          ?.id,
+        nota: 4.1,
+        justificativa:
+          "Procuro entender as necessidades do negócio antes de começar as análises.",
+        notaGestor: 4.0,
+        justificativaGestor:
+          "Demonstra preocupação com o valor entregue ao cliente.",
+      },
+
+      // Alice Cadete (users[1]) - Desenvolvimento (Manager)
+      {
+        idUser: users[1].id,
+        idCiclo: cicloQ1_2025.id,
+        criterioId: devCriterios.find((c) => c.name === "Gestão de Pessoas")
+          ?.id,
+        nota: 4.5,
+        justificativa:
+          "Procuro desenvolver minha equipe e criar um ambiente colaborativo.",
+        notaGestor: 4.7,
+        justificativaGestor: "Liderança exemplar, equipe muito motivada.",
+      },
+      {
+        idUser: users[1].id,
+        idCiclo: cicloQ1_2025.id,
+        criterioId: devCriterios.find((c) => c.name === "Gestão de Projetos")
+          ?.id,
+        nota: 4.3,
+        justificativa:
+          "Mantenho os projetos organizados e dentro do cronograma.",
+        notaGestor: 4.6,
+        justificativaGestor: "Excelente controle de projetos e prazos.",
+      },
+
+      // Raylandson Cesário (users[0]) - Desenvolvimento (Admin)
+      {
+        idUser: users[0].id,
+        idCiclo: cicloQ1_2025.id,
+        criterioId: devCriterios.find((c) => c.name === "Gestão Organizacional")
+          ?.id,
+        nota: 4.4,
+        justificativa:
+          "Contribuo para a melhoria contínua dos processos organizacionais.",
+        notaGestor: 4.8,
+        justificativaGestor:
+          "Visão estratégica excepcional para melhorias organizacionais.",
+      },
+      {
+        idUser: users[0].id,
+        idCiclo: cicloQ1_2025.id,
+        criterioId: devCriterios.find((c) => c.name === "Qualidade")?.id,
+        nota: 4.7,
+        justificativa: "Busco sempre entregar soluções robustas e escaláveis.",
+        notaGestor: 4.9,
+        justificativaGestor:
+          "Qualidade técnica excepcional em todas as entregas.",
       },
     ],
   });
@@ -416,25 +613,37 @@ async function main() {
   });
   console.log("✅ Avaliações 360 criadas.");
 
-  // 11. Cria Resumos de IA
-  console.log("🤖 Gerando resumos de IA...");
-  await prisma.resumoIA.createMany({
+  // 11. Cria as Avaliações de Mentoring
+  console.log("🤝 Criando avaliações de mentoring...");
+  await prisma.mentoring.createMany({
     data: [
       {
-        userId: users[4].id,
+        idMentor: users[1].id, // Alice Cadete
+        idMentorado: users[4].id, // Luan Bezerra
         idCiclo: cicloQ1_2025.id,
-        resumo:
-          "Luan Bezerra é um desenvolvedor em ascensão com fortes habilidades em colaboração e qualidade de código. As avaliações indicam uma necessidade de desenvolvimento em proatividade e testes automatizados para atingir o próximo nível.",
+        nota: 4.6,
+        justificativa:
+          "Luan tem demonstrado excelente evolução técnica e está mais confiante em suas decisões. Precisa trabalhar um pouco mais a comunicação com stakeholders.",
       },
       {
-        userId: users[6].id,
+        idMentor: users[1].id, // Alice Cadete
+        idMentorado: users[6].id, // Maria Santos
         idCiclo: cicloQ1_2025.id,
-        resumo:
-          "Maria Santos é uma desenvolvedora sênior exemplar, destacando-se pela qualidade técnica e proatividade. O feedback sugere que ela pode ampliar seu impacto compartilhando mais seu conhecimento com a equipe.",
+        nota: 4.8,
+        justificativa:
+          "Maria é uma mentorada excepcional, sempre proativa e com grande capacidade de aprendizado. Tem potencial para assumir posições de liderança.",
+      },
+      {
+        idMentor: users[2].id, // Arthur Lins
+        idMentorado: users[7].id, // Pedro Costa
+        idCiclo: cicloQ1_2025.id,
+        nota: 4.2,
+        justificativa:
+          "Pedro tem boa base técnica em análise de dados e está evoluindo bem. Precisa desenvolver mais autonomia na tomada de decisões analíticas.",
       },
     ],
   });
-  console.log("✅ Resumos de IA gerados.");
+  console.log("✅ Avaliações de mentoring criadas.");
 
   // --- Resumo Final ---
   console.log("\n🎉 Seeding concluído com sucesso!");
@@ -458,7 +667,12 @@ main()
     console.error("❌ Erro durante o processo de seeding:", e);
     process.exit(1);
   })
-  .finally(async () => {
+  .finally(() => {
     // Garante que a conexão com o banco de dados seja fechada
-    await prisma.$disconnect();
+    prisma
+      .$disconnect()
+      .then(() => {})
+      .catch((e) => {
+        console.error("Erro ao desconectar do banco de dados:", e);
+      });
   });
