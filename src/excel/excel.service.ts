@@ -41,13 +41,13 @@ export class ExcelService {
       await this.importAutoavaliacao(autoSheet, userId, cicleId);
     }
 
-    // if (avaliacao360Sheet && userId !== undefined && cicleId !== undefined) {
-    //   await this.importAvaliacao360(avaliacao360Sheet, userId, cicleId);
-    // }
+    if (avaliacao360Sheet && userId !== undefined && cicleId !== undefined) {
+      await this.importAvaliacao360(avaliacao360Sheet, userId, cicleId);
+    }
 
-    // if (referenciasSheet && userId !== undefined && cicleId !== undefined) {
-    //   await this.importReferencias(referenciasSheet, userId, cicleId);
-    // }
+    if (referenciasSheet && userId !== undefined && cicleId !== undefined) {
+      await this.importReferencias(referenciasSheet, userId, cicleId);
+    }
 
     return { message: 'Importação concluída com sucesso' };
   }
@@ -109,6 +109,11 @@ export class ExcelService {
       const grade = values[3];
       const justification = values[5];
       const criterionType = mapTipoCriterio(criterion); 
+
+      if (typeof grade === "string" && grade.trim().toUpperCase() === 'NA') {
+        console.warn(`Linha ${rowNumber} pulada: justificativa = NA`);
+        return;
+      }
 
       let existingCriteria = criteria.find(c =>
         c.name.trim().toLowerCase() === criterion.toLowerCase()

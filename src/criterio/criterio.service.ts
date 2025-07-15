@@ -29,12 +29,10 @@ export class CriterioService {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         switch (error.code) {
           case "P2002":
-            throw new BadRequestException(
-              `Critério com o nome "${createCriterioDto.name}" já existe nesta trilha.`
-            );
+            console.warn(`Critério com o nome "${createCriterioDto.name}" já existe nesta trilha.`);
           case "P2003":
             throw new BadRequestException(
-              "Trilha ou Ciclo especificado não existe. Verifique os IDs fornecidos."
+              `Trilha ou Ciclo especificado não existe. Verifique os IDs fornecidos. Trilha ID: ${createCriterioDto.trilhaId} , Ciclo ID: ${createCriterioDto.idCiclo}`
             );
           default:
             throw new BadRequestException(
