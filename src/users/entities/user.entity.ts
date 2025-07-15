@@ -14,6 +14,7 @@ export class User implements PrismaUser {
   trilhaId: number | null;
   cargo: string | null;
   gestorId: number | null;
+  idEquipe: number | null;
 
   // Relacionamentos
   mentor?: User;

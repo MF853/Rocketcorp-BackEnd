@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { CicleRepository } from "./cicle.repository";
 import { CreateCicleDto } from "./dto/create-cicle.dto";
 import { UpdateCicleDto } from "./dto/update-cicle.dto";
+import { Ciclo } from "@prisma/client";
 
 @Injectable()
 export class CicleService {
@@ -58,13 +59,13 @@ export class CicleService {
           year: year.toString(),
           period: period.toString(),
           status: "aberto",
-          dataAberturaAvaliacao: "2025-07-11T10:30:45-03:00",      
-          dataFechamentoAvaliacao: "2025-07-11T10:30:45-03:00",    
-          dataAberturaRevisaoGestor: "2025-07-11T10:30:45-03:00",  
+          dataAberturaAvaliacao: "2025-07-11T10:30:45-03:00",
+          dataFechamentoAvaliacao: "2025-07-11T10:30:45-03:00",
+          dataAberturaRevisaoGestor: "2025-07-11T10:30:45-03:00",
           dataFechamentoRevisaoGestor: "2025-07-11T10:30:45-03:00",
-          dataAberturaRevisaoComite: "2025-07-11T10:30:45-03:00",  
+          dataAberturaRevisaoComite: "2025-07-11T10:30:45-03:00",
           dataFechamentoRevisaoComite: "2025-07-11T10:30:45-03:00",
-          dataFinalizacao: "2025-07-11T10:30:45-03:00",  
+          dataFinalizacao: "2025-07-11T10:30:45-03:00",
         });
       }
 
@@ -76,5 +77,20 @@ export class CicleService {
     await this.findOne(id);
     await this.cicleRepository.update(id, updateCicleDto);
     return "Ciclo atualizado com sucesso";
+  }
+
+  async getCycleInRevisaoComite(): Promise<Ciclo> {
+    const currentDate = new Date();
+    const cycle = await this.cicleRepository.findCycleInRevisaoComite(
+      currentDate
+    );
+
+    if (!cycle) {
+      throw new NotFoundException(
+        "No cycle found in 'revisao comite' phase for the current date"
+      );
+    }
+
+    return cycle;
   }
 }
