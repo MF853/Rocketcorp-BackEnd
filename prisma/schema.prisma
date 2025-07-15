@@ -94,7 +94,7 @@ model Criterio {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
-  @@unique([name, trilhaId])
+  @@unique([name, trilhaId, idCiclo])
   @@index([trilhaId])
   @@index([idCiclo])
   @@map("criterio")
