@@ -1,10 +1,13 @@
 import {
   PrismaClient,
   MotivacaoTrabalhoNovamente,
+  StatusEqualizacao,
+  statusProcessamento,
   User,
   Trilha,
   Ciclo,
   Criterio,
+  Equipe,
 } from "@prisma/client";
 import * as argon from "argon2";
 import { execSync } from "child_process";
@@ -48,6 +51,7 @@ async function main() {
 
   // 2. Limpa os dados existentes na ordem correta para evitar conflitos de chave estrangeira
   console.log("🧹 Limpando dados existentes...");
+  await prisma.resumoProcessamento.deleteMany();
   await prisma.equalizacao.deleteMany();
   await prisma.mentoring.deleteMany();
   await prisma.resumoIA.deleteMany();
@@ -55,6 +59,9 @@ async function main() {
   await prisma.autoavaliacao.deleteMany();
   await prisma.referencia.deleteMany();
   await prisma.criterio.deleteMany();
+  // Limpa a relação de equipe antes de limpar usuários e equipes
+  await prisma.user.updateMany({ data: { idEquipe: null } });
+  await prisma.equipe.deleteMany();
   await prisma.user.deleteMany();
   await prisma.ciclo.deleteMany();
   await prisma.trilha.deleteMany();
@@ -62,14 +69,13 @@ async function main() {
 
   // 3. Cria as Trilhas de desenvolvimento
   console.log("🛤️ Criando trilhas...");
-  const [devTrilha, dadosTrilha, infraTrilha, gestaoTrilha] = await Promise.all(
-    [
+  const [devTrilha, dadosTrilha, infraTrilha, gestaoTrilha] =
+    await Promise.all([
       prisma.trilha.create({ data: { name: "Desenvolvimento" } }),
       prisma.trilha.create({ data: { name: "Análise de Dados" } }),
       prisma.trilha.create({ data: { name: "Infraestrutura" } }),
       prisma.trilha.create({ data: { name: "Gestão" } }),
-    ]
-  );
+    ]);
   const trilhas: Trilha[] = [devTrilha, dadosTrilha, infraTrilha, gestaoTrilha];
   console.log(`✅ Criadas ${trilhas.length} trilhas.`);
 
@@ -82,13 +88,13 @@ async function main() {
         year: 2025,
         period: 1,
         status: "aberto",
-        dataAberturaAvaliacao: new Date("2025-06-15T00:00:00Z"),
-        dataFechamentoAvaliacao: new Date("2025-07-05T23:59:59Z"),
-        dataAberturaRevisaoGestor: new Date("2025-07-06T00:00:00Z"),
-        dataFechamentoRevisaoGestor: new Date("2025-07-12T23:59:59Z"),
-        dataAberturaRevisaoComite: new Date("2025-07-13T00:00:00Z"),
-        dataFechamentoRevisaoComite: new Date("2025-07-20T23:59:59Z"),
-        dataFinalizacao: new Date("2025-07-25T23:59:59Z"),
+        dataAberturaAvaliacao: new Date("2025-01-15T00:00:00Z"),
+        dataFechamentoAvaliacao: new Date("2025-02-15T23:59:59Z"),
+        dataAberturaRevisaoGestor: new Date("2025-02-16T00:00:00Z"),
+        dataFechamentoRevisaoGestor: new Date("2025-02-28T23:59:59Z"),
+        dataAberturaRevisaoComite: new Date("2025-03-01T00:00:00Z"),
+        dataFechamentoRevisaoComite: new Date("2025-03-10T23:59:59Z"),
+        dataFinalizacao: new Date("2025-03-15T23:59:59Z"),
       },
     }),
     prisma.ciclo.create({
@@ -128,522 +134,140 @@ async function main() {
   // 5. Cria os Usuários
   console.log("👥 Criando usuários...");
   const usersData = [
-    {
-      name: "Raylandson Cesário",
-      email: "raylandson.cesario@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["admin"],
-      cargo: "Desenvolvimento",
-      unidade: "Recife",
-      trilhaId: devTrilha.id,
-    },
-    {
-      name: "Alice Cadete",
-      email: "alice.cadete@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["manager"],
-      cargo: "Desenvolvimento",
-      unidade: "Recife",
-      trilhaId: devTrilha.id,
-    },
-    {
-      name: "Arthur Lins",
-      email: "arthur.lins@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["user"],
-      cargo: "Análise de Dados",
-      unidade: "São Paulo",
-      trilhaId: dadosTrilha.id,
-    },
-    {
-      name: "Erico Chen",
-      email: "erico.chen@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["user"],
-      cargo: "Infraestrutura",
-      unidade: "Belo Horizonte",
-      trilhaId: infraTrilha.id,
-    },
-    {
-      name: "Luan Bezerra",
-      email: "luan.bezerra@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["user"],
-      cargo: "Desenvolvimento",
-      unidade: "Recife",
-      trilhaId: devTrilha.id,
-    },
-    {
-      name: "José Mário",
-      email: "jose.mario@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["manager"],
-      cargo: "Gestão",
-      unidade: "Rio de Janeiro",
-      trilhaId: gestaoTrilha.id,
-    },
-    {
-      name: "Maria Santos",
-      email: "maria.santos@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["user"],
-      cargo: "Desenvolvimento",
-      unidade: "São Paulo",
-      trilhaId: devTrilha.id,
-    },
-    {
-      name: "Pedro Costa",
-      email: "pedro.costa@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["user"],
-      cargo: "Análise de Dados",
-      unidade: "Porto Alegre",
-      trilhaId: dadosTrilha.id,
-    },
-    {
-      name: "Ana Oliveira",
-      email: "ana.oliveira@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["user"],
-      cargo: "Infraestrutura",
-      unidade: "Curitiba",
-      trilhaId: infraTrilha.id,
-    },
-    {
-      name: "Carlos Silva",
-      email: "carlos.silva@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["manager"],
-      cargo: "Gestão",
-      unidade: "Rio de Janeiro",
-      trilhaId: gestaoTrilha.id,
-    },
+    { name: "Raylandson Cesário", email: "raylandson.cesario@rocketcorp.com", password: await hashPassword("password123"), role: ["admin"], cargo: "Desenvolvimento", unidade: "Recife", trilhaId: devTrilha.id },
+    { name: "Alice Cadete", email: "alice.cadete@rocketcorp.com", password: await hashPassword("password123"), role: ["manager"], cargo: "Desenvolvimento", unidade: "Recife", trilhaId: devTrilha.id },
+    { name: "Arthur Lins", email: "arthur.lins@rocketcorp.com", password: await hashPassword("password123"), role: ["user"], cargo: "Análise de Dados", unidade: "São Paulo", trilhaId: dadosTrilha.id },
+    { name: "Erico Chen", email: "erico.chen@rocketcorp.com", password: await hashPassword("password123"), role: ["user"], cargo: "Infraestrutura", unidade: "Belo Horizonte", trilhaId: infraTrilha.id },
+    { name: "Luan Bezerra", email: "luan.bezerra@rocketcorp.com", password: await hashPassword("password123"), role: ["user"], cargo: "Desenvolvimento", unidade: "Recife", trilhaId: devTrilha.id },
+    { name: "José Mário", email: "jose.mario@rocketcorp.com", password: await hashPassword("password123"), role: ["manager"], cargo: "Gestão", unidade: "Rio de Janeiro", trilhaId: gestaoTrilha.id },
+    { name: "Maria Santos", email: "maria.santos@rocketcorp.com", password: await hashPassword("password123"), role: ["user"], cargo: "Desenvolvimento", unidade: "São Paulo", trilhaId: devTrilha.id },
+    { name: "Pedro Costa", email: "pedro.costa@rocketcorp.com", password: await hashPassword("password123"), role: ["user"], cargo: "Análise de Dados", unidade: "Porto Alegre", trilhaId: dadosTrilha.id },
+    { name: "Ana Oliveira", email: "ana.oliveira@rocketcorp.com", password: await hashPassword("password123"), role: ["user"], cargo: "Infraestrutura", unidade: "Curitiba", trilhaId: infraTrilha.id },
+    { name: "Carlos Silva", email: "carlos.silva@rocketcorp.com", password: await hashPassword("password123"), role: ["manager"], cargo: "Gestão", unidade: "Rio de Janeiro", trilhaId: gestaoTrilha.id },
   ];
   const users: User[] = await prisma.$transaction(
     usersData.map((user) => prisma.user.create({ data: user }))
   );
   console.log(`✅ Criados ${users.length} usuários.`);
 
-  // 6. Define as relações de mentoria
-  console.log("🤝 Configurando relações de mentoria...");
-  await prisma.user.update({
-    where: { id: users[4].id },
-    data: { mentorId: users[1].id },
-  }); // Alice -> Luan
-  await prisma.user.update({
-    where: { id: users[6].id },
-    data: { mentorId: users[1].id },
-  }); // Alice -> Maria
-  await prisma.user.update({
-    where: { id: users[7].id },
-    data: { mentorId: users[2].id },
-  }); // Arthur -> Pedro
-  console.log("✅ Relações de mentoria estabelecidas.");
+  // 6. Cria Equipes e define gestores
+  console.log("🏢 Criando equipes...");
+  const equipeGestao = await prisma.equipe.create({
+    data: {
+      nome: "Projetos Estratégicos",
+      descricao: "Equipe responsável pelos projetos estratégicos da empresa",
+      idGestor: users[9].id, // Carlos Silva como gestor
+    },
+  });
+  console.log(`✅ Criada a equipe "${equipeGestao.nome}".`);
 
-  // 7. Cria os Critérios de avaliação
+  // 7. Define as relações de mentoria e adiciona membros às equipes
+  console.log("🤝 Configurando relações de mentoria e equipes...");
+  await prisma.user.update({ where: { id: users[4].id }, data: { mentorId: users[1].id } }); // Alice -> Luan
+  await prisma.user.update({ where: { id: users[6].id }, data: { mentorId: users[1].id } }); // Alice -> Maria
+  await prisma.user.update({ where: { id: users[7].id }, data: { mentorId: users[2].id } }); // Arthur -> Pedro
+  await prisma.user.update({ where: { id: users[5].id }, data: { mentorId: users[0].id } }); // José Mário -> Raylandson
+  console.log("✅ Relações de mentoria e equipes estabelecidas.");
+
+  // 8. Cria os Critérios de avaliação
   console.log("📋 Criando critérios...");
   const baseCriterios = [
-    {
-      name: "Organização",
-      tipo: "comportamental",
-      peso: 5.0,
-      description: "Ser organizado e contribuir para a organização do grupo.",
-    },
-    {
-      name: "Imagem",
-      tipo: "comportamental",
-      peso: 5.0,
-      description: "Passar uma imagem pessoal positiva e profissional.",
-    },
-    {
-      name: "Iniciativa",
-      tipo: "comportamental",
-      peso: 5.0,
-      description: "Ser proativo, buscar assumir responsabilidades.",
-    },
-    {
-      name: "Comprometimento",
-      tipo: "comportamental",
-      peso: 5.0,
-      description: "Se dedicar para atingimento dos resultados desejados.",
-    },
-    {
-      name: "Relacionamento Interpessoal",
-      tipo: "comportamental",
-      peso: 5.0,
-      description: "Relacionar-se positivamente com a equipe.",
-    },
-    {
-      name: "Aprendizagem Contínua",
-      tipo: "comportamental",
-      peso: 5.0,
-      description: "Buscar sempre aprender e dividir o conhecimento.",
-    },
-    {
-      name: "Flexibilidade",
-      tipo: "comportamental",
-      peso: 5.0,
-      description: "Capacidade de se adaptar a situações diversas.",
-    },
-    {
-      name: "Trabalho em Equipe",
-      tipo: "comportamental",
-      peso: 5.0,
-      description: "Pensar sempre no ótimo global para o grupo.",
-    },
-    {
-      name: "Produtividade",
-      tipo: "tecnico",
-      peso: 5.0,
-      description: "Otimizar a execução das atividades.",
-    },
-    {
-      name: "Qualidade",
-      tipo: "tecnico",
-      peso: 5.0,
-      description:
-        "Entregar resultados que atendam ou superem as expectativas.",
-    },
-    {
-      name: "Foco no Cliente",
-      tipo: "comportamental",
-      peso: 5.0,
-      description: "Entender a real necessidade do cliente.",
-    },
-    {
-      name: "Criatividade e Inovação",
-      tipo: "comportamental",
-      peso: 5.0,
-      description: "Gerar soluções inovadoras.",
-    },
-    {
-      name: "Gestão de Pessoas",
-      tipo: "gestao",
-      peso: 5.0,
-      description: "Gerenciar grupos, capacitando e motivando.",
-    },
-    {
-      name: "Gestão de Projetos",
-      tipo: "gestao",
-      peso: 5.0,
-      description:
-        "Gerenciar projetos, alocando recursos e controlando a execução.",
-    },
-    {
-      name: "Gestão Organizacional",
-      tipo: "gestao",
-      peso: 5.0,
-      description:
-        "Contribuir para a eficiência e eficácia da gestão da empresa.",
-    },
-    {
-      name: "Novos Clientes",
-      tipo: "negocios",
-      peso: 5.0,
-      description: "Gerar novos contatos e alavancar novos clientes.",
-    },
-    {
-      name: "Novos Projetos",
-      tipo: "negocios",
-      peso: 5.0,
-      description: "Gerar novos projetos em clientes já existentes.",
-    },
-    {
-      name: "Novos Produtos ou Serviços",
-      tipo: "negocios",
-      peso: 5.0,
-      description:
-        "Gerar novos produtos e/ou serviços com potencial de mercado.",
-    },
+      { name: "Organização", tipo: "comportamental", peso: 5.0, description: "Ser organizado e contribuir para a organização do grupo." },
+      { name: "Imagem", tipo: "comportamental", peso: 5.0, description: "Passar uma imagem pessoal positiva e profissional." },
+      { name: "Iniciativa", tipo: "comportamental", peso: 5.0, description: "Ser proativo, buscar assumir responsabilidades." },
+      { name: "Comprometimento", tipo: "comportamental", peso: 5.0, description: "Se dedicar para atingimento dos resultados desejados." },
+      { name: "Relacionamento Interpessoal", tipo: "comportamental", peso: 5.0, description: "Relacionar-se positivamente com a equipe." },
+      { name: "Aprendizagem Contínua", tipo: "comportamental", peso: 5.0, description: "Buscar sempre aprender e dividir o conhecimento." },
+      { name: "Flexibilidade", tipo: "comportamental", peso: 5.0, description: "Capacidade de se adaptar a situações diversas." },
+      { name: "Trabalho em Equipe", tipo: "comportamental", peso: 5.0, description: "Pensar sempre no ótimo global para o grupo." },
+      { name: "Produtividade", tipo: "tecnico", peso: 5.0, description: "Otimizar a execução das atividades." },
+      { name: "Qualidade", tipo: "tecnico", peso: 5.0, description: "Entregar resultados que atendam ou superem as expectativas." },
+      { name: "Foco no Cliente", tipo: "comportamental", peso: 5.0, description: "Entender a real necessidade do cliente." },
+      { name: "Criatividade e Inovação", tipo: "comportamental", peso: 5.0, description: "Gerar soluções inovadoras." },
+      { name: "Gestão de Pessoas", tipo: "gestao", peso: 5.0, description: "Gerenciar grupos, capacitando e motivando." },
+      { name: "Gestão de Projetos", tipo: "gestao", peso: 5.0, description: "Gerenciar projetos, alocando recursos e controlando a execução." },
+      { name: "Gestão Organizacional", tipo: "gestao", peso: 5.0, description: "Contribuir para a eficiência e eficácia da gestão da empresa." },
+      { name: "Novos Clientes", tipo: "negocios", peso: 5.0, description: "Gerar novos contatos e alavancar novos clientes." },
+      { name: "Novos Projetos", tipo: "negocios", peso: 5.0, description: "Gerar novos projetos em clientes já existentes." },
+      { name: "Novos Produtos ou Serviços", tipo: "negocios", peso: 5.0, description: "Gerar novos produtos e/ou serviços com potencial de mercado." },
   ];
-
+  
   const allCriterios: Criterio[] = [];
-  for (const trilha of trilhas) {
-    for (const criterio of baseCriterios) {
-      const createdCriterio = await prisma.criterio.create({
-        data: {
-          ...criterio,
-          trilhaId: trilha.id,
-          idCiclo: cicloQ1_2025.id, // Associando ao ciclo principal
-        },
-      });
-      allCriterios.push(createdCriterio);
+  for (const ciclo of ciclos) {
+    for (const trilha of trilhas) {
+        for (const criterio of baseCriterios) {
+            const createdCriterio = await prisma.criterio.create({
+                data: {
+                    ...criterio,
+                    trilhaId: trilha.id,
+                    idCiclo: ciclo.id,
+                },
+            });
+            allCriterios.push(createdCriterio);
+        }
     }
   }
-  console.log(
-    `✅ Criados ${allCriterios.length} critérios para ${trilhas.length} trilhas.`
-  );
+  console.log(`✅ Criados ${allCriterios.length} critérios para ${ciclos.length} ciclos e ${trilhas.length} trilhas.`);
 
-  // 8. Cria as Referências
+  // 9. Cria as Referências
   console.log("📝 Criando referências...");
   await prisma.referencia.createMany({
     data: [
-      {
-        idReferenciador: users[1].id,
-        idReferenciado: users[4].id,
-        idCiclo: cicloQ1_2025.id,
-        justificativa:
-          "Luan demonstrou excelente crescimento técnico e é muito colaborativo.",
-      },
-      {
-        idReferenciador: users[0].id,
-        idReferenciado: users[6].id,
-        idCiclo: cicloQ1_2025.id,
-        justificativa:
-          "Maria é uma desenvolvedora excepcional com forte capacidade de resolver problemas complexos.",
-      },
-      {
-        idReferenciador: users[2].id,
-        idReferenciado: users[7].id,
-        idCiclo: cicloQ1_2025.id,
-        justificativa:
-          "Pedro possui conhecimento sólido em análise de dados e grande potencial.",
-      },
-      {
-        idReferenciador: users[5].id,
-        idReferenciado: users[3].id,
-        idCiclo: cicloQ1_2025.id,
-        justificativa:
-          "Erico tem mostrado excelente trabalho em DevOps e infraestrutura.",
-      },
-    ],
+      { idReferenciador: users[1].id, idReferenciado: users[4].id, idCiclo: cicloQ1_2025.id, justificativa: "Luan demonstrou excelente crescimento técnico e é muito colaborativo." },
+      { idReferenciador: users[0].id, idReferenciado: users[6].id, idCiclo: cicloQ1_2025.id, justificativa: "Maria é uma desenvolvedora excepcional com forte capacidade de resolver problemas complexos." },
+      { idReferenciador: users[2].id, idReferenciado: users[7].id, idCiclo: cicloQ1_2025.id, justificativa: "Pedro possui conhecimento sólido em análise de dados e grande potencial." },
+      { idReferenciador: users[5].id, idReferenciado: users[3].id, idCiclo: cicloQ1_2025.id, justificativa: "Erico tem mostrado excelente trabalho em DevOps e infraestrutura." },
+    ]
   });
   console.log("✅ Referências criadas.");
 
-  // 9. Cria as Autoavaliações
+  // 10. Cria as Autoavaliações
   console.log("📊 Criando autoavaliações...");
-  const devCriterios = allCriterios.filter((c) => c.trilhaId === devTrilha.id);
-  const dadosCriterios = allCriterios.filter(
-    (c) => c.trilhaId === dadosTrilha.id
-  );
+  const autoavaliacaoData = [
+    { user: users[4], criterioName: 'Qualidade', nota: 4.0, justificativa: "Tenho me esforçado para escrever código limpo e bem documentado.", notaGestor: 4.5, justificativaGestor: "Código muito bem estruturado." },
+    { user: users[6], criterioName: 'Iniciativa', nota: 4.5, justificativa: "Sempre busco antecipar problemas e propor soluções.", notaGestor: 4.8, justificativaGestor: "Proatividade excepcional." },
+    { user: users[7], criterioName: 'Produtividade', nota: 4.0, justificativa: "Tenho boa capacidade analítica, mas ainda estou aprendendo técnicas mais avançadas.", notaGestor: 4.4, justificativaGestor: "Excelente capacidade analítica." },
+  ];
+
+  const autoavaliacoesToCreate = autoavaliacaoData.map(d => {
+    const criterio = allCriterios.find(c => c.name === d.criterioName && c.trilhaId === d.user.trilhaId && c.idCiclo === cicloQ1_2025.id);
+    if (!criterio) return null;
+    return {
+      idUser: d.user.id,
+      idCiclo: cicloQ1_2025.id,
+      criterioId: criterio.id,
+      nota: d.nota,
+      justificativa: d.justificativa,
+      notaGestor: d.notaGestor,
+      justificativaGestor: d.justificativaGestor,
+    };
+  }).filter(Boolean); // Remove nulls if a criterion is not found
 
   await prisma.autoavaliacao.createMany({
-    data: [
-      // Luan Bezerra (users[4]) - Desenvolvimento
-      {
-        idUser: users[4].id,
-        idCiclo: cicloQ1_2025.id,
-        criterioId: devCriterios.find((c) => c.name === "Qualidade")?.id,
-        nota: 4.0,
-        justificativa:
-          "Tenho me esforçado para escrever código limpo e bem documentado.",
-        notaGestor: 4.5,
-        justificativaGestor: "Código muito bem estruturado.",
-      },
-      {
-        idUser: users[4].id,
-        idCiclo: cicloQ1_2025.id,
-        criterioId: devCriterios.find((c) => c.name === "Trabalho em Equipe")
-          ?.id,
-        nota: 4.5,
-        justificativa:
-          "Colaboro ativamente com a equipe e compartilho conhecimento.",
-        notaGestor: 4.3,
-        justificativaGestor: "Muito colaborativo, sempre disposto a ajudar.",
-      },
-      {
-        idUser: users[4].id,
-        idCiclo: cicloQ1_2025.id,
-        criterioId: devCriterios.find((c) => c.name === "Aprendizagem Contínua")
-          ?.id,
-        nota: 4.8,
-        justificativa: "Estou sempre estudando novas tecnologias e práticas.",
-        notaGestor: 4.7,
-        justificativaGestor: "Demonstra curiosidade e vontade de aprender.",
-      },
-
-      // Maria Santos (users[6]) - Desenvolvimento
-      {
-        idUser: users[6].id,
-        idCiclo: cicloQ1_2025.id,
-        criterioId: devCriterios.find((c) => c.name === "Iniciativa")?.id,
-        nota: 4.5,
-        justificativa: "Sempre busco antecipar problemas e propor soluções.",
-        notaGestor: 4.8,
-        justificativaGestor: "Proatividade excepcional.",
-      },
-      {
-        idUser: users[6].id,
-        idCiclo: cicloQ1_2025.id,
-        criterioId: devCriterios.find((c) => c.name === "Produtividade")?.id,
-        nota: 4.2,
-        justificativa: "Mantenho um ritmo consistente de entrega.",
-        notaGestor: 4.4,
-        justificativaGestor: "Entrega sempre dentro do prazo com qualidade.",
-      },
-      {
-        idUser: users[6].id,
-        idCiclo: cicloQ1_2025.id,
-        criterioId: devCriterios.find(
-          (c) => c.name === "Criatividade e Inovação"
-        )?.id,
-        nota: 4.6,
-        justificativa:
-          "Gosto de pensar em soluções criativas para problemas complexos.",
-        notaGestor: 4.5,
-        justificativaGestor: "Sempre traz ideias inovadoras para o projeto.",
-      },
-
-      // Pedro Costa (users[7]) - Análise de Dados
-      {
-        idUser: users[7].id,
-        idCiclo: cicloQ1_2025.id,
-        criterioId: dadosCriterios.find((c) => c.name === "Produtividade")?.id,
-        nota: 4.0,
-        justificativa:
-          "Tenho boa capacidade analítica, mas ainda estou aprendendo técnicas mais avançadas.",
-        notaGestor: 4.4,
-        justificativaGestor: "Excelente capacidade analítica.",
-      },
-      {
-        idUser: users[7].id,
-        idCiclo: cicloQ1_2025.id,
-        criterioId: dadosCriterios.find((c) => c.name === "Qualidade")?.id,
-        nota: 4.3,
-        justificativa:
-          "Busco sempre validar meus resultados e entregar análises precisas.",
-        notaGestor: 4.2,
-        justificativaGestor: "Análises bem fundamentadas e precisas.",
-      },
-      {
-        idUser: users[7].id,
-        idCiclo: cicloQ1_2025.id,
-        criterioId: dadosCriterios.find((c) => c.name === "Foco no Cliente")
-          ?.id,
-        nota: 4.1,
-        justificativa:
-          "Procuro entender as necessidades do negócio antes de começar as análises.",
-        notaGestor: 4.0,
-        justificativaGestor:
-          "Demonstra preocupação com o valor entregue ao cliente.",
-      },
-
-      // Alice Cadete (users[1]) - Desenvolvimento (Manager)
-      {
-        idUser: users[1].id,
-        idCiclo: cicloQ1_2025.id,
-        criterioId: devCriterios.find((c) => c.name === "Gestão de Pessoas")
-          ?.id,
-        nota: 4.5,
-        justificativa:
-          "Procuro desenvolver minha equipe e criar um ambiente colaborativo.",
-        notaGestor: 4.7,
-        justificativaGestor: "Liderança exemplar, equipe muito motivada.",
-      },
-      {
-        idUser: users[1].id,
-        idCiclo: cicloQ1_2025.id,
-        criterioId: devCriterios.find((c) => c.name === "Gestão de Projetos")
-          ?.id,
-        nota: 4.3,
-        justificativa:
-          "Mantenho os projetos organizados e dentro do cronograma.",
-        notaGestor: 4.6,
-        justificativaGestor: "Excelente controle de projetos e prazos.",
-      },
-
-      // Raylandson Cesário (users[0]) - Desenvolvimento (Admin)
-      {
-        idUser: users[0].id,
-        idCiclo: cicloQ1_2025.id,
-        criterioId: devCriterios.find((c) => c.name === "Gestão Organizacional")
-          ?.id,
-        nota: 4.4,
-        justificativa:
-          "Contribuo para a melhoria contínua dos processos organizacionais.",
-        notaGestor: 4.8,
-        justificativaGestor:
-          "Visão estratégica excepcional para melhorias organizacionais.",
-      },
-      {
-        idUser: users[0].id,
-        idCiclo: cicloQ1_2025.id,
-        criterioId: devCriterios.find((c) => c.name === "Qualidade")?.id,
-        nota: 4.7,
-        justificativa: "Busco sempre entregar soluções robustas e escaláveis.",
-        notaGestor: 4.9,
-        justificativaGestor:
-          "Qualidade técnica excepcional em todas as entregas.",
-      },
-    ],
+    data: autoavaliacoesToCreate as any,
   });
-  console.log("✅ Autoavaliações criadas.");
-
-  // 10. Cria as Avaliações 360
+  console.log(`✅ Criadas ${autoavaliacoesToCreate.length} autoavaliações.`);
+  
+  // 11. Cria as Avaliações 360
   console.log("🔄 Criando avaliações 360...");
   await prisma.avaliacao360.createMany({
     data: [
-      {
-        idAvaliador: users[4].id,
-        idAvaliado: users[1].id,
-        idCiclo: cicloQ1_2025.id,
-        nota: 4.8,
-        pontosFortes:
-          "Excelente liderança técnica, sempre disponível para mentoria.",
-        pontosMelhora: "Poderia delegar mais tarefas.",
-        nomeProjeto: "Sistema de Gestão",
-        periodoMeses: 6,
-        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
-      },
-      {
-        idAvaliador: users[6].id,
-        idAvaliado: users[0].id,
-        idCiclo: cicloQ1_2025.id,
-        nota: 4.9,
-        pontosFortes:
-          "Visão estratégica excepcional, capacidade de resolver problemas complexos.",
-        pontosMelhora: "Poderia focar mais na visão macro.",
-        nomeProjeto: "Plataforma de Avaliação",
-        periodoMeses: 8,
-        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
-      },
-      {
-        idAvaliador: users[1].id,
-        idAvaliado: users[4].id,
-        idCiclo: cicloQ1_2025.id,
-        nota: 4.2,
-        pontosFortes:
-          "Muito dedicado, aprende rapidamente, código bem estruturado.",
-        pontosMelhora: "Precisa ganhar mais confiança para propor soluções.",
-        nomeProjeto: "Sistema de Avaliação",
-        periodoMeses: 6,
-        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
-      },
-    ],
+      { idAvaliador: users[4].id, idAvaliado: users[1].id, idCiclo: cicloQ1_2025.id, nota: 4.8, pontosFortes: "Excelente liderança técnica, sempre disponível para mentoria.", pontosMelhora: "Poderia delegar mais tarefas.", nomeProjeto: "Sistema de Gestão", periodoMeses: 6, trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE },
+      { idAvaliador: users[6].id, idAvaliado: users[0].id, idCiclo: cicloQ1_2025.id, nota: 4.9, pontosFortes: "Visão estratégica excepcional, capacidade de resolver problemas complexos.", pontosMelhora: "Poderia focar mais na visão macro.", nomeProjeto: "Plataforma de Avaliação", periodoMeses: 8, trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE },
+      { idAvaliador: users[1].id, idAvaliado: users[4].id, idCiclo: cicloQ1_2025.id, nota: 4.2, pontosFortes: "Muito dedicado, aprende rapidamente, código bem estruturado.", pontosMelhora: "Precisa ganhar mais confiança para propor soluções.", nomeProjeto: "Sistema de Avaliação", periodoMeses: 6, trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE },
+    ]
   });
   console.log("✅ Avaliações 360 criadas.");
 
-  // 11. Cria as Avaliações de Mentoring
-  console.log("🤝 Criando avaliações de mentoring...");
-  await prisma.mentoring.createMany({
+  // 13. Cria Resumos de IA
+  console.log("🤖 Gerando resumos de IA...");
+  await prisma.resumoIA.createMany({
     data: [
-      {
-        idMentor: users[1].id, // Alice Cadete
-        idMentorado: users[4].id, // Luan Bezerra
-        idCiclo: cicloQ1_2025.id,
-        nota: 4.6,
-        justificativa:
-          "Luan tem demonstrado excelente evolução técnica e está mais confiante em suas decisões. Precisa trabalhar um pouco mais a comunicação com stakeholders.",
-      },
-      {
-        idMentor: users[1].id, // Alice Cadete
-        idMentorado: users[6].id, // Maria Santos
-        idCiclo: cicloQ1_2025.id,
-        nota: 4.8,
-        justificativa:
-          "Maria é uma mentorada excepcional, sempre proativa e com grande capacidade de aprendizado. Tem potencial para assumir posições de liderança.",
-      },
-      {
-        idMentor: users[2].id, // Arthur Lins
-        idMentorado: users[7].id, // Pedro Costa
-        idCiclo: cicloQ1_2025.id,
-        nota: 4.2,
-        justificativa:
-          "Pedro tem boa base técnica em análise de dados e está evoluindo bem. Precisa desenvolver mais autonomia na tomada de decisões analíticas.",
-      },
-    ],
+      { userId: users[4].id, idCiclo: cicloQ1_2025.id, resumo: "Luan Bezerra é um desenvolvedor em ascensão com fortes habilidades em colaboração e qualidade de código. As avaliações indicam uma necessidade de desenvolvimento em proatividade e testes automatizados para atingir o próximo nível." },
+      { userId: users[6].id, idCiclo: cicloQ1_2025.id, resumo: "Maria Santos é uma desenvolvedora sênior exemplar, destacando-se pela qualidade técnica e proatividade. O feedback sugere que ela pode ampliar seu impacto compartilhando mais seu conhecimento com a equipe." },
+    ]
   });
-  console.log("✅ Avaliações de mentoring criadas.");
+  console.log("✅ Resumos de IA gerados.");
 
   // --- Resumo Final ---
   console.log("\n🎉 Seeding concluído com sucesso!");
@@ -651,28 +275,27 @@ async function main() {
     trilhas: await prisma.trilha.count(),
     ciclos: await prisma.ciclo.count(),
     users: await prisma.user.count(),
+    equipes: await prisma.equipe.count(),
     criterios: await prisma.criterio.count(),
     referencias: await prisma.referencia.count(),
     autoavaliacoes: await prisma.autoavaliacao.count(),
     avaliacoes360: await prisma.avaliacao360.count(),
+    mentorings: await prisma.mentoring.count(),
     resumosIA: await prisma.resumoIA.count(),
+    equalizacoes: await prisma.equalizacao.count(),
   };
 
   console.log("\n📊 Resumo do Banco de Dados:");
   console.table(summary);
 }
+
 // Executa a função principal e trata possíveis erros
 main()
   .catch((e) => {
     console.error("❌ Erro durante o processo de seeding:", e);
     process.exit(1);
   })
-  .finally(() => {
+  .finally(async () => {
     // Garante que a conexão com o banco de dados seja fechada
-    prisma
-      .$disconnect()
-      .then(() => {})
-      .catch((e) => {
-        console.error("Erro ao desconectar do banco de dados:", e);
-      });
+    await prisma.$disconnect();
   });
