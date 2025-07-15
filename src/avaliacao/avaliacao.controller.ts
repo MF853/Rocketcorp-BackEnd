@@ -30,7 +30,7 @@ import {
 @ApiTags("Avaliacao")
 @Controller("avaliacao")
 export class AvaliacaoController {
-  constructor(private readonly avaliacaoService: AvaliacaoService) {}
+  constructor(private readonly avaliacaoService: AvaliacaoService) { }
 
   // ==================== 360 EVALUATION ENDPOINTS ====================
 
@@ -349,6 +349,16 @@ export class AvaliacaoController {
   @ApiResponse({ status: 200, description: "Autoavaliação retornada com sucesso." })
   findOne(@Param("id") id: string) {
     return this.avaliacaoService.findOne(+id);
+  }
+
+  @Get("gestor/ciclo/:id")
+  @ApiOperation({ summary: "Lista avaliações agrupadas por usuário para o ciclo (gestor view)" })
+  @ApiResponse({
+    status: 200,
+    description: "Lista agrupada por usuário retornada com sucesso.",
+  })
+  async getGestorCiclo(@Param("id") id: string) {
+    return this.avaliacaoService.getGestorCiclo(+id);
   }
 
   // ==================== ANALYTICS ENDPOINTS ====================

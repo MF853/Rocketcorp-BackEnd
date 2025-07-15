@@ -13,7 +13,7 @@ import {
 
 @Injectable()
 export class AvaliacaoRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async createAvaliacao(data: CreateAvaliacaoDto) {
     return this.prisma.autoavaliacao.create({
@@ -67,6 +67,9 @@ export class AvaliacaoRepository {
         },
         criterio: {
           select: { id: true, name: true, enabled: true },
+        },
+        ciclo: {
+          select: { name: true, year: true, period: true, status: true },
         },
       },
       orderBy: { createdAt: "desc" },
@@ -313,7 +316,7 @@ export class AvaliacaoRepository {
       });
 
       console.log("✅ Mentorings criados:", result.count);
-      
+
       // Se precisar retornar os dados criados, busque-os
       const createdMentorings = await this.prisma.mentoring.findMany({
         where: {
@@ -447,16 +450,16 @@ export class AvaliacaoRepository {
       const createdAvaliacoes: any[] = [];
 
       for (const avaliacao of avaliacoes) {
-                  // Check if autoavaliacao already exists for this user, cycle, and criterion
-          const existingAvaliacao = await tx.autoavaliacao.findUnique({
-            where: {
-              idUser_idCiclo_criterioId: {
-                idUser: avaliacao.idUser,
-                idCiclo: avaliacao.idCiclo,
-                criterioId: avaliacao.criterioId,
-              },
+        // Check if autoavaliacao already exists for this user, cycle, and criterion
+        const existingAvaliacao = await tx.autoavaliacao.findUnique({
+          where: {
+            idUser_idCiclo_criterioId: {
+              idUser: avaliacao.idUser,
+              idCiclo: avaliacao.idCiclo,
+              criterioId: avaliacao.criterioId,
             },
-          });
+          },
+        });
 
         if (existingAvaliacao) {
           // Update existing autoavaliacao
@@ -582,7 +585,7 @@ export class AvaliacaoRepository {
   private getAvaliacaoIncludes() {
     return {
       criterio: { select: { id: true, name: true, enabled: true } },
-      user : { select: { id: true, name: true, email: true } },
+      user: { select: { id: true, name: true, email: true, cargo: true } },
     };
   }
 
