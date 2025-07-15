@@ -22,6 +22,9 @@ export class ResumoiaRepository {
         avaliacoes360Recebidas: {
           where: { idCiclo },
         },
+        mentoringsRecebidos: {
+          where: { idCiclo },
+        },
       },
     });
   }
@@ -38,8 +41,17 @@ export class ResumoiaRepository {
   }
 
   async createResumo(userId: number, idCiclo: number, resumo: string) {
-    return this.prisma.resumoIA.create({
-      data: {
+    return this.prisma.resumoIA.upsert({
+      where: {
+        userId_idCiclo: {
+          userId,
+          idCiclo,
+        },
+      },
+      update: {
+        resumo,
+      },
+      create: {
         userId,
         idCiclo,
         resumo,

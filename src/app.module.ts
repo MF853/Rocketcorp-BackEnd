@@ -14,6 +14,8 @@ import { CicleModule } from "./cicle/cicle.module";
 import { ResumoiaModule } from "./resumoia/resumoia.module";
 import { EqualizacaoModule } from "./equalizacao/equalizacao.module";
 import { EquipeModule } from "./equipe/equipe.module";
+import { ScheduleModule } from "@nestjs/schedule";
+import { SchedulerModule } from "./scheduler/scheduler.module";
 
 @Module({
   imports: [
@@ -29,6 +31,8 @@ import { EquipeModule } from "./equipe/equipe.module";
     EqualizacaoModule,
     ExcelModule,
     EquipeModule,
+    ScheduleModule.forRoot(),
+    SchedulerModule,
   ],
   controllers: [AppController],
   providers: [AppService, ExcelService],
