@@ -17,6 +17,14 @@ export class ProcessamentoAutomaticoService {
   async verificarEProcessarCiclos() {
     this.logger.log("🕵️‍♂️ Verificando ciclos para processamento automático...");
 
+    // Clean up old failed processing records to allow retry
+    const cleanupResult = await this.repository.cleanupOldFailedProcessing();
+    if (cleanupResult.count > 0) {
+      this.logger.log(
+        `🧹 Limpados ${cleanupResult.count} registros de processamento com erro antigos`
+      );
+    }
+
     const ciclos = await this.repository.findCiclosParaProcessamento();
 
     if (ciclos.length === 0) {
@@ -25,7 +33,7 @@ export class ProcessamentoAutomaticoService {
     }
 
     this.logger.log(
-      `📋 Encontrados ${ciclos.length} ciclos para processamento`
+      `📋 Encontrados ${ciclos.length} ciclo(s) para processamento`
     );
 
     for (const ciclo of ciclos) {

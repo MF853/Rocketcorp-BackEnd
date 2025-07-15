@@ -39,13 +39,29 @@ export class ProcessamentoAutomaticoRepository {
         ResumoIA: {
           none: {},
         },
-        // Evita processar ciclos que já estão sendo processados
+        // Evita processar ciclos que já estão sendo processados atualmente
+        // mas permite reprocessar ciclos que falharam (status ERRO)
         ResumoProcessamento: {
           none: {
             status: {
               in: ["PENDENTE", "PROCESSANDO"],
             },
           },
+        },
+      },
+    });
+  }
+
+  async cleanupOldFailedProcessing() {
+    const umDiaAtras = new Date();
+    umDiaAtras.setDate(umDiaAtras.getDate() - 1);
+
+    // Remove registros de processamento com erro que são mais antigos que 24h
+    return await this.prisma.resumoProcessamento.deleteMany({
+      where: {
+        status: "ERRO",
+        criadoEm: {
+          lt: umDiaAtras,
         },
       },
     });
