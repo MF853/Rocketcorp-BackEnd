@@ -99,13 +99,11 @@ export class ExcelService {
   async importAutoavaliacao(sheet: ExcelJS.Worksheet, userId: number, cicleId: number) {
     // Implementar lógica para importar autoavaliações
     const criteria: Criterio[] = await this.criterioService.findByCicloId(cicleId);
-    console.log(criteria);
 
     sheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
       if (rowNumber === 1) return; 
 
       const values = row.values as any[];
-      console.log(values)
       const criterion = values[1];
       const criterionDescription = values[2];
       const grade = values[3];
