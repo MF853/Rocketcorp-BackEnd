@@ -17,7 +17,7 @@ import {
 
 @Injectable()
 export class AvaliacaoService {
-  constructor(private readonly avaliacaoRepository: AvaliacaoRepository) {}
+  constructor(private readonly avaliacaoRepository: AvaliacaoRepository) { }
 
   async create(createAvaliacaoDto: CreateAvaliacaoDto) {
     if (createAvaliacaoDto.criterioId !== undefined) {
@@ -44,12 +44,12 @@ export class AvaliacaoService {
       createAvaliacao360Dto.idAvaliado,
       createAvaliacao360Dto.idCiclo
     );
-    
+
     if (exists) {
       console.warn(
         `Avaliação 360 já existe: O usuário ${createAvaliacao360Dto.idAvaliador} já fez uma referência para o usuário ${createAvaliacao360Dto.idAvaliado} no ciclo.`
       );
-      return null; 
+      return null;
     }
 
     return this.avaliacaoRepository.createAvaliacao360(createAvaliacao360Dto);
@@ -77,7 +77,7 @@ export class AvaliacaoService {
    */
   async createBulk(bulkCreateDto: BulkCreateAvaliacaoDto): Promise<any> {
     console.log('📦 Dados recebidos no bulk:', JSON.stringify(bulkCreateDto, null, 2));
-    
+
     const results = {
       autoavaliacoes: [] as any[],
       avaliacoes360: [] as any[],
@@ -87,14 +87,14 @@ export class AvaliacaoService {
     // ✅ Processar autoavaliações
     if (bulkCreateDto.autoavaliacoes && bulkCreateDto.autoavaliacoes.length > 0) {
       console.log('🔄 Processando autoavaliações...');
-      
+
       for (const item of bulkCreateDto.autoavaliacoes) {
         const exists = await this.avaliacaoRepository.avaliacaoExists(
           item.idUser,
           item.idCiclo,
           item.criterioId
         );
-        
+
         if (exists) {
           throw new BadRequestException(
             `Já existe uma autoavaliação para usuário ${item.idUser}, ciclo ${item.idCiclo} e critério ${item.criterioId}`
@@ -112,14 +112,14 @@ export class AvaliacaoService {
     // ✅ Processar avaliações 360
     if (bulkCreateDto.avaliacoes360 && bulkCreateDto.avaliacoes360.length > 0) {
       console.log('🔄 Processando avaliações 360...');
-      
+
       for (const item of bulkCreateDto.avaliacoes360) {
         const exists = await this.avaliacaoRepository.avaliacao360Exists(
           item.idAvaliador,
           item.idAvaliado,
           item.idCiclo
         );
-        
+
         if (exists) {
           throw new BadRequestException(
             `Já existe uma avaliação 360 para avaliador ${item.idAvaliador}, avaliado ${item.idAvaliado} e ciclo ${item.idCiclo}`
@@ -137,14 +137,14 @@ export class AvaliacaoService {
     // ✅ Processar mentoring
     if (bulkCreateDto.mentoring && bulkCreateDto.mentoring.length > 0) {
       console.log('🔄 Processando mentoring...');
-      
+
       for (const item of bulkCreateDto.mentoring) {
         const exists = await this.avaliacaoRepository.mentoringExists(
           item.idMentor,
           item.idMentorado,
           item.idCiclo
         );
-        
+
         if (exists) {
           throw new BadRequestException(
             `Já existe uma avaliação de mentoring para mentor ${item.idMentor}, mentorado ${item.idMentorado} e ciclo ${item.idCiclo}`
@@ -164,7 +164,7 @@ export class AvaliacaoService {
       avaliacoes360: results.avaliacoes360.length,
       mentoring: results.mentoring.length
     });
-    
+
     return results;
   }
 
@@ -293,6 +293,38 @@ export class AvaliacaoService {
 
   getUserPerformanceSummary(userId: number, idCiclo?: number) {
     return this.avaliacaoRepository.getUserPerformanceSummary(userId, idCiclo);
+  }
+
+  async getGestorCiclo(gestorId: number, idCiclo: number) {
+    const avaliacoes = await this.avaliacaoRepository.findAvaliacoesByGestorCiclo(gestorId, idCiclo);
+    console.log(`📊 Avaliações encontradas para gestor ${gestorId} no ciclo ${idCiclo}:`, avaliacoes.length);
+    for (const a of avaliacoes) {
+      console.log(`Avaliação: ${a.id}, Avaliado: ${a.user.name}, Nota: ${a.nota}, Nota Gestor: ${a.notaGestor}`);
+    }
+    // Group by user
+    const grouped = new Map<number, any>();
+    for (const a of avaliacoes) {
+      const userId = a.user.id;
+      if (!grouped.has(userId)) {
+        grouped.set(userId, {
+          id: userId,
+          name: a.user.name,
+          cargo: a.user.cargo,
+          notas: [],
+          notasGestor: [],
+        });
+      }
+      grouped.get(userId).notas.push(a.nota);
+      grouped.get(userId).notasGestor.push(a.notaGestor);
+    }
+
+    // Calculate means
+    return Array.from(grouped.values()).map(u => ({
+      name: u.name,
+      cargo: u.cargo,
+      meanNota: u.notas.includes(null) ? null : (u.notas.reduce((a, b) => a + b, 0) / u.notas.length),
+      meanNotaGestor: u.notasGestor.includes(null) ? null : (u.notasGestor.reduce((a, b) => a + b, 0) / u.notasGestor.length),
+    }));
   }
 
   // Método para atualizar nota do gestor em avaliação existente
