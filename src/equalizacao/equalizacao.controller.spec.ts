@@ -8,7 +8,12 @@ describe('EqualizacaoController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [EqualizacaoController],
-      providers: [EqualizacaoService],
+      providers: [
+        {
+          provide: EqualizacaoService,
+          useValue: {}, // mock simples
+        },
+      ],
     }).compile();
 
     controller = module.get<EqualizacaoController>(EqualizacaoController);
@@ -16,5 +21,13 @@ describe('EqualizacaoController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  it('should have create method', () => {
+    expect(typeof controller.create).toBe('function');
+  });
+
+  it('should have findAll method', () => {
+    expect(typeof controller.findAll).toBe('function');
   });
 });
