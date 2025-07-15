@@ -77,6 +77,8 @@ model Ciclo {
   criterios                   Criterio[]
   ResumoIA                    ResumoIA[]
   mentorings                  Mentoring[]
+  Equalizacao Equalizacao[]
+  ResumoProcessamento         ResumoProcessamento[]
 
   @@unique([year, period])
   @@index([year])
@@ -110,7 +112,7 @@ model Criterio {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
-  @@unique([name, trilhaId])
+  @@unique([name, trilhaId, idCiclo])
   @@index([trilhaId])
   @@index([idCiclo])
   @@map("criterio")
@@ -229,6 +231,7 @@ model Equalizacao {
   id                   Int               @id @default(autoincrement())
   idAvaliador          Int
   idAvaliado           Int
+  idCiclo              Int
   mediaAutoavaliacao   Float
   mediaAvaliacaoGestor Float
   mediaAvaliacao360    Float
@@ -237,6 +240,24 @@ model Equalizacao {
   status               StatusEqualizacao
   avaliador            User              @relation("AvaliadorEqualizacao", fields: [idAvaliador], references: [id], onDelete: Restrict)
   avaliado             User              @relation("AvaliadoEqualizacao", fields: [idAvaliado], references: [id], onDelete: Restrict)
+  ciclo                Ciclo             @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
 
+  @@unique([idAvaliado, idCiclo])
   @@map("equalizacoes")
+}
+
+model ResumoProcessamento {
+  id         String   @id @default(uuid())
+  cicloId    Int
+  status     statusProcessamento
+  criadoEm   DateTime @default(now())
+
+  ciclo      Ciclo    @relation(fields: [cicloId], references: [id], onDelete: Cascade)
+}
+
+enum statusProcessamento {
+  PENDENTE
+  PROCESSANDO
+  CONCLUIDO
+  ERRO
 }

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Prisma, Ciclo } from "@prisma/client";
+import { Ciclo } from "@prisma/client";
 import { UpdateCicleDto } from "./dto/update-cicle.dto";
 import { CreateCicleDto } from "./dto/create-cicle.dto";
 
@@ -67,6 +67,19 @@ export class CicleRepository {
         year: data.year !== undefined ? Number(data.year) : undefined,
         period: data.period !== undefined ? Number(data.period) : undefined,
         status: data.status,
+      },
+    });
+  }
+
+  async findCycleInRevisaoComite(currentDate: Date): Promise<Ciclo | null> {
+    return await this.prisma.ciclo.findFirst({
+      where: {
+        dataAberturaRevisaoComite: {
+          lte: currentDate, // Current date is after or equal to opening date
+        },
+        dataFechamentoRevisaoComite: {
+          gte: currentDate, // Current date is before or equal to closing date
+        },
       },
     });
   }

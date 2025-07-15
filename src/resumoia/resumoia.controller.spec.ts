@@ -8,7 +8,12 @@ describe('ResumoiaController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ResumoiaController],
-      providers: [ResumoiaService],
+      providers: [
+        {
+          provide: ResumoiaService,
+          useValue: {}, // mock simples
+        },
+      ],
     }).compile();
 
     controller = module.get<ResumoiaController>(ResumoiaController);

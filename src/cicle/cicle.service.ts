@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { CicleRepository } from "./cicle.repository";
 import { CreateCicleDto } from "./dto/create-cicle.dto";
 import { UpdateCicleDto } from "./dto/update-cicle.dto";
+import { Ciclo } from "@prisma/client";
 
 @Injectable()
 export class CicleService {
@@ -80,5 +81,20 @@ export class CicleService {
     await this.findOne(id);
     await this.cicleRepository.update(id, updateCicleDto);
     return "Ciclo atualizado com sucesso";
+  }
+
+  async getCycleInRevisaoComite(): Promise<Ciclo> {
+    const currentDate = new Date();
+    const cycle = await this.cicleRepository.findCycleInRevisaoComite(
+      currentDate
+    );
+
+    if (!cycle) {
+      throw new NotFoundException(
+        "No cycle found in 'revisao comite' phase for the current date"
+      );
+    }
+
+    return cycle;
   }
 }

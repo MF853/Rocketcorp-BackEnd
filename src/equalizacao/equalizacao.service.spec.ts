@@ -1,20 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CriterioService } from './criterio.service';
+import { EqualizacaoService } from './equalizacao.service';
 
-describe('CriterioService', () => {
-  let service: CriterioService;
+describe('EqualizacaoService', () => {
+  let service: EqualizacaoService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         {
-          provide: CriterioService,
+          provide: EqualizacaoService,
           useValue: {}, // mock simples
         },
       ],
     }).compile();
 
-    service = module.get<CriterioService>(CriterioService);
+    service = module.get<EqualizacaoService>(EqualizacaoService);
   });
 
   it('should be defined', () => {

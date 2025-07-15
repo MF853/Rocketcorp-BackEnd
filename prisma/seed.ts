@@ -1,6 +1,8 @@
 import {
   PrismaClient,
   MotivacaoTrabalhoNovamente,
+  StatusEqualizacao,
+  statusProcessamento,
   User,
   Trilha,
   Ciclo,
@@ -49,6 +51,7 @@ async function main() {
 
   // 2. Limpa os dados existentes na ordem correta para evitar conflitos de chave estrangeira
   console.log("🧹 Limpando dados existentes...");
+  await prisma.resumoProcessamento.deleteMany();
   await prisma.equalizacao.deleteMany();
   await prisma.mentoring.deleteMany();
   await prisma.resumoIA.deleteMany();
@@ -56,6 +59,9 @@ async function main() {
   await prisma.autoavaliacao.deleteMany();
   await prisma.referencia.deleteMany();
   await prisma.criterio.deleteMany();
+  // Limpa a relação de equipe antes de limpar usuários e equipes
+  await prisma.user.updateMany({ data: { idEquipe: null } });
+  await prisma.equipe.deleteMany();
   await prisma.user.deleteMany();
   await prisma.ciclo.deleteMany();
   await prisma.trilha.deleteMany();
@@ -1123,10 +1129,12 @@ async function main() {
     trilhas: await prisma.trilha.count(),
     ciclos: await prisma.ciclo.count(),
     users: await prisma.user.count(),
+    equipes: await prisma.equipe.count(),
     criterios: await prisma.criterio.count(),
     referencias: await prisma.referencia.count(),
     autoavaliacoes: await prisma.autoavaliacao.count(),
     avaliacoes360: await prisma.avaliacao360.count(),
+    mentorings: await prisma.mentoring.count(),
     resumosIA: await prisma.resumoIA.count(),
     equalizacoes: await prisma.equalizacao.count(),
     mentorings: await prisma.mentoring.count(),

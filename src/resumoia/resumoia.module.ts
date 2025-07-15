@@ -9,5 +9,6 @@ import { PrismaService } from "../prisma/prisma.service";
   imports: [ConfigModule],
   controllers: [ResumoiaController],
   providers: [ResumoiaService, ResumoiaRepository, PrismaService],
+  exports: [ResumoiaService],
 })
 export class ResumoiaModule {}
