@@ -492,8 +492,9 @@ async function main() {
         nota: 4.0,
         justificativa:
           "Tenho boa capacidade analítica, mas ainda estou aprendendo técnicas mais avançadas.",
-        notaGestor: 4.4,
-        justificativaGestor: "Excelente capacidade analítica.",
+        notaGestor: 2.5,
+        justificativaGestor:
+          "Produtividade abaixo do esperado, precisa melhorar o ritmo de entrega.",
       },
       {
         idUser: users[7].id,
@@ -502,8 +503,9 @@ async function main() {
         nota: 4.3,
         justificativa:
           "Busco sempre validar meus resultados e entregar análises precisas.",
-        notaGestor: 4.2,
-        justificativaGestor: "Análises bem fundamentadas e precisas.",
+        notaGestor: 2.8,
+        justificativaGestor:
+          "Qualidade das análises inconsistente, muitos erros básicos detectados.",
       },
       {
         idUser: users[7].id,
@@ -513,9 +515,9 @@ async function main() {
         nota: 4.1,
         justificativa:
           "Procuro entender as necessidades do negócio antes de começar as análises.",
-        notaGestor: 4.0,
+        notaGestor: 2.2,
         justificativaGestor:
-          "Demonstra preocupação com o valor entregue ao cliente.",
+          "Dificuldade em compreender requisitos do cliente, entrega não atende as expectativas.",
       },
 
       // Alice Cadete (users[1]) - Desenvolvimento (Manager)
@@ -609,6 +611,19 @@ async function main() {
         periodoMeses: 6,
         trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
       },
+      {
+        idAvaliador: users[2].id, // Arthur Lins
+        idAvaliado: users[7].id, // Pedro Costa
+        idCiclo: cicloQ1_2025.id,
+        nota: 2.3,
+        pontosFortes:
+          "Tem conhecimento básico em análise de dados e é educado.",
+        pontosMelhora:
+          "Precisa melhorar drasticamente a qualidade das entregas, atenção aos detalhes e comunicação. Frequentemente não consegue atender prazos e requisitos.",
+        nomeProjeto: "Análise de Vendas Q1",
+        periodoMeses: 4,
+        trabalhariaNovamente: MotivacaoTrabalhoNovamente.DISCORDO_PARCIALMENTE,
+      },
     ],
   });
   console.log("✅ Avaliações 360 criadas.");
@@ -637,9 +652,9 @@ async function main() {
         idMentor: users[2].id, // Arthur Lins
         idMentorado: users[7].id, // Pedro Costa
         idCiclo: cicloQ1_2025.id,
-        nota: 4.2,
+        nota: 2.8,
         justificativa:
-          "Pedro tem boa base técnica em análise de dados e está evoluindo bem. Precisa desenvolver mais autonomia na tomada de decisões analíticas.",
+          "Pedro tem enfrentado dificuldades significativas em análise de dados. Precisa melhorar a atenção aos detalhes e desenvolver maior autonomia. Tem potencial, mas precisa de muito mais dedicação e foco.",
       },
     ],
   });
