@@ -15,13 +15,47 @@ import {
   UpdateAvaliacao360Dto,
 } from "./dto/update-avaliacao.dto";
 import { CryptoService } from "../crypto/crypto.service";
+import {
+  AutoavaliacaoWithIncludes,
+  Avaliacao360WithIncludes,
+} from "./avaliacao.repository";
+import { Mentoring } from "@prisma/client";
+
+// Type for encrypted data where numeric fields become strings
+type EncryptedCreateAvaliacaoDto = Omit<
+  CreateAvaliacaoDto,
+  "nota" | "notaGestor"
+> & {
+  nota: string;
+  notaGestor?: string;
+};
+
+type EncryptedUpdateAvaliacaoDto = Omit<
+  UpdateAvaliacaoDto,
+  "nota" | "notaGestor"
+> & {
+  nota?: string;
+  notaGestor?: string;
+};
+
+type EncryptedCreateAvaliacao360Dto = Omit<CreateAvaliacao360Dto, "nota"> & {
+  nota: string;
+};
+
+type EncryptedUpdateAvaliacao360Dto = Omit<UpdateAvaliacao360Dto, "nota"> & {
+  nota?: string;
+};
+
+type EncryptedCreateMentoringDto = Omit<CreateMentoringDto, "nota"> & {
+  nota: string;
+};
 
 @Injectable()
 export class AvaliacaoService {
   constructor(
     private readonly avaliacaoRepository: AvaliacaoRepository,
     private readonly cryptoService: CryptoService
-  ) { }
+  ) {}
 
   async create(createAvaliacaoDto: CreateAvaliacaoDto) {
     if (createAvaliacaoDto.criterioId !== undefined) {
@@ -44,7 +78,9 @@ export class AvaliacaoService {
       createAvaliacaoDto
     );
 
-    return this.avaliacaoRepository.createAvaliacao(encryptedDto);
+    return this.avaliacaoRepository.createAvaliacao(
+      encryptedDto as unknown as EncryptedCreateAvaliacaoDto
+    );
   }
 
   async create360(createAvaliacao360Dto: CreateAvaliacao360Dto) {
@@ -66,7 +102,9 @@ export class AvaliacaoService {
       createAvaliacao360Dto
     );
 
-    return this.avaliacaoRepository.createAvaliacao360(encryptedDto);
+    return this.avaliacaoRepository.createAvaliacao360(
+      encryptedDto as unknown as EncryptedCreateAvaliacao360Dto
+    );
   }
 
   async createMentoring(createMentoringDto: CreateMentoringDto) {
@@ -88,7 +126,9 @@ export class AvaliacaoService {
       createMentoringDto
     );
 
-    return this.avaliacaoRepository.createMentoring(encryptedDto);
+    return this.avaliacaoRepository.createMentoring(
+      encryptedDto as unknown as EncryptedCreateMentoringDto
+    );
   }
 
   /**
@@ -101,9 +141,9 @@ export class AvaliacaoService {
     );
 
     const results = {
-      autoavaliacoes: [] as any[],
-      avaliacoes360: [] as any[],
-      mentoring: [] as any[],
+      autoavaliacoes: [] as AutoavaliacaoWithIncludes[],
+      avaliacoes360: [] as Avaliacao360WithIncludes[],
+      mentoring: [] as Mentoring[],
     };
 
     // ✅ Processar autoavaliações
@@ -129,11 +169,11 @@ export class AvaliacaoService {
 
       const autoavaliacoes =
         await this.avaliacaoRepository.createBulkAvaliacoes(
-          await Promise.all(
+          (await Promise.all(
             bulkCreateDto.autoavaliacoes.map((item) =>
               this.cryptoService.encryptObject(item)
             )
-          )
+          )) as unknown as EncryptedCreateAvaliacaoDto[]
         );
       results.autoavaliacoes = autoavaliacoes;
       console.log("✅ Autoavaliações criadas:", autoavaliacoes.length);
@@ -159,11 +199,11 @@ export class AvaliacaoService {
 
       const avaliacoes360 =
         await this.avaliacaoRepository.createBulkAvaliacoes360(
-          await Promise.all(
+          (await Promise.all(
             bulkCreateDto.avaliacoes360.map((item) =>
               this.cryptoService.encryptObject(item)
             )
-          )
+          )) as unknown as EncryptedCreateAvaliacao360Dto[]
         );
       results.avaliacoes360 = avaliacoes360;
       console.log("✅ Avaliações 360 criadas:", avaliacoes360.length);
@@ -188,11 +228,11 @@ export class AvaliacaoService {
       }
 
       const mentoring = await this.avaliacaoRepository.createBulkMentoring(
-        await Promise.all(
+        (await Promise.all(
           bulkCreateDto.mentoring.map((item) =>
             this.cryptoService.encryptObject(item)
           )
-        )
+        )) as unknown as EncryptedCreateMentoringDto[]
       );
       results.mentoring = mentoring;
       console.log("✅ Mentoring criado:", mentoring.length);
@@ -267,7 +307,10 @@ export class AvaliacaoService {
     const encryptedDto = await this.cryptoService.encryptObject(
       updateAvaliacaoDto
     );
-    return this.avaliacaoRepository.updateAvaliacao(id, encryptedDto);
+    return this.avaliacaoRepository.updateAvaliacao(
+      id,
+      encryptedDto as unknown as EncryptedUpdateAvaliacaoDto
+    );
   }
 
   async update360(id: number, updateAvaliacao360Dto: UpdateAvaliacao360Dto) {
@@ -275,7 +318,10 @@ export class AvaliacaoService {
     const encryptedDto = await this.cryptoService.encryptObject(
       updateAvaliacao360Dto
     );
-    return this.avaliacaoRepository.updateAvaliacao360(id, encryptedDto);
+    return this.avaliacaoRepository.updateAvaliacao360(
+      id,
+      encryptedDto as unknown as EncryptedUpdateAvaliacao360Dto
+    );
   }
 
   async updateMentoring(id: number, updateMentoringDto: UpdateAvaliacaoDto) {
@@ -283,7 +329,10 @@ export class AvaliacaoService {
     const encryptedDto = await this.cryptoService.encryptObject(
       updateMentoringDto
     );
-    return this.avaliacaoRepository.updateMentoring(id, encryptedDto);
+    return this.avaliacaoRepository.updateMentoring(
+      id,
+      encryptedDto as unknown as Partial<EncryptedCreateMentoringDto>
+    );
   }
 
   async remove(id: number) {
@@ -396,8 +445,18 @@ export class AvaliacaoService {
         `Avaliação: ${a.id}, Avaliado: ${a.user.name}, Nota: ${a.nota}, Nota Gestor: ${a.notaGestor}`
       );
     }
+
+    // Define proper types for the grouped data
+    type GroupedUser = {
+      id: number;
+      name: string;
+      cargo: string | null;
+      notas: (string | null)[];
+      notasGestor: (string | null)[];
+    };
+
     // Group by user
-    const grouped = new Map<number, any>();
+    const grouped = new Map<number, GroupedUser>();
     for (const a of avaliacoes) {
       const userId = a.user.id;
       if (!grouped.has(userId)) {
@@ -409,34 +468,46 @@ export class AvaliacaoService {
           notasGestor: [],
         });
       }
-      grouped.get(userId).notas.push(a.nota);
-      grouped.get(userId).notasGestor.push(a.notaGestor);
+      const user = grouped.get(userId)!;
+      user.notas.push(a.nota);
+      user.notasGestor.push(a.notaGestor);
     }
 
-    // Calculate means
-    return Array.from(grouped.values()).map(u => ({
-      id: u.id, // <-- include user id in response
+    // Calculate means - convert encrypted strings to numbers for calculation
+    return Array.from(grouped.values()).map((u) => ({
+      id: u.id,
       name: u.name,
       cargo: u.cargo,
       meanNota: u.notas.includes(null)
         ? null
-        : u.notas.reduce((a, b) => a + b, 0) / u.notas.length,
+        : u.notas.reduce(
+            (acc, nota) => acc + (nota ? parseFloat(nota) : 0),
+            0
+          ) / u.notas.length,
       meanNotaGestor: u.notasGestor.includes(null)
         ? null
-        : u.notasGestor.reduce((a, b) => a + b, 0) / u.notasGestor.length,
+        : u.notasGestor.reduce(
+            (acc, nota) => acc + (nota ? parseFloat(nota) : 0),
+            0
+          ) / u.notasGestor.length,
     }));
   }
 
   async getColaboradorCiclo(colaboradorId: number, idCiclo: number) {
-    let avaliacoes = await this.avaliacaoRepository.findAvaliacoesByUser(colaboradorId);
-    avaliacoes = avaliacoes.filter(a => a.idCiclo === idCiclo);
+    let avaliacoes = await this.avaliacaoRepository.findAvaliacoesByUser(
+      colaboradorId
+    );
+    avaliacoes = avaliacoes.filter((a) => a.idCiclo === idCiclo);
 
     // Group by criterio.tipo (block)
-    const blocksMap = new Map<string, { id: string; name: string; criteria: any[] }>();
+    const blocksMap = new Map<
+      string,
+      { id: string; name: string; criteria: any[] }
+    >();
     for (const a of avaliacoes) {
       const criterio = a.criterio;
       if (!criterio) continue; // skip if criterio is null
-      const tipo = criterio.tipo || 'Outro';
+      const tipo = criterio.tipo || "Outro";
       if (!blocksMap.has(tipo)) {
         blocksMap.set(tipo, {
           id: tipo,
@@ -450,9 +521,9 @@ export class AvaliacaoService {
           id: a.id.toString(),
           name: criterio.name,
           selfScore: a.nota ?? 0,
-          selfJustification: a.justificativa ?? '',
+          selfJustification: a.justificativa ?? "",
           managerScore: a.notaGestor ?? 0,
-          managerJustification: a.justificativaGestor ?? '',
+          managerJustification: a.justificativaGestor ?? "",
         });
       }
     }
@@ -460,29 +531,63 @@ export class AvaliacaoService {
   }
 
   // Método para atualizar nota do gestor em avaliação existente
-  async updateNotaGestor(id: number, notaGestor: number, justificativa?: string) {
-    return await this.avaliacaoRepository.updateNotaGestor(id, notaGestor, justificativa);
+  async updateNotaGestor(
+    id: number,
+    notaGestor: number,
+    justificativa?: string
+  ) {
+    return await this.avaliacaoRepository.updateNotaGestor(
+      id,
+      notaGestor,
+      justificativa
+    );
   }
 
-  async patchGestorBulk(body: { colaboradorId: number; cicloId: number; updates: { avaliacaoId: number; notaGestor: number; justificativaGestor?: string }[] }) {
+  async patchGestorBulk(body: {
+    colaboradorId: number;
+    cicloId: number;
+    updates: {
+      avaliacaoId: number;
+      notaGestor: number;
+      justificativaGestor?: string;
+    }[];
+  }) {
     const { colaboradorId, cicloId, updates } = body;
     if (!colaboradorId || !cicloId || !Array.isArray(updates)) {
-      throw new BadRequestException('Dados inválidos para atualização em lote.');
+      throw new BadRequestException(
+        "Dados inválidos para atualização em lote."
+      );
     }
     let updated = 0;
     const errors: string[] = [];
     for (const u of updates) {
       try {
         // Confirma se a avaliação pertence ao colaborador e ciclo
-        const avaliacao = await this.avaliacaoRepository.findAvaliacaoById(u.avaliacaoId);
-        if (!avaliacao || avaliacao.idUser !== colaboradorId || avaliacao.idCiclo !== cicloId) {
-          errors.push(`Avaliação ${u.avaliacaoId} não pertence ao colaborador/ciclo informado.`);
+        const avaliacao = await this.avaliacaoRepository.findAvaliacaoById(
+          u.avaliacaoId
+        );
+        if (
+          !avaliacao ||
+          avaliacao.idUser !== colaboradorId ||
+          avaliacao.idCiclo !== cicloId
+        ) {
+          errors.push(
+            `Avaliação ${u.avaliacaoId} não pertence ao colaborador/ciclo informado.`
+          );
           continue;
         }
-        await this.avaliacaoRepository.updateNotaGestor(u.avaliacaoId, u.notaGestor, u.justificativaGestor);
+        await this.avaliacaoRepository.updateNotaGestor(
+          u.avaliacaoId,
+          u.notaGestor,
+          u.justificativaGestor
+        );
         updated++;
       } catch (e) {
-        errors.push(`Erro ao atualizar avaliação ${u.avaliacaoId}: ${e.message}`);
+        errors.push(
+          `Erro ao atualizar avaliação ${u.avaliacaoId}: ${
+            e instanceof Error ? e.message : "Erro desconhecido"
+          }`
+        );
       }
     }
     return { updated, errors };

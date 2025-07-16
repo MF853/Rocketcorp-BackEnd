@@ -3,11 +3,10 @@ import { PrismaService } from "../prisma/prisma.service";
 import { Prisma } from "@prisma/client";
 import { UserStatisticsResponseDto } from "./dto/user-statistics-response.dto";
 import { PerformanceDataDto } from "./dto/performance-data.dto";
-import { EvaluationCycle, EvaluationScore } from "./dto/evaluation-cycle.dto";
+import { EvaluationCycle } from "./dto/evaluation-cycle.dto";
 import {
   UserHistoryResponseDto,
   EvaluationCycleDto,
-  EvaluationScoreDto,
 } from "./dto/user-history.dto";
 import { CryptoService } from "../crypto/crypto.service";
 
@@ -25,7 +24,7 @@ export class UsersRepository {
     private readonly cryptoService: CryptoService
   ) {}
 
-  async create(data: any) {
+  async create(data: Prisma.UserCreateInput) {
     return this.prisma.user.create({
       data,
     });
