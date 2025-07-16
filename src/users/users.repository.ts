@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { Prisma } from "@prisma/client";
 import { UserStatisticsResponseDto } from "./dto/user-statistics-response.dto";
+import { PerformanceDataDto } from "./dto/performance-data.dto";
 
 const userInclude = {
   mentor: { select: { id: true, name: true, email: true } },
@@ -16,7 +17,7 @@ export class UsersRepository {
 
   async create(data: any) {
     return this.prisma.user.create({
-      data
+      data,
     });
   }
 
@@ -225,5 +226,26 @@ export class UsersRepository {
 
   private getUserIncludes() {
     return userInclude;
+  }
+
+  async getUserPerformanceData(userId: number): Promise<PerformanceDataDto[]> {
+    const equalizacoes = await this.prisma.equalizacao.findMany({
+      where: { idAvaliado: userId },
+      include: {
+        ciclo: {
+          select: {
+            name: true,
+            year: true,
+            period: true,
+          },
+        },
+      },
+      orderBy: [{ ciclo: { year: "asc" } }, { ciclo: { period: "asc" } }],
+    });
+
+    return equalizacoes.map((equalizacao) => ({
+      semester: `${equalizacao.ciclo.year}.${equalizacao.ciclo.period}`,
+      score: equalizacao.notaFinal,
+    }));
   }
 }

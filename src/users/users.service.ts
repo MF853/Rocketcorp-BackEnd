@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { UsersRepository } from "./users.repository";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { UserStatisticsResponseDto } from "./dto/user-statistics-response.dto";
+import { UserPerformanceResponseDto } from "./dto/performance-data.dto";
 
 @Injectable()
 export class UsersService {
@@ -54,10 +55,15 @@ export class UsersService {
       let novoGestorId: number | null = null;
       if (updateUserDto.idEquipe !== null) {
         // Buscar equipe para pegar o gestor
-        const equipe = await this.usersRepository.findEquipeById(updateUserDto.idEquipe);
+        const equipe = await this.usersRepository.findEquipeById(
+          updateUserDto.idEquipe
+        );
         novoGestorId = equipe?.idGestor ?? null;
       }
-      return this.usersRepository.update(id, { ...updateUserDto, gestorId: novoGestorId });
+      return this.usersRepository.update(id, {
+        ...updateUserDto,
+        gestorId: novoGestorId,
+      });
     }
     return this.usersRepository.update(id, updateUserDto);
   }
@@ -89,5 +95,20 @@ export class UsersService {
 
   async getMembrosAndGestorByEquipe(equipeId: number) {
     return this.usersRepository.findMembrosAndGestorByEquipe(equipeId);
+  }
+
+  async getUserPerformanceData(
+    userId: number
+  ): Promise<UserPerformanceResponseDto> {
+    const user = await this.findOne(userId);
+    const performanceData = await this.usersRepository.getUserPerformanceData(
+      userId
+    );
+
+    return {
+      userId: user.id,
+      userName: user.name,
+      performanceData,
+    };
   }
 }

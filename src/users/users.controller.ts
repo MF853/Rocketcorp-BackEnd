@@ -10,6 +10,7 @@ import {
 import { UsersService } from "./users.service";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { UserStatisticsResponseDto } from "./dto/user-statistics-response.dto";
+import { UserPerformanceResponseDto } from "./dto/performance-data.dto";
 import {
   ApiTags,
   ApiOperation,
@@ -97,32 +98,24 @@ export class UsersController {
     description:
       "Retorna médias de autoavaliação, avaliação do gestor e avaliação 360° para um usuário específico. Opcionalmente filtrado por ciclo.",
   })
-  @ApiParam({
-    name: "id",
-    description: "ID do usuário",
-    type: "number",
-  })
-  @ApiQuery({
-    name: "ciclo",
-    description: "ID do ciclo para filtrar as avaliações (opcional)",
-    required: false,
-    type: "number",
-  })
   @ApiResponse({
     status: 200,
     description: "Estatísticas do usuário retornadas com sucesso.",
     type: UserStatisticsResponseDto,
   })
-  @ApiResponse({
-    status: 404,
-    description: "Usuário não encontrado.",
+  @ApiParam({ name: "id", description: "ID do usuário" })
+  @ApiQuery({
+    name: "idCiclo",
+    required: false,
+    description: "ID do ciclo para filtrar as estatísticas",
+    type: Number,
   })
-  getUserStatistics(
+  async getUserStatistics(
     @Param("id") id: string,
-    @Query("ciclo") ciclo?: string
+    @Query("idCiclo") idCiclo?: string
   ): Promise<UserStatisticsResponseDto> {
-    const cicloId = ciclo ? +ciclo : undefined;
-    return this.usersService.getUserStatistics(+id, cicloId);
+    const cycleId = idCiclo ? parseInt(idCiclo, 10) : undefined;
+    return this.usersService.getUserStatistics(+id, cycleId);
   }
 
   @Get("statistics/ciclo/:cicloId")
@@ -158,13 +151,31 @@ export class UsersController {
     return this.usersService.getAllUsersStatisticsByCycle(+cicloId);
   }
 
-  @Get('by-equipe-com-gestor/:equipeId')
-  @ApiOperation({ summary: 'Lista todos os membros e o gestor de uma equipe' })
+  @Get(":id/performance")
+  @ApiOperation({
+    summary: "Busca dados de performance de um usuário",
+    description:
+      "Retorna o histórico de notas finais das equalizações do usuário organizadas por semestre.",
+  })
   @ApiResponse({
     status: 200,
-    description: 'Lista de membros e gestor da equipe retornada com sucesso.',
+    description: "Dados de performance do usuário retornados com sucesso.",
+    type: UserPerformanceResponseDto,
   })
-  getMembrosAndGestorByEquipe(@Param('equipeId') equipeId: string) {
+  @ApiParam({ name: "id", description: "ID do usuário" })
+  async getUserPerformance(
+    @Param("id") id: string
+  ): Promise<UserPerformanceResponseDto> {
+    return this.usersService.getUserPerformanceData(+id);
+  }
+
+  @Get("by-equipe-com-gestor/:equipeId")
+  @ApiOperation({ summary: "Lista todos os membros e o gestor de uma equipe" })
+  @ApiResponse({
+    status: 200,
+    description: "Lista de membros e gestor da equipe retornada com sucesso.",
+  })
+  getMembrosAndGestorByEquipe(@Param("equipeId") equipeId: string) {
     return this.usersService.getMembrosAndGestorByEquipe(+equipeId);
   }
 }
