@@ -24,7 +24,7 @@ type Avaliacao360WithIncludes = Avaliacao360 & {
 
 @Injectable()
 export class AvaliacaoRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async createAvaliacao(data: CreateAvaliacaoDto) {
     return this.prisma.autoavaliacao.create({
@@ -77,7 +77,7 @@ export class AvaliacaoRepository {
           select: { id: true, name: true, email: true },
         },
         criterio: {
-          select: { id: true, name: true, enabled: true },
+          select: { id: true, name: true, enabled: true, tipo: true },
         },
         ciclo: {
           select: { name: true, year: true, period: true, status: true },
@@ -611,16 +611,12 @@ export class AvaliacaoRepository {
   }
 
   // ✅ Método updateNotaGestor
-  async updateNotaGestor(
-    id: number,
-    notaGestor: number,
-    justificativa?: string
-  ) {
+  async updateNotaGestor(id: number, notaGestor: number, justificativaGestor?: string) {
     return await this.prisma.autoavaliacao.update({
       where: { id },
       data: {
         notaGestor,
-        ...(justificativa && { justificativa }),
+        ...(justificativaGestor !== undefined && { justificativaGestor }),
       },
       include: {
         criterio: { select: { id: true, name: true, enabled: true } },

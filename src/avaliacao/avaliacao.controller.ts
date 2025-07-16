@@ -367,6 +367,18 @@ export class AvaliacaoController {
     return this.avaliacaoService.getGestorCiclo(+gestorId, +id);
   }
 
+  @Get("gestor/colaborador/:colaboradorId/ciclo/:cicloId")
+  @ApiOperation({ summary: "Lista avaliações de um colaborador específico no ciclo" })
+  @ApiResponse({
+    status: 200,
+    description: "Avaliações do colaborador no ciclo retornadas com sucesso.",
+  })
+  async getColaboradorCiclo(
+    @Param("colaboradorId") colaboradorId: string,
+    @Param("cicloId") cicloId: string
+  ) {
+    return this.avaliacaoService.getColaboradorCiclo(+colaboradorId, +cicloId);
+  }
   // ==================== ANALYTICS ENDPOINTS ====================
   // MAYBE IGNORE THIS SECTION IF NOT NEEDED
   // --- IGNORE ---
@@ -486,5 +498,27 @@ export class AvaliacaoController {
     @Param("cicloId") cicloId: string
   ) {
     return this.avaliacaoService.getUserPerformanceSummary(+userId, +cicloId);
+  }
+
+  @Patch("gestor/bulk")
+  @Roles(Role.Gestor)
+  @UseGuards(JwtGuard, RolesGuard)
+  @ApiOperation({ summary: "Atualiza em lote avaliações de um colaborador em um ciclo (notaGestor/justificativaGestor)" })
+  @ApiResponse({
+    status: 200,
+    description: "Avaliações do gestor atualizadas com sucesso.",
+    schema: {
+      example: {
+        updated: 3,
+        errors: [],
+      },
+      properties: {
+        updated: { type: "number", example: 3 },
+        errors: { type: "array", items: { type: "string" } },
+      },
+    },
+  })
+  async patchGestorBulk(@Body() body: { colaboradorId: number; cicloId: number; updates: { avaliacaoId: number; notaGestor: number; justificativaGestor?: string }[] }) {
+    return this.avaliacaoService.patchGestorBulk(body);
   }
 }
