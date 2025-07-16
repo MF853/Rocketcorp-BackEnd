@@ -112,6 +112,7 @@ async function main() {
 
   // 5. Cria os Usuários
   console.log("👥 Criando usuários...");
+
   const users: User[] = await Promise.all([
     // Usuário admin (Raylandson Cesário)
     prisma.user.create({
@@ -198,6 +199,7 @@ async function main() {
       },
     }),
   ]);
+
   console.log(`✅ Criados ${users.length} usuários.`);
 
   // Mapeamento de usuários para facilitar o acesso
