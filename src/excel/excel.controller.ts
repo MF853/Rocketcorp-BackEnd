@@ -3,8 +3,8 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { ExcelService } from './excel.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from "@nestjs/swagger";
 
-@ApiTags("Import")
-@Controller('import')
+@ApiTags("Docs")
+@Controller('docs')
 export class ExcelController {
   constructor(private readonly excelService: ExcelService) {}
 
