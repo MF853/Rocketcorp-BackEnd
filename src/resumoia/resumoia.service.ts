@@ -6,6 +6,7 @@ import {
   HarmBlockThreshold,
 } from "@google/generative-ai";
 import { ConfigService } from "@nestjs/config";
+import { CryptoService } from "../crypto/crypto.service";
 
 @Injectable()
 export class ResumoiaService {
@@ -13,7 +14,8 @@ export class ResumoiaService {
 
   constructor(
     private readonly repository: ResumoiaRepository,
-    private readonly config: ConfigService
+    private readonly config: ConfigService,
+    private readonly cryptoService: CryptoService
   ) {
     const apiKey = this.config.get<string>("GEMINI_API_KEY");
     if (!apiKey) {
@@ -188,7 +190,10 @@ export class ResumoiaService {
         return false;
       }
 
-      await this.repository.createResumo(user.id, idCiclo, texto);
+      // Encrypt the resumo before saving
+      const encryptedTexto = await this.cryptoService.encrypt(texto);
+
+      await this.repository.createResumo(user.id, idCiclo, encryptedTexto);
       console.log(
         `💾 [RESUMOIA] Resumo salvo para ${user.name} (${texto.length} chars)`
       );
@@ -222,7 +227,7 @@ Gere apenas o resumo balanceado, sem formatação:`;
     return this.genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
       generationConfig: {
-        maxOutputTokens: 2000, // Increased to allow for thoughts + actual response
+        maxOutputTokens: 5000, // Increased to allow for thoughts + actual response
         temperature: 0.2, // Controls randomness (0.0 = deterministic, 1.0 = very random)
         topP: 0.8, // Controls diversity via nucleus sampling
         topK: 40, // Limits the number of tokens to consider at each step

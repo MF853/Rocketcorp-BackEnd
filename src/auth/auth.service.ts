@@ -16,7 +16,7 @@ export class AuthService {
     private config: ConfigService,
     private jwtService: JwtService,
     private prismaService: PrismaService
-  ) {}
+  ) { }
 
   async login(authDto: AuthDto) {
     const user = await this.prismaService.user.findUnique({
@@ -35,7 +35,7 @@ export class AuthService {
     const userPayload: UserPayload = {
       userId: user.id,
       email: authDto.email,
-      roles: ["user"], // para exemplo
+      roles: user.role || ["user"], // para exemplo
     };
     const payload: JwtPayload = { user: userPayload };
 
