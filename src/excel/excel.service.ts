@@ -231,7 +231,7 @@ export class ExcelService {
   
     await this.exportPerfil(workbook, userId);
     await this.exportAvaliacao(workbook, userId, cicleId);
-    // await this.exportAvaliacao360(workbook, userId, cicleId);
+    await this.exportAvaliacao360(workbook, userId, cicleId);
   
     // Gerar o buffer e retornar
     const buffer = await workbook.xlsx.writeBuffer();
@@ -269,7 +269,6 @@ export class ExcelService {
     for (const item of selfEvaluationData) {
       item.justificativa = await this.cryptoService.decrypt(item.justificativa);
     }
-    console.log(evaluationsData);
     // lógica para adicionar os dados
     sheet.columns = [
       { header: 'Criterio', key: 'criterio', width: 30 },
@@ -287,26 +286,36 @@ export class ExcelService {
     
   }
 
-//   private async exportAvaliacao360(workbook: ExcelJS.Workbook, userId: number, cicleId: number) {
-//     const sheet = workbook.addWorksheet('Avaliacao360');
+  private async exportAvaliacao360(workbook: ExcelJS.Workbook, userId: number, cicleId: number) {
+    const sheet = workbook.addWorksheet('Avaliacao360_Recebidas');
 
-//     const evaluationsData = await this.avaliacaoService.getUserPerformanceSummary(userId, cicleId);
-//     const evaluation360Data = evaluationsData.avaliacoes360Recebidas;
+    const evaluationsData = await this.avaliacaoService.getUserPerformanceSummary(userId, cicleId);
+    const evaluation360Data = evaluationsData.avaliacoes360Recebidas;
     
-//     // lógica para adicionar os dados
-//     sheet.columns = [
-//       { header: 'Criterio', key: 'criterio', width: 30 },
-//       { header: 'Nota', key: 'nota', width:15 },
-//       { header: 'Justificativa', key: 'justificativa', width: 50 },
-//     ];
+    for (const item of evaluation360Data) {
+      item.pontosFortes = await this.cryptoService.decrypt(item.pontosFortes);
+      item.pontosMelhora = await this.cryptoService.decrypt(item.pontosMelhora);
+    }
+    // lógica para adicionar os dados
+    sheet.columns = [
+      { header: 'Projeto', key: 'projeto', width: 30 },
+      { header: 'Periodo', key: 'periodo', width:15 },
+      { header: 'Trabalharia Novamente', key: 'trabalharia_novamente', width: 50 },
+      { header: 'Nota', key: 'nota', width: 15 },
+      { header: 'Pontos Fortes', key: 'pontos_fortes', width: 50 },
+      { header: 'Pontos Melhorar', key: 'pontos_melhorar', width: 50 },
+    ];
     
-//     selfEvaluationData.forEach((evaluation) => {
-//       sheet.addRow({
-//         criterio: evaluation.criterio?.name || 'NA',
-//         nota: evaluation.nota ?? 'NA',
-//         justificativa: evaluation.justificativa || 'NA',
-//       });
-//     });
-// } 
+    evaluation360Data.forEach((evaluation) => {
+      sheet.addRow({
+        projeto: evaluation.nomeProjeto || 'NA',
+        periodo: evaluation.periodoMeses ?? 'NA',
+        trabalharia_novamente: evaluation.trabalhariaNovamente,
+        nota: evaluation.nota ?? 'NA',
+        pontos_fortes: evaluation.pontosFortes || 'NA',
+        pontos_melhorar: evaluation.pontosMelhora || 'NA',
+      });
+    });
+} 
 
 }
