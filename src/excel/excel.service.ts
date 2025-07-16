@@ -18,7 +18,7 @@ export class ExcelService {
               private readonly criterioService: CriterioService) {}
 
   // async processExcel(filePath: string) {
-  async processExcel(buffer: Buffer) {
+  async importExcel(buffer: Buffer) {
     const workbook = new ExcelJS.Workbook();
     // await workbook.xlsx.readFile(filePath);
     await workbook.xlsx.load(buffer);
@@ -96,7 +96,7 @@ export class ExcelService {
     return cicloString;
   }
 
-  async importAutoavaliacao(sheet: ExcelJS.Worksheet, userId: number, cicleId: number) {
+  private async importAutoavaliacao(sheet: ExcelJS.Worksheet, userId: number, cicleId: number) {
     // Implementar lógica para importar autoavaliações
     const criteria: Criterio[] = await this.criterioService.findByCicloId(cicleId);
 
@@ -145,7 +145,7 @@ export class ExcelService {
     });
   }
 
-  async importAvaliacao360(sheet: ExcelJS.Worksheet, userId: number, cicleId: number) {
+  private async importAvaliacao360(sheet: ExcelJS.Worksheet, userId: number, cicleId: number) {
 
     const motivacaoMap: Record<string, MotivacaoTrabalhoNovamente> = {
       'Discordo Totalmente': MotivacaoTrabalhoNovamente.DISCORDO_TOTALMENTE,
@@ -193,7 +193,7 @@ export class ExcelService {
     });
   }
 
-  async importReferencias(sheet: ExcelJS.Worksheet, userId: number, cicleId: number) {
+  private async importReferencias(sheet: ExcelJS.Worksheet, userId: number, cicleId: number) {
     sheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
       if (rowNumber === 1) return; 
 

@@ -34,7 +34,7 @@ export class ExcelController {
     }
 
     for (const file of files) {
-      await this.excelService.processExcel(file.buffer);
+      await this.excelService.importExcel(file.buffer);
     }
 
     return { message: 'Importação concluída com sucesso' };
