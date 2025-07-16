@@ -33,7 +33,7 @@ import { Roles } from "../auth/decorators/roles.decorator";
 @ApiTags("Avaliacao")
 @Controller("avaliacao")
 export class AvaliacaoController {
-  constructor(private readonly avaliacaoService: AvaliacaoService) {}
+  constructor(private readonly avaliacaoService: AvaliacaoService) { }
 
   // ==================== 360 EVALUATION ENDPOINTS ====================
 
@@ -518,7 +518,7 @@ export class AvaliacaoController {
   }
 
   @Patch("gestor/bulk")
-  @Roles(Role.Gestor)
+  @Roles("gestor")
   @UseGuards(JwtGuard, RolesGuard)
   @ApiOperation({ summary: "Atualiza em lote avaliações de um colaborador em um ciclo (notaGestor/justificativaGestor)" })
   @ApiResponse({
