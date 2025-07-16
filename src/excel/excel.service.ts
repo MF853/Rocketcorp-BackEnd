@@ -228,6 +228,7 @@ export class ExcelService {
     const workbook = new ExcelJS.Workbook();
   
     await this.exportPerfil(workbook, userId);
+    await this.exportAvaliacao(workbook, userId, cicleId);
     
   
     // Gerar o buffer e retornar
@@ -255,6 +256,29 @@ export class ExcelService {
       unidade: userData.unidade,
     });
   
+  }
+  
+  private async exportAvaliacao(workbook: ExcelJS.Workbook, userId: number, cicleId: number) {
+    const sheet = workbook.addWorksheet('Autoavaliacao');
+
+    const evaluationsData = await this.avaliacaoService.getUserPerformanceSummary(userId, cicleId);
+    const selfEvaluationData = evaluationsData.avaliacoesRecebidas;
+    console.log(evaluationsData);
+    // lógica para adicionar os dados
+    sheet.columns = [
+      { header: 'Criterio', key: 'criterio', width: 30 },
+      { header: 'Nota', key: 'nota', width:15 },
+      { header: 'Justificativa', key: 'justificativa', width: 50 },
+    ];
+    
+    selfEvaluationData.forEach((evaluation) => {
+      sheet.addRow({
+        criterio: evaluation.criterio?.name || 'NA',
+        nota: evaluation.nota ?? 'NA',
+        justificativa: evaluation.justificativa || 'NA',
+      });
+    });
+    
   }
 
 }

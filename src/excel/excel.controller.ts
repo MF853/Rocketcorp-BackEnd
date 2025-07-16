@@ -47,7 +47,7 @@ export class ExcelController {
     // @Query('cicleId') cicleId: number = 2,
     @Res() res: Response,
   ) {
-    const buffer = await this.excelService.exportExcel(1, 1);
+    const buffer = await this.excelService.exportExcel(1, 2);
 
     res.set({
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

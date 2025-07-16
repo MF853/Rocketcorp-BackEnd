@@ -246,20 +246,24 @@ export class AvaliacaoRepository {
   }
 
   async getUserPerformanceSummary(userId: number, idCiclo?: number) {
-    const whereClause = idCiclo
-      ? { idUser: userId, idCiclo }
-      : { idUser: userId };
+    const autoavaliacaoWhere = idCiclo
+    ? { idUser: userId, idCiclo }
+    : { idUser: userId };
+
+  const avaliacao360Where = idCiclo
+    ? { idAvaliado: userId, idCiclo }
+    : { idAvaliado: userId };
 
     const [avaliacoesRecebidas, avaliacoes360Recebidas] = await Promise.all([
       this.prisma.autoavaliacao.findMany({
-        where: whereClause,
+        where: autoavaliacaoWhere,
         include: {
           user: { select: { id: true, name: true } },
           criterio: { select: { id: true, name: true } },
         },
       }),
       this.prisma.avaliacao360.findMany({
-        where: whereClause,
+        where: avaliacao360Where,
         include: {
           avaliador: { select: { id: true, name: true } },
         },
