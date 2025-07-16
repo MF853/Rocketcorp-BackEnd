@@ -15,7 +15,6 @@ import { AuthDto } from "./dto/auth.dto";
 import { RequestWithUser } from "src/types/express";
 import { JwtGuard, RolesGuard } from "./guard";
 import { Roles } from "./decorators/roles.decorator";
-import { Role } from "src/enums/roles.enum";
 import { Response, Request } from "express";
 
 @Controller("auth")
@@ -62,7 +61,7 @@ export class AuthController {
     return this.authService.getMe();
   }
 
-  @Roles(Role.Admin)
+  @Roles("admin")
   @UseGuards(JwtGuard, RolesGuard)
   @Get("admin")
   getAdmin(@Req() req: RequestWithUser) {
