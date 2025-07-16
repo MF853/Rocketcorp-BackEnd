@@ -95,22 +95,39 @@ export class ReferenciaRepository {
     bulkCreateReferenciaDto: BulkCreateReferenciaDto
   ): Promise<BulkCreateResult> {
     const { referencias } = bulkCreateReferenciaDto;
+    console.log("🔍 ReferenciaRepository.createBulkReferencias - Iniciando transação...");
 
     if (!referencias || referencias.length === 0) {
       throw new Error("No referencias provided for bulk creation");
     }
 
     return await this.prisma.$transaction(async (tx) => {
+      console.log(`📝 Transação iniciada. Criando ${referencias.length} referências...`);
       const createdReferencias: ReferenciaWithBothUsers[] = [];
 
-      for (const referencia of referencias) {
-        const result = await tx.referencia.create({
-          data: referencia,
-          include: this.bothUsersIncludes,
+      for (let i = 0; i < referencias.length; i++) {
+        const referencia = referencias[i];
+        console.log(`📝 Criando referência ${i + 1}/${referencias.length}:`, {
+          idReferenciador: referencia.idReferenciador,
+          idReferenciado: referencia.idReferenciado,
+          idCiclo: referencia.idCiclo,
+          justificativa: referencia.justificativa.substring(0, 50) + "..."
         });
-        createdReferencias.push(result);
+
+        try {
+          const result = await tx.referencia.create({
+            data: referencia,
+            include: this.bothUsersIncludes,
+          });
+          console.log(`✅ Referência ${i + 1} criada com ID:`, result.id);
+          createdReferencias.push(result);
+        } catch (error) {
+          console.error(`❌ Erro ao criar referência ${i + 1}:`, error);
+          throw error;
+        }
       }
 
+      console.log(`✅ Transação concluída. ${createdReferencias.length} referências criadas.`);
       return {
         referencias: createdReferencias,
         count: createdReferencias.length,
