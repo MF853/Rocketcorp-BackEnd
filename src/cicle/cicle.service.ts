@@ -37,15 +37,16 @@ export class CicleService {
   }
 
   async getCicloAtual() {
-    const ciclo = await this.cicleRepository.findByStatus("aberto");
+    const hoje = new Date();
+    const ciclo = await this.cicleRepository.findCicloAtualByData(hoje);
 
     if (!ciclo) {
       throw new NotFoundException(
-        "Nenhum ciclo com status 'aberto' encontrado."
+        "Nenhum ciclo em andamento encontrado para a data atual."
       );
     }
 
-    console.log("Ciclo atual encontrado:", ciclo);
+    // O ciclo já vem com statusAtual do repository
     return ciclo;
   }
 

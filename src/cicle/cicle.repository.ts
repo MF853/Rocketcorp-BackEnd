@@ -97,4 +97,35 @@ export class CicleRepository {
       orderBy: { dataFinalizacao: "desc" },
     });
   }
+
+  async findCicloAtualByData(date: Date) {
+    // Busca todos os ciclos ordenados pela data mais recente
+    const ciclos = await this.prisma.ciclo.findMany({
+      orderBy: { dataAberturaAvaliacao: "desc" },
+    });
+    for (const ciclo of ciclos) {
+      if (
+        date >= ciclo.dataAberturaAvaliacao &&
+        date <= ciclo.dataFechamentoAvaliacao
+      ) {
+        return { ...ciclo, statusAtual: "aberto" };
+      }
+      if (
+        date >= ciclo.dataAberturaRevisaoGestor &&
+        date <= ciclo.dataFechamentoRevisaoGestor
+      ) {
+        return { ...ciclo, statusAtual: "revisao_gestor" };
+      }
+      if (
+        date >= ciclo.dataAberturaRevisaoComite &&
+        date <= ciclo.dataFechamentoRevisaoComite
+      ) {
+        return { ...ciclo, statusAtual: "revisao_comite" };
+      }
+      if (date >= ciclo.dataFinalizacao) {
+        return { ...ciclo, statusAtual: "finalizado" };
+      }
+    }
+    return null;
+  }
 }
