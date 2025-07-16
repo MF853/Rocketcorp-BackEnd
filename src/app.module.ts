@@ -16,6 +16,7 @@ import { EqualizacaoModule } from "./equalizacao/equalizacao.module";
 import { EquipeModule } from "./equipe/equipe.module";
 import { ScheduleModule } from "@nestjs/schedule";
 import { SchedulerModule } from "./scheduler/scheduler.module";
+import { LogModule } from './log/log.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { SchedulerModule } from "./scheduler/scheduler.module";
     EquipeModule,
     ScheduleModule.forRoot(),
     SchedulerModule,
+    LogModule,
   ],
   controllers: [AppController],
   providers: [AppService, ExcelService],

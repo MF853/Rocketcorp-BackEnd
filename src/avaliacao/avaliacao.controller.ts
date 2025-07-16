@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Req,
 } from "@nestjs/common";
 import { AvaliacaoService } from "./avaliacao.service";
 import {
@@ -30,11 +31,17 @@ import {
 import { JwtGuard, RolesGuard } from "../auth/guard";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { Role } from "../enums/roles.enum";
+import { LogService } from '../log/log.service';
+import { Request } from 'express';
+import { UserPayload } from '../types/express';
 
 @ApiTags("Avaliacao")
 @Controller("avaliacao")
 export class AvaliacaoController {
-  constructor(private readonly avaliacaoService: AvaliacaoService) { }
+  constructor(
+    private readonly avaliacaoService: AvaliacaoService,
+    private readonly logService: LogService,
+  ) { }
 
   // ==================== 360 EVALUATION ENDPOINTS ====================
 
@@ -215,6 +222,7 @@ export class AvaliacaoController {
     return this.avaliacaoService.create(createAvaliacaoDto);
   }
 
+  @UseGuards(JwtGuard)
   @Post("bulk")
   @ApiOperation({ summary: "Cria múltiplas autoavaliações, avaliações 360 e mentoring em lote" })
   @ApiResponse({
@@ -248,7 +256,7 @@ export class AvaliacaoController {
     status: 409,
     description: "Erro de conflito - avaliações duplicadas.",
   })
-  createBulk(@Body() bulkCreateDto: BulkCreateAvaliacaoDto) {
+  async createBulk(@Body() bulkCreateDto: BulkCreateAvaliacaoDto, @Req() req: Request) {
     console.log("Received bulk data:", JSON.stringify(bulkCreateDto, null, 2));
     console.log("Autoavaliacoes array:", bulkCreateDto.autoavaliacoes); // ✅ CORRIGIDO
 
@@ -279,7 +287,14 @@ export class AvaliacaoController {
       });
     }
 
-    return this.avaliacaoService.createBulk(bulkCreateDto);
+    const result = await this.avaliacaoService.createBulk(bulkCreateDto);
+    const userId = (req.user as UserPayload)?.userId;
+    await this.logService.createLog({
+      userId,
+      action: 'CREATE_BULK',
+      entity: 'Avaliacao',
+    });
+    return result;
   }
 
   @Post("test")
@@ -500,7 +515,7 @@ export class AvaliacaoController {
     return this.avaliacaoService.getUserPerformanceSummary(+userId, +cicloId);
   }
 
-  @Patch("gestor/bulk")
+  @Patch('gestor/bulk')
   @Roles(Role.Gestor)
   @UseGuards(JwtGuard, RolesGuard)
   @ApiOperation({ summary: "Atualiza em lote avaliações de um colaborador em um ciclo (notaGestor/justificativaGestor)" })
@@ -518,7 +533,14 @@ export class AvaliacaoController {
       },
     },
   })
-  async patchGestorBulk(@Body() body: { colaboradorId: number; cicloId: number; updates: { avaliacaoId: number; notaGestor: number; justificativaGestor?: string }[] }) {
-    return this.avaliacaoService.patchGestorBulk(body);
+  async patchGestorBulk(@Body() body: { colaboradorId: number; cicloId: number; updates: { avaliacaoId: number; notaGestor: number; justificativaGestor?: string }[] }, @Req() req: Request) {
+    const result = await this.avaliacaoService.patchGestorBulk(body);
+    const userId = (req.user as UserPayload)?.userId;
+    await this.logService.createLog({
+      userId,
+      action: 'UPDATE_GESTOR_BULK',
+      entity: 'Avaliacao',
+    });
+    return result;
   }
 }

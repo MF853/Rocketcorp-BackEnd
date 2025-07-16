@@ -6,6 +6,8 @@ import {
   Patch,
   Param,
   Delete,
+  Req,
+  UseGuards,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from "@nestjs/swagger";
 import { CriterioService } from "./criterio.service";
@@ -17,11 +19,18 @@ import {
   UpdateCriterioDto,
   BulkUpdateCriterioDto,
 } from "./dto/update-criterio.dto";
+import { LogService } from '../log/log.service';
+import { Request } from 'express';
+import { UserPayload } from '../types/express';
+import { JwtGuard } from '../auth/guard';
 
 @ApiTags("Critérios")
 @Controller("criterio")
 export class CriterioController {
-  constructor(private readonly criterioService: CriterioService) {}
+  constructor(
+    private readonly criterioService: CriterioService,
+    private readonly logService: LogService,
+  ) {}
 
   @ApiOperation({
     summary: "Criar novo critério",
@@ -363,9 +372,17 @@ export class CriterioController {
     },
   })
   @ApiResponse({ status: 400, description: "Dados inválidos" })
-  @Patch("bulk")
-  updateBulk(@Body() bulkUpdateCriterioDto: BulkUpdateCriterioDto) {
-    return this.criterioService.updateBulk(bulkUpdateCriterioDto);
+  @UseGuards(JwtGuard)
+  @Patch('bulk')
+  async updateBulk(@Body() bulkUpdateCriterioDto: BulkUpdateCriterioDto, @Req() req: Request) {
+    const result = await this.criterioService.updateBulk(bulkUpdateCriterioDto);
+    const userId = (req.user as UserPayload)?.userId;
+    await this.logService.createLog({
+      userId,
+      action: 'UPDATE_BULK',
+      entity: 'Criterio',
+    });
+    return result;
   }
 
   // === PARAMETERIZED ROUTES - MUST BE AT THE END ===
@@ -526,12 +543,21 @@ export class CriterioController {
   })
   @ApiResponse({ status: 404, description: "Critério não encontrado" })
   @ApiResponse({ status: 400, description: "Dados inválidos" })
-  @Patch(":id")
-  update(
-    @Param("id") id: string,
-    @Body() updateCriterioDto: UpdateCriterioDto
+  @UseGuards(JwtGuard)
+  @Patch(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() updateCriterioDto: UpdateCriterioDto,
+    @Req() req: Request
   ) {
-    return this.criterioService.update(+id, updateCriterioDto);
+    const result = await this.criterioService.update(+id, updateCriterioDto);
+    const userId = (req.user as UserPayload)?.userId;
+    await this.logService.createLog({
+      userId,
+      action: 'UPDATE',
+      entity: 'Criterio',
+    });
+    return result;
   }
 
   @ApiOperation({
