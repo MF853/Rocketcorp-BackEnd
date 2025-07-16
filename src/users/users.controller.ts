@@ -11,6 +11,7 @@ import { UsersService } from "./users.service";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { UserStatisticsResponseDto } from "./dto/user-statistics-response.dto";
 import { UserPerformanceResponseDto } from "./dto/performance-data.dto";
+import { UserEvaluationCyclesResponseDto } from "./dto/evaluation-cycle.dto";
 import {
   ApiTags,
   ApiOperation,
@@ -167,6 +168,24 @@ export class UsersController {
     @Param("id") id: string
   ): Promise<UserPerformanceResponseDto> {
     return this.usersService.getUserPerformanceData(+id);
+  }
+
+  @Get(":id/evaluation-cycles")
+  @ApiOperation({
+    summary: "Busca ciclos de avaliação de um usuário",
+    description:
+      "Retorna informações detalhadas sobre os ciclos de avaliação do usuário, incluindo status, notas e resumos.",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Ciclos de avaliação do usuário retornados com sucesso.",
+    type: UserEvaluationCyclesResponseDto,
+  })
+  @ApiParam({ name: "id", description: "ID do usuário" })
+  async getUserEvaluationCycles(
+    @Param("id") id: string
+  ): Promise<UserEvaluationCyclesResponseDto> {
+    return this.usersService.getUserEvaluationCycles(+id);
   }
 
   @Get("by-equipe-com-gestor/:equipeId")

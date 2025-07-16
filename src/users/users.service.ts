@@ -3,6 +3,7 @@ import { UsersRepository } from "./users.repository";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { UserStatisticsResponseDto } from "./dto/user-statistics-response.dto";
 import { UserPerformanceResponseDto } from "./dto/performance-data.dto";
+import { UserEvaluationCyclesResponseDto } from "./dto/evaluation-cycle.dto";
 
 @Injectable()
 export class UsersService {
@@ -109,6 +110,21 @@ export class UsersService {
       userId: user.id,
       userName: user.name,
       performanceData,
+    };
+  }
+
+  async getUserEvaluationCycles(
+    userId: number
+  ): Promise<UserEvaluationCyclesResponseDto> {
+    const user = await this.findOne(userId);
+    const evaluationCycles = await this.usersRepository.getUserEvaluationCycles(
+      userId
+    );
+
+    return {
+      userId: user.id,
+      userName: user.name,
+      evaluationCycles,
     };
   }
 }

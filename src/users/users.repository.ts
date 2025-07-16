@@ -3,6 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { Prisma } from "@prisma/client";
 import { UserStatisticsResponseDto } from "./dto/user-statistics-response.dto";
 import { PerformanceDataDto } from "./dto/performance-data.dto";
+import { EvaluationCycle, EvaluationScore } from "./dto/evaluation-cycle.dto";
 
 const userInclude = {
   mentor: { select: { id: true, name: true, email: true } },
@@ -247,5 +248,130 @@ export class UsersRepository {
       semester: `${equalizacao.ciclo.year}.${equalizacao.ciclo.period}`,
       score: equalizacao.notaFinal,
     }));
+  }
+
+  async getUserEvaluationCycles(userId: number): Promise<EvaluationCycle[]> {
+    const ciclos = await this.prisma.ciclo.findMany({
+      include: {
+        Equalizacao: {
+          where: { idAvaliado: userId },
+        },
+        ResumoIA: {
+          where: { userId },
+        },
+      },
+      orderBy: [{ year: "asc" }, { period: "asc" }],
+    });
+
+    const currentDate = new Date();
+
+    const evaluationCycles = (
+      await Promise.all(
+        ciclos.map(async (ciclo) => {
+          const equalizacao = ciclo.Equalizacao[0];
+          const resumoIA = ciclo.ResumoIA[0];
+
+          // Get autoavaliacao data with criteria information
+          const autoavaliacoes = await this.prisma.autoavaliacao.findMany({
+            where: {
+              idUser: userId,
+              idCiclo: ciclo.id,
+            },
+            include: {
+              criterio: {
+                select: {
+                  tipo: true,
+                },
+              },
+            },
+          });
+
+          // Skip this cycle if user has no evaluations
+          if (autoavaliacoes.length === 0) {
+            return null;
+          }
+
+          // Determine status based on dates
+          let status: "em-andamento" | "finalizado";
+          const dataAbertura = new Date(ciclo.dataAberturaAvaliacao);
+          const dataFinalizacao = new Date(ciclo.dataFinalizacao);
+
+          if (currentDate >= dataAbertura && currentDate <= dataFinalizacao) {
+            status = "em-andamento";
+          } else {
+            status = "finalizado";
+          }
+
+          // Calculate scores by criteria type
+          const calculateScoresByType = () => {
+            const scoresByType: { [key: string]: number[] } = {};
+
+            autoavaliacoes.forEach((autoavaliacao) => {
+              if (autoavaliacao.criterio) {
+                const tipo = autoavaliacao.criterio.tipo.toLowerCase();
+                const score = autoavaliacao.notaGestor ?? autoavaliacao.nota;
+
+                if (score !== null && score !== undefined) {
+                  if (!scoresByType[tipo]) {
+                    scoresByType[tipo] = [];
+                  }
+                  scoresByType[tipo].push(score);
+                }
+              }
+            });
+
+            // Calculate averages
+            const averages: { [key: string]: number } = {};
+            Object.keys(scoresByType).forEach((tipo) => {
+              const scores = scoresByType[tipo];
+              if (scores.length > 0) {
+                averages[tipo] =
+                  scores.reduce((sum, score) => sum + score, 0) / scores.length;
+              }
+            });
+
+            return averages;
+          };
+
+          const scoresByType = calculateScoresByType();
+
+          // Calculate autoavaliacao average (overall average)
+          const autoavaliacaoScores = autoavaliacoes
+            .map((av) => av.notaGestor ?? av.nota)
+            .filter(
+              (score): score is number => score !== null && score !== undefined
+            );
+
+          const autoavaliacaoAverage =
+            autoavaliacaoScores.length > 0
+              ? autoavaliacaoScores.reduce((sum, score) => sum + score, 0) /
+                autoavaliacaoScores.length
+              : 0;
+
+          const cycle = `${ciclo.year}.${ciclo.period}`;
+
+          return {
+            id: ciclo.id.toString(),
+            cycle,
+            status,
+            finalScore: equalizacao?.notaFinal,
+            scores: {
+              autoavaliacao: autoavaliacaoAverage,
+              execucao: scoresByType["tecnico"] || 0,
+              postura: scoresByType["comportamental"] || 0,
+              gestao: scoresByType["gestao"],
+            },
+            resumo: resumoIA?.resumo || "",
+            period: cycle,
+            completionDate:
+              status === "finalizado"
+                ? ciclo.dataFinalizacao.toISOString()
+                : undefined,
+          };
+        })
+      )
+    ).filter((cycle) => cycle !== null) as EvaluationCycle[];
+
+    return evaluationCycles;
   }
 }
