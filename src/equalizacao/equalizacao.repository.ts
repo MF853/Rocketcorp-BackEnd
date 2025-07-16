@@ -166,4 +166,34 @@ export class EqualizacaoRepository {
       status: "Finalizado" as "Finalizado" | "Pendente",
     };
   }
+
+  async getEqualizacoesByAvaliado(idAvaliado: number) {
+    const equalizacoes = await this.prisma.equalizacao.findMany({
+      where: { idAvaliado },
+      include: {
+        avaliado: { select: { name: true, cargo: true } },
+      },
+    });
+    // Busca os resumos IA para cada equalização
+    const result = await Promise.all(
+      equalizacoes.map(async (eq) => {
+        const resumoIA = await this.prisma.resumoIA.findUnique({
+          where: {
+            userId_idCiclo: {
+              userId: eq.idAvaliado,
+              idCiclo: eq.idCiclo,
+            },
+          },
+          select: { resumo: true },
+        });
+        return {
+          ...eq,
+          nomeAvaliado: eq.avaliado.name,
+          cargoAvaliado: eq.avaliado.cargo || "Desenvolvedor",
+          resumoIA: resumoIA?.resumo || "",
+        };
+      })
+    );
+    return result;
+  }
 }

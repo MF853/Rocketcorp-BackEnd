@@ -2,12 +2,10 @@ import {
   PrismaClient,
   MotivacaoTrabalhoNovamente,
   StatusEqualizacao,
-  statusProcessamento,
   User,
   Trilha,
   Ciclo,
   Criterio,
-  StatusEqualizacao, // Importado o enum StatusEqualizacao
 } from "@prisma/client";
 import * as argon from "argon2";
 import { execSync } from "child_process";
@@ -51,7 +49,6 @@ async function main() {
 
   // 2. Limpa os dados existentes na ordem correta para evitar conflitos de chave estrangeira
   console.log("🧹 Limpando dados existentes...");
-  await prisma.resumoProcessamento.deleteMany();
   await prisma.equalizacao.deleteMany();
   await prisma.mentoring.deleteMany();
   await prisma.resumoIA.deleteMany();
@@ -80,119 +77,76 @@ async function main() {
   const trilhas: Trilha[] = [devTrilha, dadosTrilha, infraTrilha, gestaoTrilha];
   console.log(`✅ Criadas ${trilhas.length} trilhas.`);
 
-  // 4. Cria os Ciclos de avaliação com datas relativas à data atual
+  // 4. Cria os Ciclos de avaliação com datas coerentes com a data de hoje (15/07/2025)
   console.log("🔄 Criando ciclos...");
-  const now = new Date();
+  // Data de referência: 15/07/2025
+  const hoje = new Date("2025-07-15T12:00:00-03:00");
 
-  // Ciclo Aberto (Estágio Avaliações)
+  // Ciclo Aberto (hoje está entre dataAberturaAvaliacao e dataFechamentoAvaliacao)
   const cicloAberto = await prisma.ciclo.create({
     data: {
       name: "2025.2",
       year: 2025,
       period: 2,
       status: "aberto",
-      dataAberturaAvaliacao: now,
-      dataFechamentoAvaliacao: new Date(
-        now.getTime() + 7 * 24 * 60 * 60 * 1000
-      ),
-      dataAberturaRevisaoGestor: new Date(
-        now.getTime() + 8 * 24 * 60 * 60 * 1000
-      ),
-      dataFechamentoRevisaoGestor: new Date(
-        now.getTime() + 14 * 24 * 60 * 60 * 1000
-      ),
-      dataAberturaRevisaoComite: new Date(
-        now.getTime() + 15 * 24 * 60 * 60 * 1000
-      ),
-      dataFechamentoRevisaoComite: new Date(
-        now.getTime() + 21 * 24 * 60 * 60 * 1000
-      ),
-      dataFinalizacao: new Date(now.getTime() + 27 * 24 * 60 * 60 * 1000),
+      dataAberturaAvaliacao: new Date("2025-07-10T00:00:00-03:00"),
+      dataFechamentoAvaliacao: new Date("2025-07-20T23:59:59-03:00"),
+      dataAberturaRevisaoGestor: new Date("2025-07-21T00:00:00-03:00"),
+      dataFechamentoRevisaoGestor: new Date("2025-07-25T23:59:59-03:00"),
+      dataAberturaRevisaoComite: new Date("2025-07-26T00:00:00-03:00"),
+      dataFechamentoRevisaoComite: new Date("2025-07-30T23:59:59-03:00"),
+      dataFinalizacao: new Date("2025-07-31T23:59:59-03:00"),
     },
   });
 
-  // Ciclo Revisão Gestor (Estágio Revisão de Gestor)
+  // Ciclo Revisão Gestor (hoje está entre dataAberturaRevisaoGestor e dataFechamentoRevisaoGestor)
   const cicloRevisaoGestor = await prisma.ciclo.create({
     data: {
       name: "2025.1",
       year: 2025,
       period: 1,
       status: "revisao_gestor",
-      dataAberturaAvaliacao: new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000),
-      dataFechamentoAvaliacao: new Date(
-        now.getTime() - 53 * 24 * 60 * 60 * 1000
-      ),
-      dataAberturaRevisaoGestor: new Date(
-        now.getTime() - 52 * 24 * 60 * 60 * 1000
-      ),
-      dataFechamentoRevisaoGestor: new Date(
-        now.getTime() - 46 * 24 * 60 * 60 * 1000
-      ),
-      dataAberturaRevisaoComite: new Date(
-        now.getTime() - 45 * 24 * 60 * 60 * 1000
-      ),
-      dataFechamentoRevisaoComite: new Date(
-        now.getTime() - 39 * 24 * 60 * 60 * 1000
-      ),
-      dataFinalizacao: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
+      dataAberturaAvaliacao: new Date("2025-06-10T00:00:00-03:00"),
+      dataFechamentoAvaliacao: new Date("2025-06-20T23:59:59-03:00"),
+      dataAberturaRevisaoGestor: new Date("2025-07-01T00:00:00-03:00"),
+      dataFechamentoRevisaoGestor: new Date("2025-07-16T23:59:59-03:00"),
+      dataAberturaRevisaoComite: new Date("2025-07-17T00:00:00-03:00"),
+      dataFechamentoRevisaoComite: new Date("2025-07-20T23:59:59-03:00"),
+      dataFinalizacao: new Date("2025-07-21T23:59:59-03:00"),
     },
   });
 
-  // Ciclo Revisão Comitê (Estágio Revisão de Comitê)
+  // Ciclo Revisão Comitê (hoje está entre dataAberturaRevisaoComite e dataFechamentoRevisaoComite)
   const cicloRevisaoComite = await prisma.ciclo.create({
     data: {
       name: "2024.2",
       year: 2024,
       period: 2,
       status: "revisao_comite",
-      dataAberturaAvaliacao: new Date(
-        now.getTime() - 120 * 24 * 60 * 60 * 1000
-      ),
-      dataFechamentoAvaliacao: new Date(
-        now.getTime() - 113 * 24 * 60 * 60 * 1000
-      ),
-      dataAberturaRevisaoGestor: new Date(
-        now.getTime() - 112 * 24 * 60 * 60 * 1000
-      ),
-      dataFechamentoRevisaoGestor: new Date(
-        now.getTime() - 106 * 24 * 60 * 60 * 1000
-      ),
-      dataAberturaRevisaoComite: new Date(
-        now.getTime() - 105 * 24 * 60 * 60 * 1000
-      ),
-      dataFechamentoRevisaoComite: new Date(
-        now.getTime() - 99 * 24 * 60 * 60 * 1000
-      ),
-      dataFinalizacao: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000),
+      dataAberturaAvaliacao: new Date("2025-06-01T00:00:00-03:00"),
+      dataFechamentoAvaliacao: new Date("2025-06-10T23:59:59-03:00"),
+      dataAberturaRevisaoGestor: new Date("2025-06-11T00:00:00-03:00"),
+      dataFechamentoRevisaoGestor: new Date("2025-06-20T23:59:59-03:00"),
+      dataAberturaRevisaoComite: new Date("2025-07-10T00:00:00-03:00"),
+      dataFechamentoRevisaoComite: new Date("2025-07-15T23:59:59-03:00"),
+      dataFinalizacao: new Date("2025-07-16T23:59:59-03:00"),
     },
   });
 
-  // Ciclo Finalizado (Estágio Finalizado)
+  // Ciclo Finalizado (hoje é após dataFinalizacao)
   const cicloFinalizado = await prisma.ciclo.create({
     data: {
       name: "2024.1",
       year: 2024,
       period: 1,
       status: "finalizado",
-      dataAberturaAvaliacao: new Date(
-        now.getTime() - 240 * 24 * 60 * 60 * 1000
-      ),
-      dataFechamentoAvaliacao: new Date(
-        now.getTime() - 233 * 24 * 60 * 60 * 1000
-      ),
-      dataAberturaRevisaoGestor: new Date(
-        now.getTime() - 232 * 24 * 60 * 60 * 1000
-      ),
-      dataFechamentoRevisaoGestor: new Date(
-        now.getTime() - 226 * 24 * 60 * 60 * 1000
-      ),
-      dataAberturaRevisaoComite: new Date(
-        now.getTime() - 225 * 24 * 60 * 60 * 1000
-      ),
-      dataFechamentoRevisaoComite: new Date(
-        now.getTime() - 219 * 24 * 60 * 60 * 1000
-      ),
-      dataFinalizacao: new Date(now.getTime() - 210 * 24 * 60 * 60 * 1000),
+      dataAberturaAvaliacao: new Date("2025-05-01T00:00:00-03:00"),
+      dataFechamentoAvaliacao: new Date("2025-05-10T23:59:59-03:00"),
+      dataAberturaRevisaoGestor: new Date("2025-05-11T00:00:00-03:00"),
+      dataFechamentoRevisaoGestor: new Date("2025-05-20T23:59:59-03:00"),
+      dataAberturaRevisaoComite: new Date("2025-05-21T00:00:00-03:00"),
+      dataFechamentoRevisaoComite: new Date("2025-05-25T23:59:59-03:00"),
+      dataFinalizacao: new Date("2025-06-01T23:59:59-03:00"),
     },
   });
 
@@ -963,9 +917,10 @@ async function main() {
         mediaAutoavaliacao: 4.0, // Exemplo de média
         mediaAvaliacaoGestor: 4.5, // Exemplo de média
         mediaAvaliacao360: 4.3, // Exemplo de média
-        notaFinal: 4.5, // Exemplo de nota final equalizada
+        notaFinal: 4.0, // Exemplo de nota final equalizada
         justificativa: `Equalização do comitê para ${user.name}: Desempenho alinhado com as expectativas.`,
         status: StatusEqualizacao.FINALIZADO, // Definindo o status
+        idCiclo: cicloRevisaoComite.id, // Adicionado o idCiclo
       },
     });
   }
@@ -1099,6 +1054,7 @@ async function main() {
         notaFinal: 4.7, // Exemplo de nota final equalizada
         justificativa: `Equalização finalizada para ${user.name}: Desempenho excelente e consistente.`,
         status: StatusEqualizacao.FINALIZADO, // Definindo o status
+        idCiclo: cicloFinalizado.id, // Adicionado o idCiclo
       },
     });
   }
@@ -1137,7 +1093,6 @@ async function main() {
     mentorings: await prisma.mentoring.count(),
     resumosIA: await prisma.resumoIA.count(),
     equalizacoes: await prisma.equalizacao.count(),
-    mentorings: await prisma.mentoring.count(),
   };
 
   console.log("\n📊 Resumo do Banco de Dados:");
