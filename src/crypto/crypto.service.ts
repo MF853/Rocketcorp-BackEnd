@@ -98,6 +98,57 @@ export class CryptoService {
       result.pontosMelhora = await this.encrypt(result.pontosMelhora);
     }
 
+    // Encrypt nota fields
+    if ("nota" in result && result.nota !== null && result.nota !== undefined) {
+      result.nota = await this.encrypt(result.nota.toString());
+    }
+
+    if (
+      "notaGestor" in result &&
+      result.notaGestor !== null &&
+      result.notaGestor !== undefined
+    ) {
+      result.notaGestor = await this.encrypt(result.notaGestor.toString());
+    }
+
+    if (
+      "notaFinal" in result &&
+      result.notaFinal !== null &&
+      result.notaFinal !== undefined
+    ) {
+      result.notaFinal = await this.encrypt(result.notaFinal.toString());
+    }
+
+    if (
+      "mediaAutoavaliacao" in result &&
+      result.mediaAutoavaliacao !== null &&
+      result.mediaAutoavaliacao !== undefined
+    ) {
+      result.mediaAutoavaliacao = await this.encrypt(
+        result.mediaAutoavaliacao.toString()
+      );
+    }
+
+    if (
+      "mediaAvaliacaoGestor" in result &&
+      result.mediaAvaliacaoGestor !== null &&
+      result.mediaAvaliacaoGestor !== undefined
+    ) {
+      result.mediaAvaliacaoGestor = await this.encrypt(
+        result.mediaAvaliacaoGestor.toString()
+      );
+    }
+
+    if (
+      "mediaAvaliacao360" in result &&
+      result.mediaAvaliacao360 !== null &&
+      result.mediaAvaliacao360 !== undefined
+    ) {
+      result.mediaAvaliacao360 = await this.encrypt(
+        result.mediaAvaliacao360.toString()
+      );
+    }
+
     return result;
   }
 
@@ -136,6 +187,52 @@ export class CryptoService {
 
     if ("pontosMelhora" in result && typeof result.pontosMelhora === "string") {
       result.pontosMelhora = await this.decrypt(result.pontosMelhora);
+    }
+
+    // Decrypt nota fields and convert back to numbers
+    if ("nota" in result && typeof result.nota === "string") {
+      const decryptedNota = await this.decrypt(result.nota);
+      result.nota = parseFloat(decryptedNota);
+    }
+
+    if ("notaGestor" in result && typeof result.notaGestor === "string") {
+      const decryptedNotaGestor = await this.decrypt(result.notaGestor);
+      result.notaGestor = parseFloat(decryptedNotaGestor);
+    }
+
+    if ("notaFinal" in result && typeof result.notaFinal === "string") {
+      const decryptedNotaFinal = await this.decrypt(result.notaFinal);
+      result.notaFinal = parseFloat(decryptedNotaFinal);
+    }
+
+    if (
+      "mediaAutoavaliacao" in result &&
+      typeof result.mediaAutoavaliacao === "string"
+    ) {
+      const decryptedMediaAutoavaliacao = await this.decrypt(
+        result.mediaAutoavaliacao
+      );
+      result.mediaAutoavaliacao = parseFloat(decryptedMediaAutoavaliacao);
+    }
+
+    if (
+      "mediaAvaliacaoGestor" in result &&
+      typeof result.mediaAvaliacaoGestor === "string"
+    ) {
+      const decryptedMediaAvaliacaoGestor = await this.decrypt(
+        result.mediaAvaliacaoGestor
+      );
+      result.mediaAvaliacaoGestor = parseFloat(decryptedMediaAvaliacaoGestor);
+    }
+
+    if (
+      "mediaAvaliacao360" in result &&
+      typeof result.mediaAvaliacao360 === "string"
+    ) {
+      const decryptedMediaAvaliacao360 = await this.decrypt(
+        result.mediaAvaliacao360
+      );
+      result.mediaAvaliacao360 = parseFloat(decryptedMediaAvaliacao360);
     }
 
     return result;

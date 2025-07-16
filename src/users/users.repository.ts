@@ -9,6 +9,7 @@ import {
   EvaluationCycleDto,
   EvaluationScoreDto,
 } from "./dto/user-history.dto";
+import { CryptoService } from "../crypto/crypto.service";
 
 const userInclude = {
   mentor: { select: { id: true, name: true, email: true } },
@@ -19,7 +20,10 @@ const userInclude = {
 
 @Injectable()
 export class UsersRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cryptoService: CryptoService
+  ) {}
 
   async create(data: any) {
     return this.prisma.user.create({
@@ -128,35 +132,96 @@ export class UsersRepository {
       return null;
     }
 
-    const autoavaliacaoStats = await this.prisma.autoavaliacao.aggregate({
+    // Fetch autoavaliacao records and decrypt them
+    const autoavaliacaoRecords = await this.prisma.autoavaliacao.findMany({
       where: {
-        idUser: userId, // Self-evaluation
+        idUser: userId,
         nota: { not: null },
         ...whereClause,
       },
-      _avg: { nota: true },
-      _count: { nota: true },
+      select: { nota: true },
     });
 
-    const gestorAvaliacaoStats = await this.prisma.autoavaliacao.aggregate({
+    const decryptedAutoavaliacaoScores = await Promise.all(
+      autoavaliacaoRecords.map(async (record) => {
+        if (record.nota) {
+          const decrypted = await this.cryptoService.decrypt(record.nota);
+          return parseFloat(decrypted);
+        }
+        return null;
+      })
+    );
+
+    const validAutoavaliacaoScores = decryptedAutoavaliacaoScores.filter(
+      (score): score is number => score !== null && !isNaN(score)
+    );
+
+    // Fetch gestor avaliacao records and decrypt them
+    const gestorAvaliacaoRecords = await this.prisma.autoavaliacao.findMany({
       where: {
         idUser: userId,
         notaGestor: { not: null },
         ...whereClause,
       },
-      _avg: { notaGestor: true },
-      _count: { notaGestor: true },
+      select: { notaGestor: true },
     });
 
-    const avaliacao360Stats = await this.prisma.avaliacao360.aggregate({
+    const decryptedGestorScores = await Promise.all(
+      gestorAvaliacaoRecords.map(async (record) => {
+        if (record.notaGestor) {
+          const decrypted = await this.cryptoService.decrypt(record.notaGestor);
+          return parseFloat(decrypted);
+        }
+        return null;
+      })
+    );
+
+    const validGestorScores = decryptedGestorScores.filter(
+      (score): score is number => score !== null && !isNaN(score)
+    );
+
+    // Fetch avaliacao360 records and decrypt them
+    const avaliacao360Records = await this.prisma.avaliacao360.findMany({
       where: {
         idAvaliado: userId,
         nota: { not: null },
         ...whereClause,
       },
-      _avg: { nota: true },
-      _count: { nota: true },
+      select: { nota: true },
     });
+
+    const decryptedAvaliacao360Scores = await Promise.all(
+      avaliacao360Records.map(async (record) => {
+        if (record.nota) {
+          const decrypted = await this.cryptoService.decrypt(record.nota);
+          return parseFloat(decrypted);
+        }
+        return null;
+      })
+    );
+
+    const validAvaliacao360Scores = decryptedAvaliacao360Scores.filter(
+      (score): score is number => score !== null && !isNaN(score)
+    );
+
+    // Calculate averages
+    const autoavaliacaoAverage =
+      validAutoavaliacaoScores.length > 0
+        ? validAutoavaliacaoScores.reduce((sum, score) => sum + score, 0) /
+          validAutoavaliacaoScores.length
+        : null;
+
+    const gestorAvaliacaoAverage =
+      validGestorScores.length > 0
+        ? validGestorScores.reduce((sum, score) => sum + score, 0) /
+          validGestorScores.length
+        : null;
+
+    const avaliacao360Average =
+      validAvaliacao360Scores.length > 0
+        ? validAvaliacao360Scores.reduce((sum, score) => sum + score, 0) /
+          validAvaliacao360Scores.length
+        : null;
 
     return {
       user: {
@@ -164,18 +229,18 @@ export class UsersRepository {
         name: user.name,
         email: user.email,
       },
-      autoavaliacaoAverage: autoavaliacaoStats._avg.nota
-        ? Number(autoavaliacaoStats._avg.nota.toFixed(1))
+      autoavaliacaoAverage: autoavaliacaoAverage
+        ? Number(autoavaliacaoAverage.toFixed(1))
         : null,
-      autoavaliacaoCount: autoavaliacaoStats._count.nota,
-      avaliacaoGestorAvg: gestorAvaliacaoStats._avg.notaGestor
-        ? Number(gestorAvaliacaoStats._avg.notaGestor.toFixed(1))
+      autoavaliacaoCount: validAutoavaliacaoScores.length,
+      avaliacaoGestorAvg: gestorAvaliacaoAverage
+        ? Number(gestorAvaliacaoAverage.toFixed(1))
         : null,
-      avaliacaoGestorCount: gestorAvaliacaoStats._count.notaGestor || 0,
-      avaliacao360Avg: avaliacao360Stats._avg.nota
-        ? Number(avaliacao360Stats._avg.nota.toFixed(1))
+      avaliacaoGestorCount: validGestorScores.length,
+      avaliacao360Avg: avaliacao360Average
+        ? Number(avaliacao360Average.toFixed(1))
         : null,
-      avaliacao360Count: avaliacao360Stats._count.nota,
+      avaliacao360Count: validAvaliacao360Scores.length,
       cicloId: idCiclo || null,
     };
   }
@@ -249,10 +314,19 @@ export class UsersRepository {
       orderBy: [{ ciclo: { year: "asc" } }, { ciclo: { period: "asc" } }],
     });
 
-    return equalizacoes.map((equalizacao) => ({
-      semester: `${equalizacao.ciclo.year}.${equalizacao.ciclo.period}`,
-      score: equalizacao.notaFinal,
-    }));
+    const decryptedEqualizacoes = await Promise.all(
+      equalizacoes.map(async (equalizacao) => {
+        const decryptedNotaFinal = await this.cryptoService.decrypt(
+          equalizacao.notaFinal
+        );
+        return {
+          semester: `${equalizacao.ciclo.year}.${equalizacao.ciclo.period}`,
+          score: parseFloat(decryptedNotaFinal),
+        };
+      })
+    );
+
+    return decryptedEqualizacoes;
   }
 
   async getUserEvaluationCycles(userId: number): Promise<EvaluationCycle[]> {
@@ -305,25 +379,38 @@ export class UsersRepository {
             status = "em-andamento";
           } else {
             status = "finalizado";
-          }
-
-          // Calculate scores by criteria type
-          const calculateScoresByType = () => {
+          } // Calculate scores by criteria type
+          const calculateScoresByType = async () => {
             const scoresByType: { [key: string]: number[] } = {};
 
-            autoavaliacoes.forEach((autoavaliacao) => {
-              if (autoavaliacao.criterio) {
-                const tipo = autoavaliacao.criterio.tipo.toLowerCase();
-                const score = autoavaliacao.notaGestor ?? autoavaliacao.nota;
+            await Promise.all(
+              autoavaliacoes.map(async (autoavaliacao) => {
+                if (autoavaliacao.criterio) {
+                  const tipo = autoavaliacao.criterio.tipo.toLowerCase();
+                  let score: number | null = null;
 
-                if (score !== null && score !== undefined) {
-                  if (!scoresByType[tipo]) {
-                    scoresByType[tipo] = [];
+                  if (autoavaliacao.notaGestor) {
+                    const decryptedNotaGestor =
+                      await this.cryptoService.decrypt(
+                        autoavaliacao.notaGestor
+                      );
+                    score = parseFloat(decryptedNotaGestor);
+                  } else if (autoavaliacao.nota) {
+                    const decryptedNota = await this.cryptoService.decrypt(
+                      autoavaliacao.nota
+                    );
+                    score = parseFloat(decryptedNota);
                   }
-                  scoresByType[tipo].push(score);
+
+                  if (score !== null && !isNaN(score)) {
+                    if (!scoresByType[tipo]) {
+                      scoresByType[tipo] = [];
+                    }
+                    scoresByType[tipo].push(score);
+                  }
                 }
-              }
-            });
+              })
+            );
 
             // Calculate averages
             const averages: { [key: string]: number } = {};
@@ -338,28 +425,54 @@ export class UsersRepository {
             return averages;
           };
 
-          const scoresByType = calculateScoresByType();
+          const scoresByType = await calculateScoresByType();
 
           // Calculate autoavaliacao average (overall average)
-          const autoavaliacaoScores = autoavaliacoes
-            .map((av) => av.notaGestor ?? av.nota)
-            .filter(
-              (score): score is number => score !== null && score !== undefined
-            );
+          const autoavaliacaoScores = await Promise.all(
+            autoavaliacoes.map(async (av) => {
+              let score: number | null = null;
+
+              if (av.notaGestor) {
+                const decryptedNotaGestor = await this.cryptoService.decrypt(
+                  av.notaGestor
+                );
+                score = parseFloat(decryptedNotaGestor);
+              } else if (av.nota) {
+                const decryptedNota = await this.cryptoService.decrypt(av.nota);
+                score = parseFloat(decryptedNota);
+              }
+
+              return score;
+            })
+          );
+
+          const validAutoavaliacaoScores = autoavaliacaoScores.filter(
+            (score): score is number => score !== null && !isNaN(score)
+          );
 
           const autoavaliacaoAverage =
-            autoavaliacaoScores.length > 0
-              ? autoavaliacaoScores.reduce((sum, score) => sum + score, 0) /
-                autoavaliacaoScores.length
+            validAutoavaliacaoScores.length > 0
+              ? validAutoavaliacaoScores.reduce(
+                  (sum, score) => sum + score,
+                  0
+                ) / validAutoavaliacaoScores.length
               : 0;
-
           const cycle = `${ciclo.year}.${ciclo.period}`;
+
+          // Decrypt finalScore if it exists
+          let finalScore: number | undefined;
+          if (equalizacao?.notaFinal) {
+            const decryptedFinalScore = await this.cryptoService.decrypt(
+              equalizacao.notaFinal
+            );
+            finalScore = parseFloat(decryptedFinalScore);
+          }
 
           return {
             id: ciclo.id.toString(),
             cycle,
             status,
-            finalScore: equalizacao?.notaFinal,
+            finalScore,
             scores: {
               autoavaliacao: autoavaliacaoAverage,
               execucao: scoresByType["tecnico"] || 0,

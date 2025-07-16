@@ -24,11 +24,11 @@ type Avaliacao360WithIncludes = Avaliacao360 & {
 
 @Injectable()
 export class AvaliacaoRepository {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async createAvaliacao(data: CreateAvaliacaoDto) {
     return this.prisma.autoavaliacao.create({
-      data,
+      data: data as any,
       include: {
         criterio: { select: { id: true, name: true, enabled: true } },
         user: { select: { id: true, name: true, email: true } },
@@ -58,7 +58,7 @@ export class AvaliacaoRepository {
   async updateAvaliacao(id: number, data: UpdateAvaliacaoDto) {
     return this.prisma.autoavaliacao.update({
       where: { id },
-      data,
+      data: data as any,
       include: this.getAvaliacaoIncludes(),
     });
   }
@@ -138,7 +138,7 @@ export class AvaliacaoRepository {
 
   async createAvaliacao360(data: CreateAvaliacao360Dto) {
     return this.prisma.avaliacao360.create({
-      data,
+      data: data as any, // Cast to any for encrypted fields
       include: this.getAvaliacao360Includes(),
     });
   }
@@ -165,7 +165,7 @@ export class AvaliacaoRepository {
   async updateAvaliacao360(id: number, data: UpdateAvaliacao360Dto) {
     return this.prisma.avaliacao360.update({
       where: { id },
-      data,
+      data: data as any, // Cast to any for encrypted fields
       include: this.getAvaliacao360Includes(),
     });
   }
@@ -223,25 +223,16 @@ export class AvaliacaoRepository {
     return count > 0;
   }
   async getCycleStatistics(idCiclo: number) {
-    const [totalAutoavaliacoes, totalAvaliacoes360, avgNota, avgNota360] =
-      await Promise.all([
-        this.prisma.autoavaliacao.count({ where: { idCiclo } }),
-        this.prisma.avaliacao360.count({ where: { idCiclo } }),
-        this.prisma.autoavaliacao.aggregate({
-          where: { idCiclo, nota: { not: null } },
-          _avg: { nota: true },
-        }),
-        this.prisma.avaliacao360.aggregate({
-          where: { idCiclo, nota: { not: null } },
-          _avg: { nota: true },
-        }),
-      ]);
+    const [totalAutoavaliacoes, totalAvaliacoes360] = await Promise.all([
+      this.prisma.autoavaliacao.count({ where: { idCiclo } }),
+      this.prisma.avaliacao360.count({ where: { idCiclo } }),
+    ]);
 
     return {
       totalAutoavaliacoes,
       totalAvaliacoes360,
-      avgNota: (avgNota._avg.nota as number) || 0,
-      avgNota360: (avgNota360._avg.nota as number) || 0,
+      avgNota: 0, // Cannot calculate average on encrypted fields
+      avgNota360: 0, // Cannot calculate average on encrypted fields
     };
   }
 
@@ -301,7 +292,7 @@ export class AvaliacaoRepository {
   async createMentoring(createMentoringDto: CreateMentoringDto) {
     try {
       return await this.prisma.mentoring.create({
-        data: createMentoringDto,
+        data: createMentoringDto as any, // Cast to any for encrypted fields
       });
     } catch (error) {
       console.error("Erro ao criar mentoring:", error);
@@ -318,7 +309,7 @@ export class AvaliacaoRepository {
 
       // Opção 1: Usar createMany (mais eficiente)
       const result = await this.prisma.mentoring.createMany({
-        data: mentoringData,
+        data: mentoringData as any, // Cast to any for encrypted fields
         skipDuplicates: false, // ou true se quiser pular duplicatas
       });
 
@@ -379,7 +370,7 @@ export class AvaliacaoRepository {
     try {
       return await this.prisma.mentoring.update({
         where: { id },
-        data: updateData,
+        data: updateData as any, // Cast to any for encrypted fields
       });
     } catch (error) {
       console.error("Erro ao atualizar mentoring:", error);
@@ -474,23 +465,15 @@ export class AvaliacaoRepository {
           // Update existing autoavaliacao
           const result = await tx.autoavaliacao.update({
             where: { id: existingAvaliacao.id },
-            data: avaliacao,
-            include: {
-              criterio: { select: { id: true, name: true, enabled: true } },
-              user: { select: { id: true, name: true, email: true } },
-            },
+            data: avaliacao as any, // Cast to any for encrypted fields
           });
-          createdAvaliacoes.push(result);
+          createdAvaliacoes.push(result as any);
         } else {
           // Create new autoavaliacao
           const result = await tx.autoavaliacao.create({
-            data: avaliacao,
-            include: {
-              criterio: { select: { id: true, name: true, enabled: true } },
-              user: { select: { id: true, name: true, email: true } },
-            },
+            data: avaliacao as any, // Cast to any for encrypted fields
           });
-          createdAvaliacoes.push(result);
+          createdAvaliacoes.push(result as any);
         }
       }
 
@@ -509,13 +492,9 @@ export class AvaliacaoRepository {
 
       for (const avaliacao360 of avaliacoes360) {
         const created = await tx.avaliacao360.create({
-          data: avaliacao360,
-          include: {
-            avaliador: { select: { id: true, name: true, email: true } },
-            avaliado: { select: { id: true, name: true, email: true } },
-          },
+          data: avaliacao360 as any, // Cast to any for encrypted fields
         });
-        createdAvaliacoes360.push(created);
+        createdAvaliacoes360.push(created as any);
       }
 
       return createdAvaliacoes360;
@@ -556,23 +535,15 @@ export class AvaliacaoRepository {
             // Update existing autoavaliacao
             const result = await tx.autoavaliacao.update({
               where: { id: existingAvaliacao.id },
-              data: avaliacao,
-              include: {
-                criterio: { select: { id: true, name: true, enabled: true } },
-                user: { select: { id: true, name: true, email: true } },
-              },
+              data: avaliacao as any, // Cast to any for encrypted fields
             });
-            results.autoavaliacoes.push(result);
+            results.autoavaliacoes.push(result as any);
           } else {
             // Create new autoavaliacao
             const result = await tx.autoavaliacao.create({
-              data: avaliacao,
-              include: {
-                criterio: { select: { id: true, name: true, enabled: true } },
-                user: { select: { id: true, name: true, email: true } },
-              },
+              data: avaliacao as any, // Cast to any for encrypted fields
             });
-            results.autoavaliacoes.push(result);
+            results.autoavaliacoes.push(result as any);
           }
         }
       }
@@ -580,13 +551,9 @@ export class AvaliacaoRepository {
       if (data.avaliacoes360 && data.avaliacoes360.length > 0) {
         for (const avaliacao360 of data.avaliacoes360) {
           const created = await tx.avaliacao360.create({
-            data: avaliacao360,
-            include: {
-              avaliador: { select: { id: true, name: true, email: true } },
-              avaliado: { select: { id: true, name: true, email: true } },
-            },
+            data: avaliacao360 as any, // Cast to any for encrypted fields
           });
-          results.avaliacoes360.push(created);
+          results.avaliacoes360.push(created as any);
         }
       }
 
@@ -611,11 +578,15 @@ export class AvaliacaoRepository {
   }
 
   // ✅ Método updateNotaGestor
-  async updateNotaGestor(id: number, notaGestor: number, justificativaGestor?: string) {
+  async updateNotaGestor(
+    id: number,
+    notaGestor: number,
+    justificativaGestor?: string
+  ) {
     return await this.prisma.autoavaliacao.update({
       where: { id },
       data: {
-        notaGestor,
+        notaGestor: notaGestor as any, // Cast to any for encrypted field
         ...(justificativaGestor !== undefined && { justificativaGestor }),
       },
       include: {

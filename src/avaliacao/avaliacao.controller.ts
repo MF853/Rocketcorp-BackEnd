@@ -29,6 +29,7 @@ import {
 } from "@nestjs/swagger";
 import { JwtGuard, RolesGuard } from "../auth/guard";
 import { Roles } from "../auth/decorators/roles.decorator";
+import { Role } from "@prisma/client";
 
 @ApiTags("Avaliacao")
 @Controller("avaliacao")
@@ -385,7 +386,9 @@ export class AvaliacaoController {
   }
 
   @Get("gestor/colaborador/:colaboradorId/ciclo/:cicloId")
-  @ApiOperation({ summary: "Lista avaliações de um colaborador específico no ciclo" })
+  @ApiOperation({
+    summary: "Lista avaliações de um colaborador específico no ciclo",
+  })
   @ApiResponse({
     status: 200,
     description: "Avaliações do colaborador no ciclo retornadas com sucesso.",
@@ -518,9 +521,12 @@ export class AvaliacaoController {
   }
 
   @Patch("gestor/bulk")
-  @Roles(Role.Gestor)
+  @Roles(Role.gestor)
   @UseGuards(JwtGuard, RolesGuard)
-  @ApiOperation({ summary: "Atualiza em lote avaliações de um colaborador em um ciclo (notaGestor/justificativaGestor)" })
+  @ApiOperation({
+    summary:
+      "Atualiza em lote avaliações de um colaborador em um ciclo (notaGestor/justificativaGestor)",
+  })
   @ApiResponse({
     status: 200,
     description: "Avaliações do gestor atualizadas com sucesso.",
@@ -535,7 +541,18 @@ export class AvaliacaoController {
       },
     },
   })
-  async patchGestorBulk(@Body() body: { colaboradorId: number; cicloId: number; updates: { avaliacaoId: number; notaGestor: number; justificativaGestor?: string }[] }) {
+  async patchGestorBulk(
+    @Body()
+    body: {
+      colaboradorId: number;
+      cicloId: number;
+      updates: {
+        avaliacaoId: number;
+        notaGestor: number;
+        justificativaGestor?: string;
+      }[];
+    }
+  ) {
     return this.avaliacaoService.patchGestorBulk(body);
   }
 }

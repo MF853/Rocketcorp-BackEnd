@@ -163,10 +163,10 @@ model Autoavaliacao {
   id                  Int       @id @default(autoincrement())
   idUser              Int
   idCiclo             Int
-  nota                Float?
+  nota                String?
   justificativa       String
   criterioId          Int?
-  notaGestor          Float?
+  notaGestor          String?
   justificativaGestor String?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
@@ -194,7 +194,7 @@ model Avaliacao360 {
   idAvaliador          Int
   idAvaliado           Int
   idCiclo              Int
-  nota                 Float?
+  nota                 String?
   pontosFortes         String
   pontosMelhora        String
   nomeProjeto          String                     @db.VarChar(255)
@@ -218,7 +218,7 @@ model Mentoring {
   idMentor      Int
   idMentorado   Int
   idCiclo       Int
-  nota          Float?
+  nota          String?
   justificativa String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -239,10 +239,10 @@ model Equalizacao {
   idAvaliador          Int
   idAvaliado           Int
   idCiclo              Int
-  mediaAutoavaliacao   Float
-  mediaAvaliacaoGestor Float
-  mediaAvaliacao360    Float
-  notaFinal            Float
+  mediaAutoavaliacao   String
+  mediaAvaliacaoGestor String
+  mediaAvaliacao360    String
+  notaFinal            String
   justificativa        String
   status               StatusEqualizacao
   avaliador            User              @relation("AvaliadorEqualizacao", fields: [idAvaliador], references: [id], onDelete: Restrict)

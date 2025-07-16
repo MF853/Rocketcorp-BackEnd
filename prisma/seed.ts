@@ -444,11 +444,11 @@ async function main() {
       idUser: users[4].id,
       idCiclo: cicloQ1_2025.id,
       criterioId: devCriterios.find((c) => c.name === "Qualidade")?.id,
-      nota: 4.0,
+      nota: await cryptoService.encrypt("4.0"),
       justificativa: await cryptoService.encrypt(
         "Tenho me esforçado para escrever código limpo e bem documentado."
       ),
-      notaGestor: 4.5,
+      notaGestor: await cryptoService.encrypt("4.5"),
       justificativaGestor: await cryptoService.encrypt(
         "Código muito bem estruturado."
       ),
@@ -459,11 +459,11 @@ async function main() {
       idUser: users[4].id,
       idCiclo: cicloQ1_2025.id,
       criterioId: devCriterios.find((c) => c.name === "Trabalho em Equipe")?.id,
-      nota: 4.5,
+      nota: await cryptoService.encrypt("4.5"),
       justificativa: await cryptoService.encrypt(
         "Colaboro ativamente com a equipe e compartilho conhecimento."
       ),
-      notaGestor: 4.3,
+      notaGestor: await cryptoService.encrypt("4.3"),
       justificativaGestor: await cryptoService.encrypt(
         "Muito colaborativo, sempre disposto a ajudar."
       ),
@@ -475,11 +475,11 @@ async function main() {
       idCiclo: cicloQ1_2025.id,
       criterioId: devCriterios.find((c) => c.name === "Aprendizagem Contínua")
         ?.id,
-      nota: 4.8,
+      nota: await cryptoService.encrypt("4.8"),
       justificativa: await cryptoService.encrypt(
         "Estou sempre estudando novas tecnologias e práticas."
       ),
-      notaGestor: 4.7,
+      notaGestor: await cryptoService.encrypt("4.7"),
       justificativaGestor: await cryptoService.encrypt(
         "Demonstra curiosidade e vontade de aprender."
       ),
@@ -492,11 +492,11 @@ async function main() {
       idUser: users[6].id,
       idCiclo: cicloQ1_2025.id,
       criterioId: devCriterios.find((c) => c.name === "Iniciativa")?.id,
-      nota: 4.5,
+      nota: await cryptoService.encrypt("4.5"),
       justificativa: await cryptoService.encrypt(
         "Sempre busco antecipar problemas e propor soluções."
       ),
-      notaGestor: 4.8,
+      notaGestor: await cryptoService.encrypt("4.8"),
       justificativaGestor: await cryptoService.encrypt(
         "Proatividade excepcional."
       ),
@@ -507,11 +507,11 @@ async function main() {
       idUser: users[6].id,
       idCiclo: cicloQ1_2025.id,
       criterioId: devCriterios.find((c) => c.name === "Produtividade")?.id,
-      nota: 4.2,
+      nota: await cryptoService.encrypt("4.2"),
       justificativa: await cryptoService.encrypt(
         "Mantenho um ritmo consistente de entrega."
       ),
-      notaGestor: 4.4,
+      notaGestor: await cryptoService.encrypt("4.4"),
       justificativaGestor: await cryptoService.encrypt(
         "Entrega sempre dentro do prazo com qualidade."
       ),
@@ -523,11 +523,11 @@ async function main() {
       idCiclo: cicloQ1_2025.id,
       criterioId: devCriterios.find((c) => c.name === "Criatividade e Inovação")
         ?.id,
-      nota: 4.6,
+      nota: await cryptoService.encrypt("4.6"),
       justificativa: await cryptoService.encrypt(
         "Gosto de pensar em soluções criativas para problemas complexos."
       ),
-      notaGestor: 4.5,
+      notaGestor: await cryptoService.encrypt("4.5"),
       justificativaGestor: await cryptoService.encrypt(
         "Sempre traz ideias inovadoras para o projeto."
       ),
@@ -540,11 +540,11 @@ async function main() {
       idUser: users[7].id,
       idCiclo: cicloQ1_2025.id,
       criterioId: dadosCriterios.find((c) => c.name === "Produtividade")?.id,
-      nota: 4.0,
+      nota: await cryptoService.encrypt("4.0"),
       justificativa: await cryptoService.encrypt(
         "Tenho boa capacidade analítica, mas ainda estou aprendendo técnicas mais avançadas."
       ),
-      notaGestor: 2.5,
+      notaGestor: await cryptoService.encrypt("2.5"),
       justificativaGestor: await cryptoService.encrypt(
         "Produtividade abaixo do esperado, precisa melhorar o ritmo de entrega."
       ),
@@ -555,11 +555,11 @@ async function main() {
       idUser: users[7].id,
       idCiclo: cicloQ1_2025.id,
       criterioId: dadosCriterios.find((c) => c.name === "Qualidade")?.id,
-      nota: 4.3,
+      nota: await cryptoService.encrypt("4.3"),
       justificativa: await cryptoService.encrypt(
         "Busco sempre validar meus resultados e entregar análises precisas."
       ),
-      notaGestor: 2.8,
+      notaGestor: await cryptoService.encrypt("2.8"),
       justificativaGestor: await cryptoService.encrypt(
         "Qualidade das análises inconsistente, muitos erros básicos detectados."
       ),
@@ -570,11 +570,11 @@ async function main() {
       idUser: users[7].id,
       idCiclo: cicloQ1_2025.id,
       criterioId: dadosCriterios.find((c) => c.name === "Foco no Cliente")?.id,
-      nota: 4.1,
+      nota: await cryptoService.encrypt("4.1"),
       justificativa: await cryptoService.encrypt(
         "Procuro entender as necessidades do negócio antes de começar as análises."
       ),
-      notaGestor: 2.2,
+      notaGestor: await cryptoService.encrypt("2.2"),
       justificativaGestor: await cryptoService.encrypt(
         "Dificuldade em compreender requisitos do cliente, entrega não atende as expectativas."
       ),
@@ -587,11 +587,11 @@ async function main() {
       idUser: users[1].id,
       idCiclo: cicloQ1_2025.id,
       criterioId: devCriterios.find((c) => c.name === "Gestão de Pessoas")?.id,
-      nota: 4.5,
+      nota: await cryptoService.encrypt("4.5"),
       justificativa: await cryptoService.encrypt(
         "Procuro desenvolver minha equipe e criar um ambiente colaborativo."
       ),
-      notaGestor: 4.7,
+      notaGestor: await cryptoService.encrypt("4.7"),
       justificativaGestor: await cryptoService.encrypt(
         "Liderança exemplar, equipe muito motivada."
       ),
@@ -602,11 +602,11 @@ async function main() {
       idUser: users[1].id,
       idCiclo: cicloQ1_2025.id,
       criterioId: devCriterios.find((c) => c.name === "Gestão de Projetos")?.id,
-      nota: 4.3,
+      nota: await cryptoService.encrypt("4.3"),
       justificativa: await cryptoService.encrypt(
         "Mantenho os projetos organizados e dentro do cronograma."
       ),
-      notaGestor: 4.6,
+      notaGestor: await cryptoService.encrypt("4.6"),
       justificativaGestor: await cryptoService.encrypt(
         "Excelente controle de projetos e prazos."
       ),
@@ -620,11 +620,11 @@ async function main() {
       idCiclo: cicloQ1_2025.id,
       criterioId: devCriterios.find((c) => c.name === "Gestão Organizacional")
         ?.id,
-      nota: 4.4,
+      nota: await cryptoService.encrypt("4.4"),
       justificativa: await cryptoService.encrypt(
         "Contribuo para a melhoria contínua dos processos organizacionais."
       ),
-      notaGestor: 4.8,
+      notaGestor: await cryptoService.encrypt("4.8"),
       justificativaGestor: await cryptoService.encrypt(
         "Visão estratégica excepcional para melhorias organizacionais."
       ),
@@ -635,11 +635,11 @@ async function main() {
       idUser: users[0].id,
       idCiclo: cicloQ1_2025.id,
       criterioId: devCriterios.find((c) => c.name === "Qualidade")?.id,
-      nota: 4.7,
+      nota: await cryptoService.encrypt("4.7"),
       justificativa: await cryptoService.encrypt(
         "Busco sempre entregar soluções robustas e escaláveis."
       ),
-      notaGestor: 4.9,
+      notaGestor: await cryptoService.encrypt("4.9"),
       justificativaGestor: await cryptoService.encrypt(
         "Qualidade técnica excepcional em todas as entregas."
       ),
@@ -654,7 +654,7 @@ async function main() {
       idAvaliador: users[4].id,
       idAvaliado: users[1].id,
       idCiclo: cicloQ1_2025.id,
-      nota: 4.8,
+      nota: await cryptoService.encrypt("4.8"),
       pontosFortes: await cryptoService.encrypt(
         "Excelente liderança técnica, sempre disponível para mentoria."
       ),
@@ -671,7 +671,7 @@ async function main() {
       idAvaliador: users[6].id,
       idAvaliado: users[0].id,
       idCiclo: cicloQ1_2025.id,
-      nota: 4.9,
+      nota: await cryptoService.encrypt("4.9"),
       pontosFortes: await cryptoService.encrypt(
         "Visão estratégica excepcional, capacidade de resolver problemas complexos."
       ),
@@ -688,7 +688,7 @@ async function main() {
       idAvaliador: users[1].id,
       idAvaliado: users[4].id,
       idCiclo: cicloQ1_2025.id,
-      nota: 4.2,
+      nota: await cryptoService.encrypt("4.2"),
       pontosFortes: await cryptoService.encrypt(
         "Muito dedicado, aprende rapidamente, código bem estruturado."
       ),
@@ -705,7 +705,7 @@ async function main() {
       idAvaliador: users[2].id, // Arthur Lins
       idAvaliado: users[7].id, // Pedro Costa
       idCiclo: cicloQ1_2025.id,
-      nota: 2.3,
+      nota: await cryptoService.encrypt("2.3"),
       pontosFortes: await cryptoService.encrypt(
         "Tem conhecimento básico em análise de dados e é educado."
       ),
@@ -726,7 +726,7 @@ async function main() {
       idMentor: users[1].id, // Alice Cadete
       idMentorado: users[4].id, // Luan Bezerra
       idCiclo: cicloQ1_2025.id,
-      nota: 4.6,
+      nota: await cryptoService.encrypt("4.6"),
       justificativa: await cryptoService.encrypt(
         "Luan tem demonstrado excelente evolução técnica e está mais confiante em suas decisões. Precisa trabalhar um pouco mais a comunicação com stakeholders."
       ),
@@ -737,7 +737,7 @@ async function main() {
       idMentor: users[1].id, // Alice Cadete
       idMentorado: users[6].id, // Maria Santos
       idCiclo: cicloQ1_2025.id,
-      nota: 4.8,
+      nota: await cryptoService.encrypt("4.8"),
       justificativa: await cryptoService.encrypt(
         "Maria é uma mentorada excepcional, sempre proativa e com grande capacidade de aprendizado. Tem potencial para assumir posições de liderança."
       ),
@@ -748,7 +748,7 @@ async function main() {
       idMentor: users[2].id, // Arthur Lins
       idMentorado: users[7].id, // Pedro Costa
       idCiclo: cicloQ1_2025.id,
-      nota: 2.8,
+      nota: await cryptoService.encrypt("2.8"),
       justificativa: await cryptoService.encrypt(
         "Pedro tem enfrentado dificuldades significativas em análise de dados. Precisa melhorar a atenção aos detalhes e desenvolver maior autonomia. Tem potencial, mas precisa de muito mais dedicação e foco."
       ),
