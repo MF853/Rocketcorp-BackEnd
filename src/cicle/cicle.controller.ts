@@ -36,6 +36,16 @@ export class CicleController {
     return await this.cicleService.getCicloAtual();
   }
 
+  @Get("last-finalizado")
+  @ApiOperation({ summary: "Retorna o ciclo finalizado mais recente" })
+  @ApiResponse({
+    status: 200,
+    description: "Ciclo finalizado mais recente retornado com sucesso.",
+  })
+  async getLastFinalizado() {
+    return this.cicleService.getLastFinalizado();
+  }
+
   @Get(":id")
   @ApiOperation({ summary: "Busca um ciclo pelo ID" })
   @ApiResponse({ status: 200, description: "Ciclo retornado com sucesso." })

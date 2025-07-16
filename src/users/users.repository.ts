@@ -7,6 +7,7 @@ const userInclude = {
   mentor: { select: { id: true, name: true, email: true } },
   mentorados: { select: { id: true, name: true, email: true } },
   trilha: { select: { id: true, name: true } },
+  equipe: { select: { id: true, nome: true, descricao: true } },
 };
 
 @Injectable()
@@ -54,6 +55,36 @@ export class UsersRepository {
       include: this.getUserIncludes(),
       orderBy: { name: "asc" },
     });
+  }
+
+  async findByEquipe(equipeId: number) {
+    return this.prisma.user.findMany({
+      where: { idEquipe: equipeId },
+      include: this.getUserIncludes(),
+      orderBy: { name: "asc" },
+    });
+  }
+
+  async findEquipeById(idEquipe: number) {
+    return this.prisma.equipe.findUnique({ where: { id: idEquipe } });
+  }
+
+  async findMembrosAndGestorByEquipe(equipeId: number) {
+    // Busca a equipe, incluindo gestor e membros
+    const equipe = await this.prisma.equipe.findUnique({
+      where: { id: equipeId },
+      include: {
+        gestor: true,
+        membros: true,
+      },
+    });
+    if (!equipe) return [];
+    // Retorna gestor + membros (sem duplicidade)
+    const allUsers = [
+      equipe.gestor,
+      ...equipe.membros.filter((m) => m.id !== equipe.gestor.id),
+    ];
+    return allUsers;
   }
 
   async update(
@@ -146,11 +177,10 @@ export class UsersRepository {
   ): Promise<UserStatisticsResponseDto[]> {
     const [autoavaliacaoUsers, gestorAvaliacaoUsers, avaliacao360Users] =
       await Promise.all([
-        this.prisma.$queryRaw<{ idAvaliado: number }[]>`
-        SELECT DISTINCT "idAvaliado" 
-        FROM avaliacoes 
+        this.prisma.$queryRaw<{ idUser: number }[]>`
+        SELECT DISTINCT "idUser" 
+        FROM Autoavaliacao 
         WHERE "idCiclo" = ${idCiclo} 
-        AND "idAvaliador" = "idAvaliado" 
         AND nota IS NOT NULL
       `,
         this.prisma.autoavaliacao.findMany({
@@ -172,7 +202,7 @@ export class UsersRepository {
       ]);
 
     const allUserIds = [
-      ...autoavaliacaoUsers.map((u) => u.idAvaliado),
+      ...autoavaliacaoUsers.map((u) => u.idUser),
       ...gestorAvaliacaoUsers.map((u) => u.idUser),
       ...avaliacao360Users.map((u) => u.idAvaliado),
     ];
@@ -204,6 +234,26 @@ export class UsersRepository {
     if (userIds.length === 0) return [];
     return this.prisma.user.findMany({
       where: { id: { in: userIds } },
+      include: this.getUserIncludes(),
+      orderBy: { name: "asc" },
+    });
+  }
+
+  async findMentores() {
+    return this.prisma.user.findMany({
+      where: {
+        role: {
+          has: "mentor",
+        },
+      },
+      include: this.getUserIncludes(),
+      orderBy: { name: "asc" },
+    });
+  }
+
+  async findLideradosByGestor(gestorId: number) {
+    return this.prisma.user.findMany({
+      where: { gestorId },
       include: this.getUserIncludes(),
       orderBy: { name: "asc" },
     });

@@ -20,22 +20,13 @@
 CREATE TYPE "StatusEqualizacao" AS ENUM ('PENDENTE', 'FINALIZADO');
 
 -- DropForeignKey
-ALTER TABLE "avaliacoes" DROP CONSTRAINT "avaliacoes_idAvaliado_fkey";
+ALTER TABLE "autoavaliacoes" DROP CONSTRAINT "autoavaliacoes_idAvaliado_fkey";
 
 -- DropForeignKey
-ALTER TABLE "avaliacoes" DROP CONSTRAINT "avaliacoes_idAvaliador_fkey";
-
--- DropIndex
-DROP INDEX "avaliacoes_idAvaliado_idx";
-
--- DropIndex
-DROP INDEX "avaliacoes_idAvaliador_idAvaliado_idCiclo_key";
-
--- DropIndex
-DROP INDEX "avaliacoes_idAvaliador_idx";
+ALTER TABLE "autoavaliacoes" DROP CONSTRAINT "autoavaliacoes_idAvaliador_fkey";
 
 -- AlterTable
-ALTER TABLE "avaliacoes" DROP COLUMN "idAvaliado",
+ALTER TABLE "autoavaliacoes" DROP COLUMN "idAvaliado",
 DROP COLUMN "idAvaliador",
 ADD COLUMN     "idUser" INTEGER NOT NULL;
 
@@ -85,13 +76,13 @@ CREATE TABLE "Equalizacao" (
 );
 
 -- CreateIndex
-CREATE INDEX "avaliacoes_idUser_idx" ON "avaliacoes"("idUser");
+CREATE INDEX "autoavaliacoes_idUser_idx" ON "autoavaliacoes"("idUser");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "avaliacoes_idUser_idCiclo_key" ON "avaliacoes"("idUser", "idCiclo");
+CREATE UNIQUE INDEX "autoavaliacoes_idUser_idCiclo_key" ON "autoavaliacoes"("idUser", "idCiclo");
 
 -- AddForeignKey
-ALTER TABLE "avaliacoes" ADD CONSTRAINT "avaliacoes_idUser_fkey" FOREIGN KEY ("idUser") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "autoavaliacoes" ADD CONSTRAINT "autoavaliacoes_idUser_fkey" FOREIGN KEY ("idUser") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Mentoring" ADD CONSTRAINT "Mentoring_idCiclo_fkey" FOREIGN KEY ("idCiclo") REFERENCES "ciclos"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

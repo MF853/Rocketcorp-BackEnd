@@ -8,7 +8,12 @@ describe('TrilhaController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TrilhaController],
-      providers: [TrilhaService],
+      providers: [
+        {
+          provide: TrilhaService,
+          useValue: {}, // mock simples
+        },
+      ],
     }).compile();
 
     controller = module.get<TrilhaController>(TrilhaController);

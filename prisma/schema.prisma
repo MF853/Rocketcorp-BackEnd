@@ -8,6 +8,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Equipe {
+  id        Int      @id @default(autoincrement())
+  nome      String   @db.VarChar(255)
+  descricao String?  @db.VarChar(255)
+  idGestor  Int
+  gestor    User     @relation("GestorEquipe", fields: [idGestor], references: [id], onDelete: Restrict)
+  membros   User[]   @relation("MembrosEquipe")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("equipes")
+}
+
 model User {
   id                     Int             @id @default(autoincrement())
   email                  String          @unique
@@ -34,6 +47,9 @@ model User {
   equalizacoesRecebidas  Equalizacao[]   @relation("AvaliadoEqualizacao")
   mentoringsFeitos       Mentoring[]     @relation("MentorMentoring")
   mentoringsRecebidos    Mentoring[]     @relation("MentoradoMentoring")
+  idEquipe               Int?
+  equipe                 Equipe?         @relation("MembrosEquipe", fields: [idEquipe], references: [id], onDelete: SetNull)
+  equipesGeridas         Equipe[]        @relation("GestorEquipe")
 
   @@index([trilhaId])
   @@index([email])
@@ -41,13 +57,12 @@ model User {
 }
 
 model Ciclo {
-  id                          Int             @id @default(autoincrement())
-  name                        String          @db.VarChar(255)
+  id                          Int                   @id @default(autoincrement())
+  name                        String                @db.VarChar(255)
   year                        Int
   period                      Int
-  status                      String          @default("aberto") @db.VarChar(50)
-  createdAt                   DateTime        @default(now())
-  updatedAt                   DateTime        @updatedAt
+  createdAt                   DateTime              @default(now())
+  updatedAt                   DateTime              @updatedAt
   dataAberturaAvaliacao       DateTime
   dataFechamentoAvaliacao     DateTime
   dataAberturaRevisaoGestor   DateTime
@@ -61,6 +76,8 @@ model Ciclo {
   criterios                   Criterio[]
   ResumoIA                    ResumoIA[]
   mentorings                  Mentoring[]
+  Equalizacao                 Equalizacao[]
+  ResumoProcessamento         ResumoProcessamento[]
 
   @@unique([year, period])
   @@index([year])
@@ -94,7 +111,7 @@ model Criterio {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
-  @@unique([name, trilhaId])
+  @@unique([name, trilhaId, idCiclo])
   @@index([trilhaId])
   @@index([idCiclo])
   @@map("criterio")
@@ -153,7 +170,7 @@ model Autoavaliacao {
   @@index([idUser])
   @@index([criterioId])
   @@index([idCiclo])
-  @@map("avaliacoes")
+  @@map("autoavaliacao")
 }
 
 enum MotivacaoTrabalhoNovamente {
@@ -201,6 +218,8 @@ model Mentoring {
   ciclo     Ciclo @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
   mentor    User  @relation("MentorMentoring", fields: [idMentor], references: [id], onDelete: Restrict)
   mentorado User  @relation("MentoradoMentoring", fields: [idMentorado], references: [id], onDelete: Restrict)
+
+  @@map("mentoring")
 }
 
 enum StatusEqualizacao {
@@ -212,6 +231,7 @@ model Equalizacao {
   id                   Int               @id @default(autoincrement())
   idAvaliador          Int
   idAvaliado           Int
+  idCiclo              Int
   mediaAutoavaliacao   Float
   mediaAvaliacaoGestor Float
   mediaAvaliacao360    Float
@@ -220,6 +240,24 @@ model Equalizacao {
   status               StatusEqualizacao
   avaliador            User              @relation("AvaliadorEqualizacao", fields: [idAvaliador], references: [id], onDelete: Restrict)
   avaliado             User              @relation("AvaliadoEqualizacao", fields: [idAvaliado], references: [id], onDelete: Restrict)
+  ciclo                Ciclo             @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
 
+  @@unique([idAvaliado, idCiclo])
   @@map("equalizacoes")
+}
+
+model ResumoProcessamento {
+  id       String              @id @default(uuid())
+  cicloId  Int
+  status   statusProcessamento
+  criadoEm DateTime            @default(now())
+
+  ciclo Ciclo @relation(fields: [cicloId], references: [id], onDelete: Cascade)
+}
+
+enum statusProcessamento {
+  PENDENTE
+  PROCESSANDO
+  CONCLUIDO
+  ERRO
 }

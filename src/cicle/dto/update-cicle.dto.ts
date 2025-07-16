@@ -22,11 +22,23 @@ export class UpdateCicleDto extends PartialType(CreateCicleDto) {
   @ApiProperty({
     required: true,
     description: "Status do ciclo",
-    enum: ["aberto", "fechado"],
+    enum: [
+      "aberto",
+      "fechado",
+      "revisao_gestor",
+      "revisao_comite",
+      "finalizado",
+    ],
   })
   @IsOptional()
   @IsString()
-  @IsEnum(["aberto", "fechado"])
+  @IsEnum([
+    "aberto",
+    "fechado",
+    "revisao_gestor",
+    "revisao_comite",
+    "finalizado",
+  ])
   status?: string;
 
   @ApiProperty({

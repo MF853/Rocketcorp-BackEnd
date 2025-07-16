@@ -33,6 +33,16 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @Get("mentores")
+  @ApiOperation({ summary: "Lista todos os usuários com role mentor" })
+  @ApiResponse({
+    status: 200,
+    description: "Lista de mentores retornada com sucesso.",
+  })
+  findMentores() {
+    return this.usersService.findMentores();
+  }
+
   @Get(":id")
   @ApiOperation({ summary: "Busca um usuário pelo ID" })
   @ApiResponse({ status: 200, description: "Usuário retornado com sucesso." })
@@ -45,6 +55,16 @@ export class UsersController {
   @ApiResponse({ status: 200, description: "Usuário retornado com sucesso." })
   findByEmail(@Param("email") email: string) {
     return this.usersService.findByEmail(email);
+  }
+
+  @Get(":id/liderados")
+  @ApiOperation({ summary: "Lista todos os liderados de um gestor" })
+  @ApiResponse({
+    status: 200,
+    description: "Lista de liderados retornada com sucesso.",
+  })
+  findLideradosByGestor(@Param("id") id: string) {
+    return this.usersService.findLideradosByGestor(+id);
   }
 
   @Get(":id/mentorados")
@@ -65,6 +85,16 @@ export class UsersController {
   })
   findByTrilha(@Param("trilhaId") trilhaId: string) {
     return this.usersService.findByTrilha(+trilhaId);
+  }
+
+  @Get("equipe/:equipeId")
+  @ApiOperation({ summary: "Lista todos os usuários de uma equipe" })
+  @ApiResponse({
+    status: 200,
+    description: "Lista de usuários da equipe retornada com sucesso.",
+  })
+  findByEquipe(@Param("equipeId") equipeId: string) {
+    return this.usersService.findByEquipe(+equipeId);
   }
 
   @Patch(":id")
@@ -146,5 +176,15 @@ export class UsersController {
     @Param("cicloId") cicloId: string
   ): Promise<UserStatisticsResponseDto[]> {
     return this.usersService.getAllUsersStatisticsByCycle(+cicloId);
+  }
+
+  @Get("by-equipe-com-gestor/:equipeId")
+  @ApiOperation({ summary: "Lista todos os membros e o gestor de uma equipe" })
+  @ApiResponse({
+    status: 200,
+    description: "Lista de membros e gestor da equipe retornada com sucesso.",
+  })
+  getMembrosAndGestorByEquipe(@Param("equipeId") equipeId: string) {
+    return this.usersService.getMembrosAndGestorByEquipe(+equipeId);
   }
 }

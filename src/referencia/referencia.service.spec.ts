@@ -6,7 +6,12 @@ describe('ReferenciaService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ReferenciaService],
+      providers: [
+        {
+          provide: ReferenciaService,
+          useValue: {}, // mock simples
+        },
+      ],
     }).compile();
 
     service = module.get<ReferenciaService>(ReferenciaService);

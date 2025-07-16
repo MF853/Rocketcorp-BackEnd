@@ -3,6 +3,7 @@ import { CicleRepository } from "./cicle.repository";
 import { CreateCicleDto } from "./dto/create-cicle.dto";
 import { UpdateCicleDto } from "./dto/update-cicle.dto";
 import { UsersService } from "../users/users.service";
+import { Ciclo } from "@prisma/client";
 
 @Injectable()
 export class CicleService {
@@ -48,6 +49,10 @@ export class CicleService {
     return ciclo;
   }
 
+  async getLastFinalizado() {
+    return this.cicleRepository.findLastFinalizado();
+  }
+
   async findOrCreateByString(cicloString: string) {
     const [yearStr, periodStr] = cicloString.split(".");
     const year = Number(yearStr);
@@ -85,5 +90,20 @@ export class CicleService {
   async getUsersByCiclo(id: number) {
     // Retorna apenas os usuários que fizeram autoavaliação no ciclo
     return this.usersService.findUsersWithAutoavaliacaoByCiclo(id);
+  }
+
+  async getCycleInRevisaoComite(): Promise<Ciclo> {
+    const currentDate = new Date();
+    const cycle = await this.cicleRepository.findCycleInRevisaoComite(
+      currentDate
+    );
+
+    if (!cycle) {
+      throw new NotFoundException(
+        "No cycle found in 'revisao comite' phase for the current date"
+      );
+    }
+
+    return cycle;
   }
 }

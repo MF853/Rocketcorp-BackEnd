@@ -77,4 +77,24 @@ export class CicleRepository {
       },
     });
   }
+
+  async findCycleInRevisaoComite(currentDate: Date): Promise<Ciclo | null> {
+    return await this.prisma.ciclo.findFirst({
+      where: {
+        dataAberturaRevisaoComite: {
+          lte: currentDate, // Current date is after or equal to opening date
+        },
+        dataFechamentoRevisaoComite: {
+          gte: currentDate, // Current date is before or equal to closing date
+        },
+      },
+    });
+  }
+
+  async findLastFinalizado() {
+    return this.prisma.ciclo.findFirst({
+      where: { status: "finalizado" },
+      orderBy: { dataFinalizacao: "desc" },
+    });
+  }
 }

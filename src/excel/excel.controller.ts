@@ -1,8 +1,6 @@
-import { Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Controller, Post, UploadedFiles, UseInterceptors, BadRequestException } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { ExcelService } from './excel.service';
-import { File as MulterFile } from 'multer';
-import { BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from "@nestjs/swagger";
 
 @ApiTags("Import")
@@ -14,24 +12,31 @@ export class ExcelController {
   @ApiResponse({ status: 200, description: "Excel importado com sucesso." })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
-    description: 'Arquivo Excel (.xlsx)',
+    description: 'Arquivos Excel (.xlsx)',
     schema: {
       type: 'object',
       properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
+        files: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
         },
       },
     },
   })
   @Post()
-  @UseInterceptors(FileInterceptor('file'))
-  async importExcel(@UploadedFile() file: MulterFile) {
-    if (!file) {
-      throw new BadRequestException('No file uploaded');
+  @UseInterceptors(FilesInterceptor('files', 15))
+  async importExcel(@UploadedFiles() files: Express.Multer.File[]) {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('Nenhum arquivo enviado');
     }
-    // return this.excelService.processExcel(file.path);
-    return this.excelService.processExcel(file.buffer);
+
+    for (const file of files) {
+      await this.excelService.processExcel(file.buffer);
+    }
+
+    return { message: 'Importação concluída com sucesso' };
   }
 }
