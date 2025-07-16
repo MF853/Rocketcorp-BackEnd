@@ -7,10 +7,11 @@ import { UsersModule } from '../users/users.module';
 import { TrilhaModule } from '../trilha/trilha.module';
 import { CriterioModule } from '../criterio/criterio.module';
 import { CicleModule } from 'src/cicle/cicle.module';
+import { CryptoModule } from 'src/crypto/crypto.module';
 
 
 @Module({
-  imports: [AvaliacaoModule, ReferenciaModule, UsersModule, TrilhaModule, CriterioModule, CicleModule],
+  imports: [AvaliacaoModule, ReferenciaModule, UsersModule, TrilhaModule, CriterioModule, CicleModule, CryptoModule],
   controllers: [ExcelController],
   providers: [ExcelService],
 })

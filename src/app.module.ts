@@ -16,6 +16,7 @@ import { EqualizacaoModule } from "./equalizacao/equalizacao.module";
 import { EquipeModule } from "./equipe/equipe.module";
 import { ScheduleModule } from "@nestjs/schedule";
 import { SchedulerModule } from "./scheduler/scheduler.module";
+import { CryptoModule} from "./crypto/crypto.module";
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { SchedulerModule } from "./scheduler/scheduler.module";
     TrilhaModule,
     CriterioModule,
     CicleModule,
+    CryptoModule,
     ResumoiaModule,
     EqualizacaoModule,
     ExcelModule,

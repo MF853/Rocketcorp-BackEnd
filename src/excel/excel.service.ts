@@ -8,6 +8,7 @@ import { MotivacaoTrabalhoNovamente } from '../avaliacao/dto/create-avaliacao.dt
 import { CriterioService } from 'src/criterio/criterio.service';
 import { Criterio } from '@prisma/client';
 import { mapTipoCriterio } from 'src/criterio/helpers/map.tipo.criterios';
+import { CryptoService } from 'src/crypto/crypto.service';
 
 @Injectable()
 export class ExcelService {
@@ -15,7 +16,8 @@ export class ExcelService {
               private readonly referenciaService: ReferenciaService, 
               private readonly cicleService: CicleService, 
               private readonly avaliacaoService: AvaliacaoService,
-              private readonly criterioService: CriterioService) {}
+              private readonly criterioService: CriterioService,
+              private readonly cryptoService: CryptoService) {}
 
   // async processExcel(filePath: string) {
   async importExcel(buffer: Buffer) {
@@ -229,7 +231,7 @@ export class ExcelService {
   
     await this.exportPerfil(workbook, userId);
     await this.exportAvaliacao(workbook, userId, cicleId);
-    
+    // await this.exportAvaliacao360(workbook, userId, cicleId);
   
     // Gerar o buffer e retornar
     const buffer = await workbook.xlsx.writeBuffer();
@@ -263,6 +265,10 @@ export class ExcelService {
 
     const evaluationsData = await this.avaliacaoService.getUserPerformanceSummary(userId, cicleId);
     const selfEvaluationData = evaluationsData.avaliacoesRecebidas;
+
+    for (const item of selfEvaluationData) {
+      item.justificativa = await this.cryptoService.decrypt(item.justificativa);
+    }
     console.log(evaluationsData);
     // lógica para adicionar os dados
     sheet.columns = [
@@ -280,5 +286,27 @@ export class ExcelService {
     });
     
   }
+
+//   private async exportAvaliacao360(workbook: ExcelJS.Workbook, userId: number, cicleId: number) {
+//     const sheet = workbook.addWorksheet('Avaliacao360');
+
+//     const evaluationsData = await this.avaliacaoService.getUserPerformanceSummary(userId, cicleId);
+//     const evaluation360Data = evaluationsData.avaliacoes360Recebidas;
+    
+//     // lógica para adicionar os dados
+//     sheet.columns = [
+//       { header: 'Criterio', key: 'criterio', width: 30 },
+//       { header: 'Nota', key: 'nota', width:15 },
+//       { header: 'Justificativa', key: 'justificativa', width: 50 },
+//     ];
+    
+//     selfEvaluationData.forEach((evaluation) => {
+//       sheet.addRow({
+//         criterio: evaluation.criterio?.name || 'NA',
+//         nota: evaluation.nota ?? 'NA',
+//         justificativa: evaluation.justificativa || 'NA',
+//       });
+//     });
+// } 
 
 }
