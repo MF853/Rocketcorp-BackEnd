@@ -1,6 +1,6 @@
 export enum Role {
-  User = "user",
+  Colaborador = "colaborador",
   Admin = "admin",
   Rh = "rh",
-  Gestor = "manager",
+  Gestor = "gestor",
 }

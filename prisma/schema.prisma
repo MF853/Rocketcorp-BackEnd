@@ -26,7 +26,7 @@ model User {
   email                  String          @unique
   name                   String
   password               String
-  role                   String[]        @default(["user"])
+  role                   String[]        @default(["colaborador"])
   cargo                  String?         @db.VarChar(50)
   unidade                String?         @db.VarChar(50)
   createdAt              DateTime        @default(now())

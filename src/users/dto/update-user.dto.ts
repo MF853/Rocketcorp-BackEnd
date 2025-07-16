@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsString, IsOptional, IsNumber, IsEnum } from "class-validator";
+import { Role } from "../../enums/roles.enum";
 
 export class UpdateUserDto {
   @ApiProperty({ required: false, description: "Nome do usuário" })
@@ -12,11 +13,16 @@ export class UpdateUserDto {
   @IsOptional()
   password?: string;
 
-  @ApiProperty({ required: false, description: "Papel do usuário no sistema", enum: ["user", "admin"] })
-  @IsString()
-  @IsEnum(["user", "admin"])
+  @ApiProperty({
+    required: false,
+    description: "Papel do usuário no sistema",
+    enum: Role,
+    enumName: "Role",
+    isArray: true,
+  })
+  @IsEnum(Role, { each: true })
   @IsOptional()
-  role?: string[];
+  role?: Role[];
 
   @ApiProperty({ required: false, description: "Unidade do usuário" })
   @IsString()
@@ -37,4 +43,4 @@ export class UpdateUserDto {
   @IsNumber()
   @IsOptional()
   idEquipe?: number;
-} 
+}
