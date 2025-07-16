@@ -8,7 +8,7 @@ import * as argon2 from "argon2";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import { JwtPayload } from "./interfaces/jwtpayload.interface";
-import { Role } from "../enums/roles.enum";
+import { Role } from "@prisma/client";
 import { UserPayload } from "src/types/express";
 import { PrismaService } from "src/prisma/prisma.service";
 @Injectable()
@@ -36,7 +36,7 @@ export class AuthService {
     const userPayload: UserPayload = {
       userId: user.id,
       email: authDto.email,
-      roles: (user.role as Role[]) || [Role.Colaborador], // default role
+      roles: user.role || ["colaborador" as Role], // default role
     };
     const payload: JwtPayload = { user: userPayload };
 

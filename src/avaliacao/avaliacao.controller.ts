@@ -29,12 +29,11 @@ import {
 } from "@nestjs/swagger";
 import { JwtGuard, RolesGuard } from "../auth/guard";
 import { Roles } from "../auth/decorators/roles.decorator";
-import { Role } from "../enums/roles.enum";
 
 @ApiTags("Avaliacao")
 @Controller("avaliacao")
 export class AvaliacaoController {
-  constructor(private readonly avaliacaoService: AvaliacaoService) { }
+  constructor(private readonly avaliacaoService: AvaliacaoService) {}
 
   // ==================== 360 EVALUATION ENDPOINTS ====================
 
@@ -210,13 +209,19 @@ export class AvaliacaoController {
 
   @Post()
   @ApiOperation({ summary: "Cria uma nova autoavaliação" })
-  @ApiResponse({ status: 201, description: "Autoavaliação criada com sucesso." })
+  @ApiResponse({
+    status: 201,
+    description: "Autoavaliação criada com sucesso.",
+  })
   create(@Body() createAvaliacaoDto: CreateAvaliacaoDto) {
     return this.avaliacaoService.create(createAvaliacaoDto);
   }
 
   @Post("bulk")
-  @ApiOperation({ summary: "Cria múltiplas autoavaliações, avaliações 360 e mentoring em lote" })
+  @ApiOperation({
+    summary:
+      "Cria múltiplas autoavaliações, avaliações 360 e mentoring em lote",
+  })
   @ApiResponse({
     status: 201,
     description: "Avaliações criadas com sucesso.",
@@ -321,7 +326,10 @@ export class AvaliacaoController {
 
   @Delete(":id")
   @ApiOperation({ summary: "Remove uma autoavaliação pelo ID" })
-  @ApiResponse({ status: 200, description: "Autoavaliação removida com sucesso." })
+  @ApiResponse({
+    status: 200,
+    description: "Autoavaliação removida com sucesso.",
+  })
   remove(@Param("id") id: string) {
     return this.avaliacaoService.remove(+id);
   }
@@ -350,20 +358,29 @@ export class AvaliacaoController {
 
   @Get(":id")
   @ApiOperation({ summary: "Busca uma autoavaliação pelo ID" })
-  @ApiResponse({ status: 200, description: "Autoavaliação retornada com sucesso." })
+  @ApiResponse({
+    status: 200,
+    description: "Autoavaliação retornada com sucesso.",
+  })
   findOne(@Param("id") id: string) {
     return this.avaliacaoService.findOne(+id);
   }
 
-  @Roles(Role.Gestor)
+  @Roles("gestor")
   @UseGuards(JwtGuard, RolesGuard)
   @Get("gestor/:gestorId/ciclo/:id")
-  @ApiOperation({ summary: "Lista avaliações agrupadas por usuário para o ciclo (gestor view)" })
+  @ApiOperation({
+    summary:
+      "Lista avaliações agrupadas por usuário para o ciclo (gestor view)",
+  })
   @ApiResponse({
     status: 200,
     description: "Lista agrupada por usuário retornada com sucesso.",
   })
-  async getGestorCiclo(@Param("gestorId") gestorId: string, @Param("id") id: string) {
+  async getGestorCiclo(
+    @Param("gestorId") gestorId: string,
+    @Param("id") id: string
+  ) {
     return this.avaliacaoService.getGestorCiclo(+gestorId, +id);
   }
 
