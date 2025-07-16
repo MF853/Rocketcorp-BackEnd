@@ -57,15 +57,12 @@ export class UsersRepository {
     });
   }
 
-  async findByEquipe(_equipeId: number) {
-    // TODO: Descomentar após regenerar o Prisma Client com o campo idEquipe
-    // return this.prisma.user.findMany({
-    //   where: { idEquipe: equipeId },
-    //   include: this.getUserIncludes(),
-    //   orderBy: { name: "asc" },
-    // });
-    console.log('🔧 Método findByEquipe temporariamente desabilitado - aguardando regeneração do Prisma Client');
-    return [];
+  async findByEquipe(equipeId: number) {
+    return this.prisma.user.findMany({
+      where: { idEquipe: equipeId },
+      include: this.getUserIncludes(),
+      orderBy: { name: "asc" },
+    });
   }
 
   async findEquipeById(idEquipe: number) {
@@ -180,11 +177,10 @@ export class UsersRepository {
   ): Promise<UserStatisticsResponseDto[]> {
     const [autoavaliacaoUsers, gestorAvaliacaoUsers, avaliacao360Users] =
       await Promise.all([
-        this.prisma.$queryRaw<{ idAvaliado: number }[]>`
-        SELECT DISTINCT "idAvaliado" 
+        this.prisma.$queryRaw<{ idUser: number }[]>`
+        SELECT DISTINCT "idUser" 
         FROM Autoavaliacao 
         WHERE "idCiclo" = ${idCiclo} 
-        AND "idAvaliador" = "idAvaliado" 
         AND nota IS NOT NULL
       `,
         this.prisma.autoavaliacao.findMany({
@@ -206,7 +202,7 @@ export class UsersRepository {
       ]);
 
     const allUserIds = [
-      ...autoavaliacaoUsers.map((u) => u.idAvaliado),
+      ...autoavaliacaoUsers.map((u) => u.idUser),
       ...gestorAvaliacaoUsers.map((u) => u.idUser),
       ...avaliacao360Users.map((u) => u.idAvaliado),
     ];

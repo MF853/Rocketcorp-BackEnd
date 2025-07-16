@@ -26,4 +26,15 @@ export class EquipeService {
   remove(id: number) {
     return this.equipeRepository.remove(id);
   }
+
+  async getUsersByGestor(gestorId: number) {
+    // Busca todas as equipes do gestor
+    const equipes = await this.equipeRepository.findByGestorId(gestorId);
+    // Junta todos os membros das equipes
+    const users = equipes.flatMap(equipe => equipe.membros || []);
+    // Remove duplicados por id
+    const uniqueUsers = Array.from(new Map(users.map(u => [u.id, u])).values());
+    // Retorna apenas id, name e email
+    return uniqueUsers.map(u => ({ id: u.id, name: u.name, email: u.email }));
+  }
 } 

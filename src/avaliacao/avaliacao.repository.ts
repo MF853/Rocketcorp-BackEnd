@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { Autoavaliacao, Avaliacao360 } from "@prisma/client";
 import {
   CreateAvaliacaoDto,
   CreateAvaliacao360Dto,
@@ -10,6 +11,16 @@ import {
   UpdateAvaliacaoDto,
   UpdateAvaliacao360Dto,
 } from "./dto/update-avaliacao.dto";
+
+type AutoavaliacaoWithIncludes = Autoavaliacao & {
+  criterio: { id: number; name: string; enabled: boolean } | null;
+  user: { id: number; name: string; email: string };
+};
+
+type Avaliacao360WithIncludes = Avaliacao360 & {
+  avaliador: { id: number; name: string; email: string };
+  avaliado: { id: number; name: string; email: string };
+};
 
 @Injectable()
 export class AvaliacaoRepository {
@@ -114,11 +125,7 @@ export class AvaliacaoRepository {
     });
   }
 
-  async avaliacaoExists(
-    idUser: number,
-    idCiclo: number,
-    criterioId: number
-  ) {
+  async avaliacaoExists(idUser: number, idCiclo: number, criterioId: number) {
     const count = await this.prisma.autoavaliacao.count({
       where: {
         idUser,
@@ -320,13 +327,13 @@ export class AvaliacaoRepository {
       // Se precisar retornar os dados criados, busque-os
       const createdMentorings = await this.prisma.mentoring.findMany({
         where: {
-          OR: mentoringData.map(item => ({
+          OR: mentoringData.map((item) => ({
             idMentor: item.idMentor,
             idMentorado: item.idMentorado,
             idCiclo: item.idCiclo,
-          }))
+          })),
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         take: mentoringData.length,
       });
 
@@ -445,9 +452,11 @@ export class AvaliacaoRepository {
   /**
    * Creates multiple Avaliacoes in a single transaction
    */
-  async createBulkAvaliacoes(avaliacoes: CreateAvaliacaoDto[]): Promise<any[]> {
+  async createBulkAvaliacoes(
+    avaliacoes: CreateAvaliacaoDto[]
+  ): Promise<AutoavaliacaoWithIncludes[]> {
     return this.prisma.$transaction(async (tx) => {
-      const createdAvaliacoes: any[] = [];
+      const createdAvaliacoes: AutoavaliacaoWithIncludes[] = [];
 
       for (const avaliacao of avaliacoes) {
         // Check if autoavaliacao already exists for this user, cycle, and criterion
@@ -492,9 +501,11 @@ export class AvaliacaoRepository {
   /**
    * Creates multiple Avaliacoes360 in a single transaction
    */
-  async createBulkAvaliacoes360(avaliacoes360: CreateAvaliacao360Dto[]): Promise<any[]> {
+  async createBulkAvaliacoes360(
+    avaliacoes360: CreateAvaliacao360Dto[]
+  ): Promise<Avaliacao360WithIncludes[]> {
     return this.prisma.$transaction(async (tx) => {
-      const createdAvaliacoes360: any[] = [];
+      const createdAvaliacoes360: Avaliacao360WithIncludes[] = [];
 
       for (const avaliacao360 of avaliacoes360) {
         const created = await tx.avaliacao360.create({
@@ -517,11 +528,14 @@ export class AvaliacaoRepository {
   async createBulkMixed(data: {
     autoavaliacoes?: CreateAvaliacaoDto[];
     avaliacoes360?: CreateAvaliacao360Dto[];
-  }): Promise<{ autoavaliacoes: any[]; avaliacoes360: any[] }> {
+  }): Promise<{
+    autoavaliacoes: AutoavaliacaoWithIncludes[];
+    avaliacoes360: Avaliacao360WithIncludes[];
+  }> {
     return this.prisma.$transaction(async (tx) => {
       const results = {
-        autoavaliacoes: [] as any[],
-        avaliacoes360: [] as any[],
+        autoavaliacoes: [] as AutoavaliacaoWithIncludes[],
+        avaliacoes360: [] as Avaliacao360WithIncludes[],
       };
 
       // Create regular evaluations
