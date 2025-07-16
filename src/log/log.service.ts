@@ -25,4 +25,28 @@ export class LogService {
       },
     });
   }
+
+  async getRecentLogs() {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
+    return this.prisma.log.findMany({
+      where: {
+        createdAt: {
+          gte: twentyFourHoursAgo,
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
 } 
