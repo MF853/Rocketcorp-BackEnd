@@ -12,6 +12,7 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import { UserStatisticsResponseDto } from "./dto/user-statistics-response.dto";
 import { UserPerformanceResponseDto } from "./dto/performance-data.dto";
 import { UserEvaluationCyclesResponseDto } from "./dto/evaluation-cycle.dto";
+import { UserHistoryResponseDto } from "./dto/user-history.dto";
 import {
   ApiTags,
   ApiOperation,
@@ -186,6 +187,24 @@ export class UsersController {
     @Param("id") id: string
   ): Promise<UserEvaluationCyclesResponseDto> {
     return this.usersService.getUserEvaluationCycles(+id);
+  }
+
+  @Get(":id/history")
+  @ApiOperation({
+    summary: "Busca histórico completo de avaliações de um usuário",
+    description:
+      "Retorna histórico completo incluindo performance atual, crescimento, dados históricos e ciclos de avaliação detalhados.",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Histórico do usuário retornado com sucesso.",
+    type: UserHistoryResponseDto,
+  })
+  @ApiParam({ name: "id", description: "ID do usuário" })
+  async getUserHistory(
+    @Param("id") id: string
+  ): Promise<UserHistoryResponseDto> {
+    return this.usersService.getUserHistory(+id);
   }
 
   @Get("by-equipe-com-gestor/:equipeId")

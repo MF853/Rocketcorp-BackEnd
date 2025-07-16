@@ -4,6 +4,11 @@ import { Prisma } from "@prisma/client";
 import { UserStatisticsResponseDto } from "./dto/user-statistics-response.dto";
 import { PerformanceDataDto } from "./dto/performance-data.dto";
 import { EvaluationCycle, EvaluationScore } from "./dto/evaluation-cycle.dto";
+import {
+  UserHistoryResponseDto,
+  EvaluationCycleDto,
+  EvaluationScoreDto,
+} from "./dto/user-history.dto";
 
 const userInclude = {
   mentor: { select: { id: true, name: true, email: true } },
@@ -373,5 +378,81 @@ export class UsersRepository {
     ).filter((cycle) => cycle !== null) as EvaluationCycle[];
 
     return evaluationCycles;
+  }
+
+  async getUserHistory(userId: number): Promise<UserHistoryResponseDto> {
+    // Get user basic info
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, email: true },
+    });
+
+    if (!user) {
+      throw new Error(`User with ID ${userId} not found`);
+    }
+
+    // Get performance data (historical scores)
+    const performanceData = await this.getUserPerformanceData(userId);
+
+    // Get evaluation cycles
+    const evaluationCycles = await this.getUserEvaluationCycles(userId);
+
+    // Convert EvaluationCycle to EvaluationCycleDto
+    const evaluationCyclesDto: EvaluationCycleDto[] = evaluationCycles.map(
+      (cycle) => ({
+        id: cycle.id,
+        cycle: cycle.cycle,
+        status: cycle.status,
+        finalScore: cycle.finalScore,
+        scores: {
+          autoavaliacao: cycle.scores.autoavaliacao,
+          execucao: cycle.scores.execucao,
+          postura: cycle.scores.postura,
+          gestao: cycle.scores.gestao,
+        },
+        resumo: cycle.resumo,
+        period: cycle.period,
+        completionDate: cycle.completionDate,
+      })
+    );
+
+    // Calculate current and last scores
+    const sortedPerformanceData = performanceData.sort((a, b) => {
+      const [aYear, aPeriod] = a.semester.split(".").map(Number);
+      const [bYear, bPeriod] = b.semester.split(".").map(Number);
+      if (aYear !== bYear) return bYear - aYear; // Recent year first
+      return bPeriod - aPeriod; // Recent period first
+    });
+
+    const currentScore =
+      sortedPerformanceData.length > 0 ? sortedPerformanceData[0].score : 0;
+    const currentSemester =
+      sortedPerformanceData.length > 0 ? sortedPerformanceData[0].semester : "";
+    const lastScore =
+      sortedPerformanceData.length > 1 ? sortedPerformanceData[1].score : 0;
+    const lastSemester =
+      sortedPerformanceData.length > 1 ? sortedPerformanceData[1].semester : "";
+    const growth = currentScore - lastScore;
+
+    // Count total evaluations
+    const totalEvaluations = await this.prisma.autoavaliacao.count({
+      where: {
+        idUser: userId,
+        OR: [{ nota: { not: null } }, { notaGestor: { not: null } }],
+      },
+    });
+
+    return {
+      userId: user.id,
+      userName: user.name,
+      currentScore,
+      currentSemester,
+      lastScore,
+      lastSemester,
+      growth,
+      totalEvaluations,
+      performanceData,
+      evaluationCycles: evaluationCyclesDto,
+    };
   }
 }

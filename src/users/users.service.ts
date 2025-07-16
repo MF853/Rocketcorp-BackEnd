@@ -4,6 +4,7 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import { UserStatisticsResponseDto } from "./dto/user-statistics-response.dto";
 import { UserPerformanceResponseDto } from "./dto/performance-data.dto";
 import { UserEvaluationCyclesResponseDto } from "./dto/evaluation-cycle.dto";
+import { UserHistoryResponseDto } from "./dto/user-history.dto";
 
 @Injectable()
 export class UsersService {
@@ -126,5 +127,13 @@ export class UsersService {
       userName: user.name,
       evaluationCycles,
     };
+  }
+
+  async getUserHistory(userId: number): Promise<UserHistoryResponseDto> {
+    try {
+      return await this.usersRepository.getUserHistory(userId);
+    } catch (error) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
   }
 }
