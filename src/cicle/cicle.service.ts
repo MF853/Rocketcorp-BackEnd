@@ -58,7 +58,7 @@ export class CicleService {
           name: cicloString,
           year: year.toString(),
           period: period.toString(),
-          status: "aberto",
+          status: "finalizado",
           dataAberturaAvaliacao: "2025-07-11T10:30:45-03:00",
           dataFechamentoAvaliacao: "2025-07-11T10:30:45-03:00",
           dataAberturaRevisaoGestor: "2025-07-11T10:30:45-03:00",
