@@ -4,10 +4,14 @@ import { EqualizacaoResponseDto } from "./dto/equalizacao-response.dto";
 import { CreateEqualizacaoDto } from "./dto/create-equalizacao.dto";
 import { UpdateEqualizacaoDto } from "./dto/update-equalizacao.dto";
 import { StatusEqualizacao } from "@prisma/client";
+import { CryptoService } from "../crypto/crypto.service";
 
 @Injectable()
 export class EqualizacaoRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cryptoService: CryptoService
+  ) {}
 
   async getEqualizacoesByCycle(idCiclo: number) {
     const users = await this.prisma.user.findMany({
@@ -36,22 +40,30 @@ export class EqualizacaoRepository {
       },
     });
 
-    return users.map((user) => {
-      const existingEqualizacao = user.equalizacoesRecebidas.find(
-        (eq) => eq.idAvaliado === user.id && eq.idCiclo === idCiclo
-      );
+    // Use Promise.all to handle async map properly
+    return Promise.all(
+      users.map(async (user) => {
+        const existingEqualizacao = user.equalizacoesRecebidas.find(
+          (eq) => eq.idAvaliado === user.id && eq.idCiclo === idCiclo
+        );
 
-      return {
-        user: {
-          id: user.id,
-          name: user.name,
-          cargo: user.cargo || "Desenvolvedor",
-          resumoIA: user.ResumoIA?.[0]?.resumo || "",
-        },
-        existingEqualizacao,
-        idCiclo,
-      };
-    });
+        // Decrypt the resumoIA if it exists
+        const decryptedResumoIA = user.ResumoIA?.[0]?.resumo
+          ? await this.cryptoService.decrypt(user.ResumoIA[0].resumo)
+          : "";
+
+        return {
+          user: {
+            id: user.id,
+            name: user.name,
+            cargo: user.cargo || "Desenvolvedor",
+            resumoIA: decryptedResumoIA,
+          },
+          existingEqualizacao,
+          idCiclo,
+        };
+      })
+    );
   }
 
   async createEqualizacao(
@@ -89,6 +101,11 @@ export class EqualizacaoRepository {
       select: { resumo: true },
     });
 
+    // Decrypt the resumo if it exists
+    const decryptedResumo = resumoIA?.resumo
+      ? await this.cryptoService.decrypt(resumoIA.resumo)
+      : "";
+
     return {
       idEqualizacao: createdEqualizacao.id.toString(),
       idAvaliador: createdEqualizacao.idAvaliador.toString(),
@@ -101,7 +118,7 @@ export class EqualizacaoRepository {
       notaAvaliacao360: createdEqualizacao.mediaAvaliacao360,
       notaFinal: createdEqualizacao.notaFinal,
       justificativa: createdEqualizacao.justificativa,
-      resumoIA: resumoIA?.resumo || "",
+      resumoIA: decryptedResumo,
       status: "Finalizado" as "Finalizado" | "Pendente",
     };
   }
@@ -150,6 +167,11 @@ export class EqualizacaoRepository {
       select: { resumo: true },
     });
 
+    // Decrypt the resumo if it exists
+    const decryptedResumo = resumoIA?.resumo
+      ? await this.cryptoService.decrypt(resumoIA.resumo)
+      : "";
+
     return {
       idEqualizacao: updatedEqualizacao.id.toString(),
       idAvaliador: updatedEqualizacao.idAvaliador.toString(),
@@ -162,7 +184,7 @@ export class EqualizacaoRepository {
       notaAvaliacao360: updatedEqualizacao.mediaAvaliacao360,
       notaFinal: updatedEqualizacao.notaFinal,
       justificativa: updatedEqualizacao.justificativa,
-      resumoIA: resumoIA?.resumo || "",
+      resumoIA: decryptedResumo,
       status: "Finalizado" as "Finalizado" | "Pendente",
     };
   }

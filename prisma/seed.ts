@@ -56,9 +56,6 @@ async function main() {
   await prisma.autoavaliacao.deleteMany();
   await prisma.referencia.deleteMany();
   await prisma.criterio.deleteMany();
-  // Limpa a relação de equipe antes de limpar usuários e equipes
-  await prisma.user.updateMany({ data: { idEquipe: null } });
-  await prisma.equipe.deleteMany();
   await prisma.user.deleteMany();
   await prisma.ciclo.deleteMany();
   await prisma.trilha.deleteMany();
@@ -79,8 +76,6 @@ async function main() {
 
   // 4. Cria os Ciclos de avaliação com datas coerentes com a data de hoje (15/07/2025)
   console.log("🔄 Criando ciclos...");
-  // Data de referência: 15/07/2025
-  const hoje = new Date("2025-07-15T12:00:00-03:00");
 
   // Ciclo Aberto (hoje está entre dataAberturaAvaliacao e dataFechamentoAvaliacao)
   const cicloAberto = await prisma.ciclo.create({
@@ -1085,27 +1080,28 @@ async function main() {
     trilhas: await prisma.trilha.count(),
     ciclos: await prisma.ciclo.count(),
     users: await prisma.user.count(),
-    equipes: await prisma.equipe.count(),
     criterios: await prisma.criterio.count(),
     referencias: await prisma.referencia.count(),
     autoavaliacoes: await prisma.autoavaliacao.count(),
     avaliacoes360: await prisma.avaliacao360.count(),
-    mentorings: await prisma.mentoring.count(),
     resumosIA: await prisma.resumoIA.count(),
-    equalizacoes: await prisma.equalizacao.count(),
   };
 
   console.log("\n📊 Resumo do Banco de Dados:");
   console.table(summary);
 }
-
 // Executa a função principal e trata possíveis erros
 main()
   .catch((e) => {
     console.error("❌ Erro durante o processo de seeding:", e);
     process.exit(1);
   })
-  .finally(async () => {
+  .finally(() => {
     // Garante que a conexão com o banco de dados seja fechada
-    await prisma.$disconnect();
+    prisma
+      .$disconnect()
+      .then(() => {})
+      .catch((e) => {
+        console.error("Erro ao desconectar do banco de dados:", e);
+      });
   });

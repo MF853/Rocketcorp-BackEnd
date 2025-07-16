@@ -14,10 +14,14 @@ import {
   UpdateAvaliacaoDto,
   UpdateAvaliacao360Dto,
 } from "./dto/update-avaliacao.dto";
+import { CryptoService } from "../crypto/crypto.service";
 
 @Injectable()
 export class AvaliacaoService {
-  constructor(private readonly avaliacaoRepository: AvaliacaoRepository) {}
+  constructor(
+    private readonly avaliacaoRepository: AvaliacaoRepository,
+    private readonly cryptoService: CryptoService
+  ) { }
 
   async create(createAvaliacaoDto: CreateAvaliacaoDto) {
     if (createAvaliacaoDto.criterioId !== undefined) {
@@ -35,7 +39,12 @@ export class AvaliacaoService {
       }
     }
 
-    return this.avaliacaoRepository.createAvaliacao(createAvaliacaoDto);
+    // Encrypt justificativa fields before saving
+    const encryptedDto = await this.cryptoService.encryptObject(
+      createAvaliacaoDto
+    );
+
+    return this.avaliacaoRepository.createAvaliacao(encryptedDto);
   }
 
   async create360(createAvaliacao360Dto: CreateAvaliacao360Dto) {
@@ -44,15 +53,20 @@ export class AvaliacaoService {
       createAvaliacao360Dto.idAvaliado,
       createAvaliacao360Dto.idCiclo
     );
-    
+
     if (exists) {
       console.warn(
         `Avaliação 360 já existe: O usuário ${createAvaliacao360Dto.idAvaliador} já fez uma referência para o usuário ${createAvaliacao360Dto.idAvaliado} no ciclo.`
       );
-      return null; 
+      return null;
     }
 
-    return this.avaliacaoRepository.createAvaliacao360(createAvaliacao360Dto);
+    // Encrypt justificativa fields before saving
+    const encryptedDto = await this.cryptoService.encryptObject(
+      createAvaliacao360Dto
+    );
+
+    return this.avaliacaoRepository.createAvaliacao360(encryptedDto);
   }
 
   async createMentoring(createMentoringDto: CreateMentoringDto) {
@@ -69,32 +83,43 @@ export class AvaliacaoService {
       return null;
     }
 
-    return this.avaliacaoRepository.createMentoring(createMentoringDto);
+    // Encrypt justificativa fields before saving
+    const encryptedDto = await this.cryptoService.encryptObject(
+      createMentoringDto
+    );
+
+    return this.avaliacaoRepository.createMentoring(encryptedDto);
   }
 
   /**
    * Creates multiple Avaliacoes, Avaliacoes360 and Mentoring in bulk
    */
   async createBulk(bulkCreateDto: BulkCreateAvaliacaoDto): Promise<any> {
-    console.log('📦 Dados recebidos no bulk:', JSON.stringify(bulkCreateDto, null, 2));
-    
+    console.log(
+      "📦 Dados recebidos no bulk:",
+      JSON.stringify(bulkCreateDto, null, 2)
+    );
+
     const results = {
       autoavaliacoes: [] as any[],
       avaliacoes360: [] as any[],
-      mentoring: [] as any[]
+      mentoring: [] as any[],
     };
 
     // ✅ Processar autoavaliações
-    if (bulkCreateDto.autoavaliacoes && bulkCreateDto.autoavaliacoes.length > 0) {
-      console.log('🔄 Processando autoavaliações...');
-      
+    if (
+      bulkCreateDto.autoavaliacoes &&
+      bulkCreateDto.autoavaliacoes.length > 0
+    ) {
+      console.log("🔄 Processando autoavaliações...");
+
       for (const item of bulkCreateDto.autoavaliacoes) {
         const exists = await this.avaliacaoRepository.avaliacaoExists(
           item.idUser,
           item.idCiclo,
           item.criterioId
         );
-        
+
         if (exists) {
           throw new BadRequestException(
             `Já existe uma autoavaliação para usuário ${item.idUser}, ciclo ${item.idCiclo} e critério ${item.criterioId}`
@@ -102,24 +127,29 @@ export class AvaliacaoService {
         }
       }
 
-      const autoavaliacoes = await this.avaliacaoRepository.createBulkAvaliacoes(
-        bulkCreateDto.autoavaliacoes
-      );
+      const autoavaliacoes =
+        await this.avaliacaoRepository.createBulkAvaliacoes(
+          await Promise.all(
+            bulkCreateDto.autoavaliacoes.map((item) =>
+              this.cryptoService.encryptObject(item)
+            )
+          )
+        );
       results.autoavaliacoes = autoavaliacoes;
-      console.log('✅ Autoavaliações criadas:', autoavaliacoes.length);
+      console.log("✅ Autoavaliações criadas:", autoavaliacoes.length);
     }
 
     // ✅ Processar avaliações 360
     if (bulkCreateDto.avaliacoes360 && bulkCreateDto.avaliacoes360.length > 0) {
-      console.log('🔄 Processando avaliações 360...');
-      
+      console.log("🔄 Processando avaliações 360...");
+
       for (const item of bulkCreateDto.avaliacoes360) {
         const exists = await this.avaliacaoRepository.avaliacao360Exists(
           item.idAvaliador,
           item.idAvaliado,
           item.idCiclo
         );
-        
+
         if (exists) {
           throw new BadRequestException(
             `Já existe uma avaliação 360 para avaliador ${item.idAvaliador}, avaliado ${item.idAvaliado} e ciclo ${item.idCiclo}`
@@ -127,24 +157,29 @@ export class AvaliacaoService {
         }
       }
 
-      const avaliacoes360 = await this.avaliacaoRepository.createBulkAvaliacoes360(
-        bulkCreateDto.avaliacoes360
-      );
+      const avaliacoes360 =
+        await this.avaliacaoRepository.createBulkAvaliacoes360(
+          await Promise.all(
+            bulkCreateDto.avaliacoes360.map((item) =>
+              this.cryptoService.encryptObject(item)
+            )
+          )
+        );
       results.avaliacoes360 = avaliacoes360;
-      console.log('✅ Avaliações 360 criadas:', avaliacoes360.length);
+      console.log("✅ Avaliações 360 criadas:", avaliacoes360.length);
     }
 
     // ✅ Processar mentoring
     if (bulkCreateDto.mentoring && bulkCreateDto.mentoring.length > 0) {
-      console.log('🔄 Processando mentoring...');
-      
+      console.log("🔄 Processando mentoring...");
+
       for (const item of bulkCreateDto.mentoring) {
         const exists = await this.avaliacaoRepository.mentoringExists(
           item.idMentor,
           item.idMentorado,
           item.idCiclo
         );
-        
+
         if (exists) {
           throw new BadRequestException(
             `Já existe uma avaliação de mentoring para mentor ${item.idMentor}, mentorado ${item.idMentorado} e ciclo ${item.idCiclo}`
@@ -153,33 +188,46 @@ export class AvaliacaoService {
       }
 
       const mentoring = await this.avaliacaoRepository.createBulkMentoring(
-        bulkCreateDto.mentoring
+        await Promise.all(
+          bulkCreateDto.mentoring.map((item) =>
+            this.cryptoService.encryptObject(item)
+          )
+        )
       );
       results.mentoring = mentoring;
-      console.log('✅ Mentoring criado:', mentoring.length);
+      console.log("✅ Mentoring criado:", mentoring.length);
     }
 
-    console.log('✅ Resultados do bulk:', {
+    console.log("✅ Resultados do bulk:", {
       autoavaliacoes: results.autoavaliacoes.length,
       avaliacoes360: results.avaliacoes360.length,
-      mentoring: results.mentoring.length
+      mentoring: results.mentoring.length,
     });
-    
+
     return results;
   }
 
   // ==================== QUERY METHODS ====================
 
-  findAll() {
-    return this.avaliacaoRepository.findAllAvaliacoes();
+  async findAll() {
+    const avaliacoes = await this.avaliacaoRepository.findAllAvaliacoes();
+    return await Promise.all(
+      avaliacoes.map((item) => this.cryptoService.decryptObject(item))
+    );
   }
 
-  findAll360() {
-    return this.avaliacaoRepository.findAllAvaliacoes360();
+  async findAll360() {
+    const avaliacoes360 = await this.avaliacaoRepository.findAllAvaliacoes360();
+    return await Promise.all(
+      avaliacoes360.map((item) => this.cryptoService.decryptObject(item))
+    );
   }
 
-  findAllMentoring() {
-    return this.avaliacaoRepository.findAllMentoring();
+  async findAllMentoring() {
+    const mentoring = await this.avaliacaoRepository.findAllMentoring();
+    return await Promise.all(
+      mentoring.map((item) => this.cryptoService.decryptObject(item))
+    );
   }
 
   async findOne(id: number) {
@@ -189,7 +237,7 @@ export class AvaliacaoService {
       throw new NotFoundException(`Avaliação com ID ${id} não encontrada`);
     }
 
-    return avaliacao;
+    return await this.cryptoService.decryptObject(avaliacao);
   }
 
   async findOne360(id: number) {
@@ -201,7 +249,7 @@ export class AvaliacaoService {
       throw new NotFoundException(`Avaliação 360 com ID ${id} não encontrada`);
     }
 
-    return avaliacao360;
+    return await this.cryptoService.decryptObject(avaliacao360);
   }
 
   async findOneMentoring(id: number) {
@@ -211,25 +259,31 @@ export class AvaliacaoService {
       throw new NotFoundException(`Mentoring com ID ${id} não encontrado`);
     }
 
-    return mentoring;
+    return await this.cryptoService.decryptObject(mentoring);
   }
 
   async update(id: number, updateAvaliacaoDto: UpdateAvaliacaoDto) {
     await this.findOne(id);
-    return this.avaliacaoRepository.updateAvaliacao(id, updateAvaliacaoDto);
+    const encryptedDto = await this.cryptoService.encryptObject(
+      updateAvaliacaoDto
+    );
+    return this.avaliacaoRepository.updateAvaliacao(id, encryptedDto);
   }
 
   async update360(id: number, updateAvaliacao360Dto: UpdateAvaliacao360Dto) {
     await this.findOne360(id);
-    return this.avaliacaoRepository.updateAvaliacao360(
-      id,
+    const encryptedDto = await this.cryptoService.encryptObject(
       updateAvaliacao360Dto
     );
+    return this.avaliacaoRepository.updateAvaliacao360(id, encryptedDto);
   }
 
   async updateMentoring(id: number, updateMentoringDto: UpdateAvaliacaoDto) {
     await this.findOneMentoring(id);
-    return this.avaliacaoRepository.updateMentoring(id, updateMentoringDto);
+    const encryptedDto = await this.cryptoService.encryptObject(
+      updateMentoringDto
+    );
+    return this.avaliacaoRepository.updateMentoring(id, encryptedDto);
   }
 
   async remove(id: number) {
@@ -247,32 +301,64 @@ export class AvaliacaoService {
     return this.avaliacaoRepository.deleteMentoring(id);
   }
 
-  findByUser(idUser: number) {
-    return this.avaliacaoRepository.findAvaliacoesByUser(idUser);
+  async findByUser(idUser: number) {
+    const avaliacoes = await this.avaliacaoRepository.findAvaliacoesByUser(
+      idUser
+    );
+    return await Promise.all(
+      avaliacoes.map((item) => this.cryptoService.decryptObject(item))
+    );
   }
 
-  findByAvaliador(idAvaliador: number) {
-    return this.avaliacaoRepository.findAvaliacoesByAvaliador(idAvaliador);
+  async findByAvaliador(idAvaliador: number) {
+    const avaliacoes = await this.avaliacaoRepository.findAvaliacoesByAvaliador(
+      idAvaliador
+    );
+    return await Promise.all(
+      avaliacoes.map((item) => this.cryptoService.decryptObject(item))
+    );
   }
 
-  findByAvaliado(idAvaliado: number) {
-    return this.avaliacaoRepository.findAvaliacoesByAvaliado(idAvaliado);
+  async findByAvaliado(idAvaliado: number) {
+    const avaliacoes = await this.avaliacaoRepository.findAvaliacoesByAvaliado(
+      idAvaliado
+    );
+    return await Promise.all(
+      avaliacoes.map((item) => this.cryptoService.decryptObject(item))
+    );
   }
 
-  findByCiclo(idCiclo: number) {
-    return this.avaliacaoRepository.findAvaliacoesByCiclo(idCiclo);
+  async findByCiclo(idCiclo: number) {
+    const avaliacoes = await this.avaliacaoRepository.findAvaliacoesByCiclo(
+      idCiclo
+    );
+    return await Promise.all(
+      avaliacoes.map((item) => this.cryptoService.decryptObject(item))
+    );
   }
 
-  findAvaliacoes360ByAvaliador(idAvaliador: number) {
-    return this.avaliacaoRepository.findAvaliacoes360ByAvaliador(idAvaliador);
+  async findAvaliacoes360ByAvaliador(idAvaliador: number) {
+    const avaliacoes360 =
+      await this.avaliacaoRepository.findAvaliacoes360ByAvaliador(idAvaliador);
+    return await Promise.all(
+      avaliacoes360.map((item) => this.cryptoService.decryptObject(item))
+    );
   }
 
-  findAvaliacoes360ByAvaliado(idAvaliado: number) {
-    return this.avaliacaoRepository.findAvaliacoes360ByAvaliado(idAvaliado);
+  async findAvaliacoes360ByAvaliado(idAvaliado: number) {
+    const avaliacoes360 =
+      await this.avaliacaoRepository.findAvaliacoes360ByAvaliado(idAvaliado);
+    return await Promise.all(
+      avaliacoes360.map((item) => this.cryptoService.decryptObject(item))
+    );
   }
 
-  findAvaliacoes360ByCiclo(idCiclo: number) {
-    return this.avaliacaoRepository.findAvaliacoes360ByCiclo(idCiclo);
+  async findAvaliacoes360ByCiclo(idCiclo: number) {
+    const avaliacoes360 =
+      await this.avaliacaoRepository.findAvaliacoes360ByCiclo(idCiclo);
+    return await Promise.all(
+      avaliacoes360.map((item) => this.cryptoService.decryptObject(item))
+    );
   }
 
   findMentoringByMentor(idMentor: number) {
@@ -295,8 +381,110 @@ export class AvaliacaoService {
     return this.avaliacaoRepository.getUserPerformanceSummary(userId, idCiclo);
   }
 
+  async getGestorCiclo(gestorId: number, idCiclo: number) {
+    const avaliacoes =
+      await this.avaliacaoRepository.findAvaliacoesByGestorCiclo(
+        gestorId,
+        idCiclo
+      );
+    console.log(
+      `📊 Avaliações encontradas para gestor ${gestorId} no ciclo ${idCiclo}:`,
+      avaliacoes.length
+    );
+    for (const a of avaliacoes) {
+      console.log(
+        `Avaliação: ${a.id}, Avaliado: ${a.user.name}, Nota: ${a.nota}, Nota Gestor: ${a.notaGestor}`
+      );
+    }
+    // Group by user
+    const grouped = new Map<number, any>();
+    for (const a of avaliacoes) {
+      const userId = a.user.id;
+      if (!grouped.has(userId)) {
+        grouped.set(userId, {
+          id: userId,
+          name: a.user.name,
+          cargo: a.user.cargo,
+          notas: [],
+          notasGestor: [],
+        });
+      }
+      grouped.get(userId).notas.push(a.nota);
+      grouped.get(userId).notasGestor.push(a.notaGestor);
+    }
+
+    // Calculate means
+    return Array.from(grouped.values()).map(u => ({
+      id: u.id, // <-- include user id in response
+      name: u.name,
+      cargo: u.cargo,
+      meanNota: u.notas.includes(null)
+        ? null
+        : u.notas.reduce((a, b) => a + b, 0) / u.notas.length,
+      meanNotaGestor: u.notasGestor.includes(null)
+        ? null
+        : u.notasGestor.reduce((a, b) => a + b, 0) / u.notasGestor.length,
+    }));
+  }
+
+  async getColaboradorCiclo(colaboradorId: number, idCiclo: number) {
+    let avaliacoes = await this.avaliacaoRepository.findAvaliacoesByUser(colaboradorId);
+    avaliacoes = avaliacoes.filter(a => a.idCiclo === idCiclo);
+
+    // Group by criterio.tipo (block)
+    const blocksMap = new Map<string, { id: string; name: string; criteria: any[] }>();
+    for (const a of avaliacoes) {
+      const criterio = a.criterio;
+      if (!criterio) continue; // skip if criterio is null
+      const tipo = criterio.tipo || 'Outro';
+      if (!blocksMap.has(tipo)) {
+        blocksMap.set(tipo, {
+          id: tipo,
+          name: tipo,
+          criteria: [],
+        });
+      }
+      const block = blocksMap.get(tipo);
+      if (block) {
+        block.criteria.push({
+          id: a.id.toString(),
+          name: criterio.name,
+          selfScore: a.nota ?? 0,
+          selfJustification: a.justificativa ?? '',
+          managerScore: a.notaGestor ?? 0,
+          managerJustification: a.justificativaGestor ?? '',
+        });
+      }
+    }
+    return Array.from(blocksMap.values());
+  }
+
   // Método para atualizar nota do gestor em avaliação existente
   async updateNotaGestor(id: number, notaGestor: number, justificativa?: string) {
     return await this.avaliacaoRepository.updateNotaGestor(id, notaGestor, justificativa);
+  }
+
+  async patchGestorBulk(body: { colaboradorId: number; cicloId: number; updates: { avaliacaoId: number; notaGestor: number; justificativaGestor?: string }[] }) {
+    const { colaboradorId, cicloId, updates } = body;
+    if (!colaboradorId || !cicloId || !Array.isArray(updates)) {
+      throw new BadRequestException('Dados inválidos para atualização em lote.');
+    }
+    let updated = 0;
+    const errors: string[] = [];
+    for (const u of updates) {
+      try {
+        // Confirma se a avaliação pertence ao colaborador e ciclo
+        const avaliacao = await this.avaliacaoRepository.findAvaliacaoById(u.avaliacaoId);
+        if (!avaliacao || avaliacao.idUser !== colaboradorId || avaliacao.idCiclo !== cicloId) {
+          errors.push(`Avaliação ${u.avaliacaoId} não pertence ao colaborador/ciclo informado.`);
+          continue;
+        }
+        await this.avaliacaoRepository.updateNotaGestor(u.avaliacaoId, u.notaGestor, u.justificativaGestor);
+        updated++;
+      } catch (e) {
+        errors.push(`Erro ao atualizar avaliação ${u.avaliacaoId}: ${e.message}`);
+      }
+    }
+    return { updated, errors };
   }
 }

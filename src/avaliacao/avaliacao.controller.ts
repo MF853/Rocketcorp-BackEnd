@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from "@nestjs/common";
 import { AvaliacaoService } from "./avaliacao.service";
 import {
@@ -26,11 +27,14 @@ import {
   // ApiExtraModels,
   // getSchemaPath,
 } from "@nestjs/swagger";
+import { JwtGuard, RolesGuard } from "../auth/guard";
+import { Roles } from "../auth/decorators/roles.decorator";
+import { Role } from "../enums/roles.enum";
 
 @ApiTags("Avaliacao")
 @Controller("avaliacao")
 export class AvaliacaoController {
-  constructor(private readonly avaliacaoService: AvaliacaoService) {}
+  constructor(private readonly avaliacaoService: AvaliacaoService) { }
 
   // ==================== 360 EVALUATION ENDPOINTS ====================
 
@@ -351,6 +355,30 @@ export class AvaliacaoController {
     return this.avaliacaoService.findOne(+id);
   }
 
+  @Roles(Role.Gestor)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Get("gestor/:gestorId/ciclo/:id")
+  @ApiOperation({ summary: "Lista avaliações agrupadas por usuário para o ciclo (gestor view)" })
+  @ApiResponse({
+    status: 200,
+    description: "Lista agrupada por usuário retornada com sucesso.",
+  })
+  async getGestorCiclo(@Param("gestorId") gestorId: string, @Param("id") id: string) {
+    return this.avaliacaoService.getGestorCiclo(+gestorId, +id);
+  }
+
+  @Get("gestor/colaborador/:colaboradorId/ciclo/:cicloId")
+  @ApiOperation({ summary: "Lista avaliações de um colaborador específico no ciclo" })
+  @ApiResponse({
+    status: 200,
+    description: "Avaliações do colaborador no ciclo retornadas com sucesso.",
+  })
+  async getColaboradorCiclo(
+    @Param("colaboradorId") colaboradorId: string,
+    @Param("cicloId") cicloId: string
+  ) {
+    return this.avaliacaoService.getColaboradorCiclo(+colaboradorId, +cicloId);
+  }
   // ==================== ANALYTICS ENDPOINTS ====================
   // MAYBE IGNORE THIS SECTION IF NOT NEEDED
   // --- IGNORE ---
@@ -470,5 +498,27 @@ export class AvaliacaoController {
     @Param("cicloId") cicloId: string
   ) {
     return this.avaliacaoService.getUserPerformanceSummary(+userId, +cicloId);
+  }
+
+  @Patch("gestor/bulk")
+  @Roles(Role.Gestor)
+  @UseGuards(JwtGuard, RolesGuard)
+  @ApiOperation({ summary: "Atualiza em lote avaliações de um colaborador em um ciclo (notaGestor/justificativaGestor)" })
+  @ApiResponse({
+    status: 200,
+    description: "Avaliações do gestor atualizadas com sucesso.",
+    schema: {
+      example: {
+        updated: 3,
+        errors: [],
+      },
+      properties: {
+        updated: { type: "number", example: 3 },
+        errors: { type: "array", items: { type: "string" } },
+      },
+    },
+  })
+  async patchGestorBulk(@Body() body: { colaboradorId: number; cicloId: number; updates: { avaliacaoId: number; notaGestor: number; justificativaGestor?: string }[] }) {
+    return this.avaliacaoService.patchGestorBulk(body);
   }
 }

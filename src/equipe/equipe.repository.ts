@@ -66,4 +66,13 @@ export class EquipeRepository {
   async remove(id: number) {
     return this.prisma.equipe.delete({ where: { id } });
   }
+
+  async findByGestorId(gestorId: number) {
+    return this.prisma.equipe.findMany({
+      where: { idGestor: gestorId },
+      include: {
+        membros: true,
+      },
+    });
+  }
 } 

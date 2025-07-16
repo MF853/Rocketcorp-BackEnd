@@ -173,4 +173,25 @@ export class EquipeController {
   remove(@Param('id') id: string) {
     return this.equipeService.remove(+id);
   }
+
+  @Get('users-by-gestor/:gestorId')
+  @ApiOperation({ summary: 'Lista todos os usuários de equipes sob um gestor específico' })
+  @ApiParam({ name: 'gestorId', description: 'ID do gestor', type: 'number', example: 2 })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de usuários das equipes sob o gestor retornada com sucesso.',
+    schema: {
+      type: 'array',
+      items: {
+        example: {
+          id: 3,
+          name: 'Maria Santos',
+          email: 'maria@example.com',
+        },
+      },
+    },
+  })
+  async getUsersByGestor(@Param('gestorId') gestorId: string) {
+    return this.equipeService.getUsersByGestor(+gestorId);
+  }
 } 
