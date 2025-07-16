@@ -1,7 +1,8 @@
-import { Controller, Post, UploadedFiles, UseInterceptors, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Get, Res, UploadedFiles, UseInterceptors, BadRequestException } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ExcelService } from './excel.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from "@nestjs/swagger";
+import { Response } from 'express';
 
 @ApiTags("Docs")
 @Controller('docs')
@@ -39,4 +40,21 @@ export class ExcelController {
 
     return { message: 'Importação concluída com sucesso' };
   }
+
+  @Get()
+  async exportExcel(
+    // @Query('userId') userId: number = 1,
+    // @Query('cicleId') cicleId: number = 2,
+    @Res() res: Response,
+  ) {
+    const buffer = await this.excelService.exportExcel(1, 1);
+
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': 'attachment; filename="autoavaliacoes.xlsx"',
+    });
+
+    return res.send(buffer);
+  }
+  
 }

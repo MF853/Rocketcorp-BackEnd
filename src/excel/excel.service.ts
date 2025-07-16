@@ -219,5 +219,42 @@ export class ExcelService {
       
     });
   }
+ 
+  async exportExcel(userId: number, cicleId: number) {
+  //Planilha PERFIL - idUser = Pegar parte dos dados dele
+  //Planilha AUTOAVALIACAO - 
+  //Planilha AVALIACAO360 - 
+  //Planilha EQUALIZACAO - 
+    const workbook = new ExcelJS.Workbook();
+  
+    await this.exportPerfil(workbook, userId);
+    
+  
+    // Gerar o buffer e retornar
+    const buffer = await workbook.xlsx.writeBuffer();
+    return buffer;
+  }
+
+
+  private async exportPerfil(workbook: ExcelJS.Workbook, userId: number) {
+    const sheet = workbook.addWorksheet('Perfil');
+
+    const userData = await this.usersService.findOne(userId);
+    // lógica para adicionar os dados
+    sheet.columns = [
+      { header: 'Email', key: 'email', width: 30 },
+      { header: 'Nome', key: 'nome', width: 30 },
+      { header: 'Cargo', key: 'cargo', width: 40 },
+      { header: 'Unidade', key: 'unidade', width: 40 },
+    ];
+    
+    sheet.addRow({
+      email: userData.email,
+      nome: userData.name,
+      cargo: userData.cargo,
+      unidade: userData.unidade,
+    });
+  
+  }
 
 }
