@@ -1,5 +1,12 @@
-import { User, MotivacaoTrabalhoNovamente } from "@prisma/client";
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { User } from "@prisma/client";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from "typeorm";
+import { MotivacaoTrabalhoNovamente } from "../dto/create-avaliacao.dto";
 
 export class Autoavaliacao {
   id: number;
@@ -24,30 +31,30 @@ export class Autoavaliacao {
   } | null;
 }
 
-@Entity('mentoring')
+@Entity("mentoring")
 export class Mentoring {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'id_mentor' })
+  @Column({ name: "id_mentor" })
   idMentor: number;
 
-  @Column({ name: 'id_mentorado' })
+  @Column({ name: "id_mentorado" })
   idMentorado: number;
 
-  @Column({ name: 'id_ciclo' })
+  @Column({ name: "id_ciclo" })
   idCiclo: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: "int" })
   nota: number;
 
-  @Column({ type: 'text' })
+  @Column({ type: "text" })
   justificativa: string;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ name: "updated_at" })
   updatedAt: Date;
 }
 

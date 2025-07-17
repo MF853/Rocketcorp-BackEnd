@@ -66,36 +66,34 @@ export class CryptoService {
 
     const result = { ...obj } as any;
 
-    // Encrypt justificativa fields
-    if ("justificativa" in result && typeof result.justificativa === "string") {
-      result.justificativa = await this.encrypt(result.justificativa);
+    const stringKeysToEncrypt = [
+      "justificativa",
+      "justificativa_gestor",
+      "justificativaGestor",
+      "pontosFortes",
+      "pontosMelhora",
+      "trabalhariaNovamente",
+    ];
+
+    const numericKeysToEncrypt = [
+      "nota",
+      "notaGestor",
+      "notaFinal",
+      "mediaAutoavaliacao",
+      "mediaAvaliacaoGestor",
+      "mediaAvaliacao360",
+    ];
+
+    for (const key of stringKeysToEncrypt) {
+      if (key in result && typeof result[key] === "string") {
+        result[key] = await this.encrypt(result[key]);
+      }
     }
 
-    if (
-      "justificativa_gestor" in result &&
-      typeof result.justificativa_gestor === "string"
-    ) {
-      result.justificativa_gestor = await this.encrypt(
-        result.justificativa_gestor
-      );
-    }
-
-    if (
-      "justificativaGestor" in result &&
-      typeof result.justificativaGestor === "string"
-    ) {
-      result.justificativaGestor = await this.encrypt(
-        result.justificativaGestor
-      );
-    }
-
-    // Encrypt 360 evaluation fields
-    if ("pontosFortes" in result && typeof result.pontosFortes === "string") {
-      result.pontosFortes = await this.encrypt(result.pontosFortes);
-    }
-
-    if ("pontosMelhora" in result && typeof result.pontosMelhora === "string") {
-      result.pontosMelhora = await this.encrypt(result.pontosMelhora);
+    for (const key of numericKeysToEncrypt) {
+      if (key in result && result[key] !== null && result[key] !== undefined) {
+        result[key] = await this.encrypt(String(result[key]));
+      }
     }
 
     return result;
@@ -106,36 +104,36 @@ export class CryptoService {
 
     const result = { ...obj } as any;
 
-    // Decrypt justificativa fields
-    if ("justificativa" in result && typeof result.justificativa === "string") {
-      result.justificativa = await this.decrypt(result.justificativa);
+    const stringKeysToDecrypt = [
+      "justificativa",
+      "justificativa_gestor",
+      "justificativaGestor",
+      "pontosFortes",
+      "pontosMelhora",
+      "trabalhariaNovamente",
+    ];
+
+    const numericKeysToDecrypt = [
+      "nota",
+      "notaGestor",
+      "notaFinal",
+      "mediaAutoavaliacao",
+      "mediaAvaliacaoGestor",
+      "mediaAvaliacao360",
+    ];
+
+    for (const key of stringKeysToDecrypt) {
+      if (key in result && typeof result[key] === "string") {
+        result[key] = await this.decrypt(result[key]);
+      }
     }
 
-    if (
-      "justificativa_gestor" in result &&
-      typeof result.justificativa_gestor === "string"
-    ) {
-      result.justificativa_gestor = await this.decrypt(
-        result.justificativa_gestor
-      );
-    }
-
-    if (
-      "justificativaGestor" in result &&
-      typeof result.justificativaGestor === "string"
-    ) {
-      result.justificativaGestor = await this.decrypt(
-        result.justificativaGestor
-      );
-    }
-
-    // Decrypt 360 evaluation fields
-    if ("pontosFortes" in result && typeof result.pontosFortes === "string") {
-      result.pontosFortes = await this.decrypt(result.pontosFortes);
-    }
-
-    if ("pontosMelhora" in result && typeof result.pontosMelhora === "string") {
-      result.pontosMelhora = await this.decrypt(result.pontosMelhora);
+    for (const key of numericKeysToDecrypt) {
+      if (key in result && typeof result[key] === "string") {
+        const decryptedValue = await this.decrypt(result[key]);
+        const parsedValue = parseFloat(decryptedValue);
+        result[key] = isNaN(parsedValue) ? null : parsedValue;
+      }
     }
 
     return result;
