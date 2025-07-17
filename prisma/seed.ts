@@ -120,7 +120,7 @@ async function main() {
         name: "Raylandson Cesário",
         email: "raylandson.cesario@rocketcorp.com",
         password: await hashPassword("password123"),
-        role: ["user", "admin"],
+        role: ["colaborador", "admin"],
         unidade: "sao paulo",
         cargo: "fullstack",
         trilhaId: devTrilha.id,
@@ -132,7 +132,7 @@ async function main() {
         name: "Alice Cadete",
         email: "alice.cadete@rocketcorp.com",
         password: await hashPassword("password123"),
-        role: ["manager"],
+        role: ["gestor"],
         unidade: "recife",
         cargo: "Gestão",
         trilhaId: devTrilha.id,
@@ -144,7 +144,7 @@ async function main() {
         name: "Arthur Lins",
         email: "arthur.lins@rocketcorp.com",
         password: await hashPassword("password123"),
-        role: ["user"],
+        role: ["colaborador"],
         cargo: "front",
         unidade: "recife",
         trilhaId: dadosTrilha.id,
@@ -156,7 +156,7 @@ async function main() {
         name: "Erico Chen",
         email: "erico.chen@rocketcorp.com",
         password: await hashPassword("password123"),
-        role: ["user"],
+        role: ["colaborador"],
         cargo: "Back",
         unidade: "recife",
         trilhaId: infraTrilha.id,
@@ -168,7 +168,7 @@ async function main() {
         name: "Luan Bezerra",
         email: "luan.bezerra@rocketcorp.com",
         password: await hashPassword("password123"),
-        role: ["user"],
+        role: ["colaborador"],
         cargo: "Dados",
         unidade: "rio de janeiro",
         trilhaId: devTrilha.id,
@@ -180,7 +180,7 @@ async function main() {
         name: "Fernanda Lima",
         email: "fernanda.lima@rocketcorp.com",
         password: await hashPassword("password123"),
-        role: ["comite"],
+        role: ["rh", "comite"],
         cargo: "Gestão",
         unidade: "sao paulo",
         trilhaId: gestaoTrilha.id,
@@ -211,7 +211,7 @@ async function main() {
   const comiteUser = users[5]; // Fernanda Lima
   const mentorUser = users[6]; // Bruno Souza
 
-  const nonMentorUsers = users.filter((user) => !user.role.includes("mentor")); // Todos menos o mentor
+  const nonMentorUsers = users.filter((user) => user.id !== mentorUser.id); // Todos menos o mentor
 
   // 6. Define as relações de mentoria
   console.log("🤝 Configurando relações de mentoria...");
