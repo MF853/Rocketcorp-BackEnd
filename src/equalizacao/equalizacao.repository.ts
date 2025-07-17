@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { EqualizacaoResponseDto } from "./dto/equalizacao-response.dto";
@@ -215,32 +214,24 @@ export class EqualizacaoRepository {
   }
 
   async getEqualizacoesByAvaliado(idAvaliado: number) {
-    const equalizacoes = await this.prisma.equalizacao.findMany({
-      where: { idAvaliado },
-      include: {
-        avaliado: { select: { name: true, cargo: true } },
+    return await this.prisma.equalizacao.findMany({
+      where: {
+        idAvaliado: idAvaliado,
       },
-    });
-    // Busca os resumos IA para cada equalização
-    const result = await Promise.all(
-      equalizacoes.map(async (eq) => {
-        const resumoIA = await this.prisma.resumoIA.findUnique({
-          where: {
-            userId_idCiclo: {
-              userId: eq.idAvaliado,
-              idCiclo: eq.idCiclo,
+      include: {
+        avaliado: {
+          select: {
+            name: true,
+            cargo: true,
+            ResumoIA: {
+              select: {
+                resumo: true,
+                idCiclo: true,
+              },
             },
           },
-          select: { resumo: true },
-        });
-        return {
-          ...eq,
-          nomeAvaliado: eq.avaliado.name,
-          cargoAvaliado: eq.avaliado.cargo || "Desenvolvedor",
-          resumoIA: resumoIA?.resumo || "",
-        };
-      })
-    );
-    return result;
+        },
+      },
+    });
   }
 }

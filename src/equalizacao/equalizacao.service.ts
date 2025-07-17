@@ -101,6 +101,19 @@ export class EqualizacaoService {
       const { user, existingEqualizacao, idCiclo: cycleId } = userData;
 
       if (existingEqualizacao) {
+        const decryptedAutoavaliacao = await this.cryptoService.decrypt(
+          existingEqualizacao.mediaAutoavaliacao
+        );
+        const decryptedAvaliacaoGestor = await this.cryptoService.decrypt(
+          existingEqualizacao.mediaAvaliacaoGestor
+        );
+        const decryptedAvaliacao360 = await this.cryptoService.decrypt(
+          existingEqualizacao.mediaAvaliacao360
+        );
+        const decryptedNotaFinal = await this.cryptoService.decrypt(
+          existingEqualizacao.notaFinal
+        );
+
         results.push({
           idEqualizacao: existingEqualizacao.id.toString(),
           idAvaliador: existingEqualizacao.idAvaliador.toString(),
@@ -108,12 +121,10 @@ export class EqualizacaoService {
           idCiclo: cycleId.toString(),
           nomeAvaliado: user.name,
           cargoAvaliado: user.cargo,
-          notaAutoavaliacao:
-            parseFloat(existingEqualizacao.mediaAutoavaliacao) || 0,
-          notaGestor: parseFloat(existingEqualizacao.mediaAvaliacaoGestor) || 0,
-          notaAvaliacao360:
-            parseFloat(existingEqualizacao.mediaAvaliacao360) || 0,
-          notaFinal: parseFloat(existingEqualizacao.notaFinal) || 0,
+          notaAutoavaliacao: parseFloat(decryptedAutoavaliacao) || 0,
+          notaGestor: parseFloat(decryptedAvaliacaoGestor) || 0,
+          notaAvaliacao360: parseFloat(decryptedAvaliacao360) || 0,
+          notaFinal: parseFloat(decryptedNotaFinal) || 0,
           justificativa: existingEqualizacao.justificativa,
           resumoIA: user.resumoIA,
           status:
@@ -160,6 +171,19 @@ export class EqualizacaoService {
 
     const { user, existingEqualizacao, idCiclo: cycleId } = userData;
     if (existingEqualizacao) {
+      const decryptedAutoavaliacao = await this.cryptoService.decrypt(
+        existingEqualizacao.mediaAutoavaliacao
+      );
+      const decryptedAvaliacaoGestor = await this.cryptoService.decrypt(
+        existingEqualizacao.mediaAvaliacaoGestor
+      );
+      const decryptedAvaliacao360 = await this.cryptoService.decrypt(
+        existingEqualizacao.mediaAvaliacao360
+      );
+      const decryptedNotaFinal = await this.cryptoService.decrypt(
+        existingEqualizacao.notaFinal
+      );
+
       return {
         idEqualizacao: existingEqualizacao.id.toString(),
         idAvaliador: existingEqualizacao.idAvaliador.toString(),
@@ -167,10 +191,10 @@ export class EqualizacaoService {
         idCiclo: cycleId.toString(),
         nomeAvaliado: user.name,
         cargoAvaliado: user.cargo,
-        notaAutoavaliacao: existingEqualizacao.mediaAutoavaliacao,
-        notaGestor: existingEqualizacao.mediaAvaliacaoGestor,
-        notaAvaliacao360: existingEqualizacao.mediaAvaliacao360,
-        notaFinal: existingEqualizacao.notaFinal,
+        notaAutoavaliacao: parseFloat(decryptedAutoavaliacao) || 0,
+        notaGestor: parseFloat(decryptedAvaliacaoGestor) || 0,
+        notaAvaliacao360: parseFloat(decryptedAvaliacao360) || 0,
+        notaFinal: parseFloat(decryptedNotaFinal) || 0,
         justificativa: existingEqualizacao.justificativa,
         resumoIA: user.resumoIA,
         status:
@@ -203,20 +227,46 @@ export class EqualizacaoService {
   ): Promise<EqualizacaoResponseDto[]> {
     const equalizacoes =
       await this.equalizacaoRepository.getEqualizacoesByAvaliado(idAvaliado);
-    return equalizacoes.map((eq) => ({
-      idEqualizacao: eq.id.toString(),
-      idAvaliador: eq.idAvaliador.toString(),
-      idAvaliado: eq.idAvaliado.toString(),
-      idCiclo: eq.idCiclo.toString(),
-      nomeAvaliado: eq.nomeAvaliado,
-      cargoAvaliado: eq.cargoAvaliado,
-      notaAutoavaliacao: eq.mediaAutoavaliacao,
-      notaGestor: eq.mediaAvaliacaoGestor,
-      notaAvaliacao360: eq.mediaAvaliacao360,
-      notaFinal: eq.notaFinal,
-      justificativa: eq.justificativa,
-      resumoIA: eq.resumoIA,
-      status: eq.status === "FINALIZADO" ? "Finalizado" : "Pendente",
-    }));
+
+    const results: EqualizacaoResponseDto[] = [];
+
+    for (const eq of equalizacoes) {
+      const decryptedAutoavaliacao = await this.cryptoService.decrypt(
+        eq.mediaAutoavaliacao
+      );
+      const decryptedAvaliacaoGestor = await this.cryptoService.decrypt(
+        eq.mediaAvaliacaoGestor
+      );
+      const decryptedAvaliacao360 = await this.cryptoService.decrypt(
+        eq.mediaAvaliacao360
+      );
+      const decryptedNotaFinal = await this.cryptoService.decrypt(eq.notaFinal);
+
+      // Find the ResumoIA for this specific cycle
+      const resumoForCycle = eq.avaliado.ResumoIA?.find(
+        (resumo) => resumo.idCiclo === eq.idCiclo
+      );
+      const decryptedResumoIA = resumoForCycle?.resumo
+        ? await this.cryptoService.decrypt(resumoForCycle.resumo)
+        : "";
+
+      results.push({
+        idEqualizacao: eq.id.toString(),
+        idAvaliador: eq.idAvaliador.toString(),
+        idAvaliado: eq.idAvaliado.toString(),
+        idCiclo: eq.idCiclo.toString(),
+        nomeAvaliado: eq.avaliado.name,
+        cargoAvaliado: eq.avaliado.cargo || "Desenvolvedor",
+        notaAutoavaliacao: parseFloat(decryptedAutoavaliacao) || 0,
+        notaGestor: parseFloat(decryptedAvaliacaoGestor) || 0,
+        notaAvaliacao360: parseFloat(decryptedAvaliacao360) || 0,
+        notaFinal: parseFloat(decryptedNotaFinal) || 0,
+        justificativa: eq.justificativa,
+        resumoIA: decryptedResumoIA,
+        status: eq.status === "FINALIZADO" ? "Finalizado" : "Pendente",
+      });
+    }
+
+    return results;
   }
 }
