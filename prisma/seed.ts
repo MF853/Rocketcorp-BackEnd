@@ -1,6 +1,5 @@
 import {
   PrismaClient,
-  MotivacaoTrabalhoNovamente,
   StatusEqualizacao,
   User,
   Trilha,
@@ -8,9 +7,12 @@ import {
 } from "@prisma/client";
 import * as argon from "argon2";
 import { execSync } from "child_process";
+import { CryptoService } from "../src/crypto/crypto.service";
+import { MotivacaoTrabalhoNovamente } from "../src/avaliacao/dto/create-avaliacao.dto";
 
 // Inicializa o cliente do Prisma
 const prisma = new PrismaClient();
+const cryptoService = new CryptoService();
 
 /**
  * Gera o hash de uma senha usando argon2.
@@ -394,16 +396,15 @@ async function main() {
 
   // 8. Cria as Referências (Opcional)
   console.log("📝 Criando referências para ciclo revisão comitê...");
-  await prisma.referencia.createMany({
-    data: [
-      {
-        idReferenciador: managerUser.id,
-        idReferenciado: luanUser.id,
-        idCiclo: cicloRevisaoComite.id,
-        justificativa:
-          "Luan manteve seu excelente desempenho no ciclo de revisão comitê.",
-      },
-    ],
+  await prisma.referencia.create({
+    data: {
+      idReferenciador: managerUser.id,
+      idReferenciado: luanUser.id,
+      idCiclo: cicloRevisaoComite.id,
+      justificativa: await cryptoService.encrypt(
+        "Luan manteve seu excelente desempenho no ciclo de revisão comitê."
+      ),
+    },
   });
   console.log("✅ Referências criadas para ciclo revisão comitê.");
 
@@ -433,8 +434,10 @@ async function main() {
           idUser: user.id,
           idCiclo: cicloRevisaoComite.id,
           criterioId: criterioParaAvaliar.id,
-          nota: 4.0,
-          justificativa: `Autoavaliação de ${user.name} para o ciclo de revisão comitê.`,
+          nota: await cryptoService.encrypt("4.0"),
+          justificativa: await cryptoService.encrypt(
+            `Autoavaliação de ${user.name} para o ciclo de revisão comitê.`
+          ),
           notaGestor: null, // Ainda não avaliado pelo gestor neste ciclo
           justificativaGestor: null,
         },
@@ -445,31 +448,35 @@ async function main() {
 
   // 10. Cria as Avaliações 360 (Obrigatório para não-mentores)
   console.log("🔄 Criando avaliações 360 para ciclo revisão comitê...");
-  await prisma.avaliacao360.createMany({
-    data: [
-      {
-        idAvaliador: luanUser.id,
-        idAvaliado: managerUser.id,
-        idCiclo: cicloRevisaoComite.id,
-        nota: 4.7,
-        pontosFortes: "Liderança exemplar.",
-        pontosMelhora: "Nenhum.",
-        nomeProjeto: "Projeto Z",
-        periodoMeses: 6,
-        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
-      },
-      {
-        idAvaliador: managerUser.id,
-        idAvaliado: luanUser.id,
-        idCiclo: cicloRevisaoComite.id,
-        nota: 4.3,
-        pontosFortes: "Crescimento notável.",
-        pontosMelhora: "Melhorar proatividade.",
-        nomeProjeto: "Sistema de Avaliação",
-        periodoMeses: 6,
-        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
-      },
-    ],
+  await prisma.avaliacao360.create({
+    data: {
+      idAvaliador: luanUser.id,
+      idAvaliado: managerUser.id,
+      idCiclo: cicloRevisaoComite.id,
+      nota: await cryptoService.encrypt("4.7"),
+      pontosFortes: await cryptoService.encrypt("Liderança exemplar."),
+      pontosMelhora: await cryptoService.encrypt("Nenhum."),
+      nomeProjeto: "Projeto Z",
+      periodoMeses: 6,
+      trabalhariaNovamente: await cryptoService.encrypt(
+        MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE
+      ),
+    },
+  });
+  await prisma.avaliacao360.create({
+    data: {
+      idAvaliador: managerUser.id,
+      idAvaliado: luanUser.id,
+      idCiclo: cicloRevisaoComite.id,
+      nota: await cryptoService.encrypt("4.3"),
+      pontosFortes: await cryptoService.encrypt("Crescimento notável."),
+      pontosMelhora: await cryptoService.encrypt("Melhorar proatividade."),
+      nomeProjeto: "Sistema de Avaliação",
+      periodoMeses: 6,
+      trabalhariaNovamente: await cryptoService.encrypt(
+        MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE
+      ),
+    },
   });
   console.log("✅ Avaliações 360 criadas para ciclo revisão comitê.");
 
@@ -481,8 +488,10 @@ async function main() {
         idMentorado: user.id,
         idMentor: mentorUser.id,
         idCiclo: cicloRevisaoComite.id,
-        nota: 4.2,
-        justificativa: `Sessão de mentoria final para ${user.name} no ciclo de revisão comitê.`,
+        nota: await cryptoService.encrypt("4.2"),
+        justificativa: await cryptoService.encrypt(
+          `Sessão de mentoria final para ${user.name} no ciclo de revisão comitê.`
+        ),
       },
     });
   }
@@ -495,11 +504,13 @@ async function main() {
       data: {
         idAvaliador: comiteUser.id, // O comitê é o avaliador da equalização
         idAvaliado: user.id,
-        mediaAutoavaliacao: 4.0, // Exemplo de média
-        mediaAvaliacaoGestor: 4.5, // Exemplo de média
-        mediaAvaliacao360: 4.3, // Exemplo de média
-        notaFinal: 4.0, // Exemplo de nota final equalizada
-        justificativa: `Equalização do comitê para ${user.name}: Desempenho alinhado com as expectativas.`,
+        mediaAutoavaliacao: await cryptoService.encrypt("4.0"), // Exemplo de média
+        mediaAvaliacaoGestor: await cryptoService.encrypt("4.5"), // Exemplo de média
+        mediaAvaliacao360: await cryptoService.encrypt("4.3"), // Exemplo de média
+        notaFinal: await cryptoService.encrypt("4.0"), // Exemplo de nota final equalizada
+        justificativa: await cryptoService.encrypt(
+          `Equalização do comitê para ${user.name}: Desempenho alinhado com as expectativas.`
+        ),
         status: StatusEqualizacao.FINALIZADO, // Definindo o status
         idCiclo: cicloRevisaoComite.id, // Adicionado o idCiclo
       },
@@ -508,21 +519,23 @@ async function main() {
   console.log("✅ Equalizações criadas para ciclo revisão comitê.");
 
   console.log("🤖 Gerando resumos de IA para ciclo revisão comitê...");
-  await prisma.resumoIA.createMany({
-    data: [
-      {
-        userId: luanUser.id,
-        idCiclo: cicloRevisaoComite.id,
-        resumo:
-          "Luan Bezerra teve seu desempenho validado pelo comitê, com excelente potencial de carreira.",
-      },
-      {
-        userId: arthurUser.id,
-        idCiclo: cicloRevisaoComite.id,
-        resumo:
-          "Arthur Lins foi equalizado com um forte reconhecimento de suas habilidades técnicas.",
-      },
-    ],
+  await prisma.resumoIA.create({
+    data: {
+      userId: luanUser.id,
+      idCiclo: cicloRevisaoComite.id,
+      resumo: await cryptoService.encrypt(
+        "Luan Bezerra teve seu desempenho validado pelo comitê, com excelente potencial de carreira."
+      ),
+    },
+  });
+  await prisma.resumoIA.create({
+    data: {
+      userId: arthurUser.id,
+      idCiclo: cicloRevisaoComite.id,
+      resumo: await cryptoService.encrypt(
+        "Arthur Lins foi equalizado com um forte reconhecimento de suas habilidades técnicas."
+      ),
+    },
   });
   console.log("✅ Resumos de IA gerados para ciclo revisão comitê.");
 
@@ -531,16 +544,15 @@ async function main() {
 
   // Replicar dados de todos os estágios anteriores para o Ciclo Finalizado
   console.log("📝 Criando referências para ciclo finalizado...");
-  await prisma.referencia.createMany({
-    data: [
-      {
-        idReferenciador: managerUser.id,
-        idReferenciado: luanUser.id,
-        idCiclo: cicloFinalizado.id,
-        justificativa:
-          "Luan teve um desempenho excepcional no ciclo finalizado.",
-      },
-    ],
+  await prisma.referencia.create({
+    data: {
+      idReferenciador: managerUser.id,
+      idReferenciado: luanUser.id,
+      idCiclo: cicloFinalizado.id,
+      justificativa: await cryptoService.encrypt(
+        "Luan teve um desempenho excepcional no ciclo finalizado."
+      ),
+    },
   });
   console.log("✅ Referências criadas para ciclo finalizado.");
 
@@ -569,10 +581,14 @@ async function main() {
           idUser: user.id,
           idCiclo: cicloFinalizado.id,
           criterioId: criterioParaAvaliar.id,
-          nota: 4.0,
-          justificativa: `Autoavaliação de ${user.name} para o ciclo finalizado.`,
-          notaGestor: 4.5,
-          justificativaGestor: "Avaliação do gestor finalizada neste ciclo.",
+          nota: await cryptoService.encrypt("4.0"),
+          justificativa: await cryptoService.encrypt(
+            `Autoavaliação de ${user.name} para o ciclo finalizado.`
+          ),
+          notaGestor: await cryptoService.encrypt("4.5"),
+          justificativaGestor: await cryptoService.encrypt(
+            "Avaliação do gestor finalizada neste ciclo."
+          ),
         },
       });
     }
@@ -580,31 +596,39 @@ async function main() {
   console.log("✅ Autoavaliações criadas para ciclo finalizado.");
 
   console.log("🔄 Criando avaliações 360 para ciclo finalizado...");
-  await prisma.avaliacao360.createMany({
-    data: [
-      {
-        idAvaliador: luanUser.id,
-        idAvaliado: managerUser.id,
-        idCiclo: cicloFinalizado.id,
-        nota: 4.9,
-        pontosFortes: "Liderança e impacto excepcionais.",
-        pontosMelhora: "Nenhum.",
-        nomeProjeto: "Projeto W",
-        periodoMeses: 6,
-        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
-      },
-      {
-        idAvaliador: managerUser.id,
-        idAvaliado: luanUser.id,
-        idCiclo: cicloFinalizado.id,
-        nota: 4.5,
-        pontosFortes: "Desempenho consolidado e proativo.",
-        pontosMelhora: "Nenhum.",
-        nomeProjeto: "Sistema de Avaliação",
-        periodoMeses: 6,
-        trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
-      },
-    ],
+  await prisma.avaliacao360.create({
+    data: {
+      idAvaliador: luanUser.id,
+      idAvaliado: managerUser.id,
+      idCiclo: cicloFinalizado.id,
+      nota: await cryptoService.encrypt("4.9"),
+      pontosFortes: await cryptoService.encrypt(
+        "Liderança e impacto excepcionais."
+      ),
+      pontosMelhora: await cryptoService.encrypt("Nenhum."),
+      nomeProjeto: "Projeto W",
+      periodoMeses: 6,
+      trabalhariaNovamente: await cryptoService.encrypt(
+        MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE
+      ),
+    },
+  });
+  await prisma.avaliacao360.create({
+    data: {
+      idAvaliador: managerUser.id,
+      idAvaliado: luanUser.id,
+      idCiclo: cicloFinalizado.id,
+      nota: await cryptoService.encrypt("4.5"),
+      pontosFortes: await cryptoService.encrypt(
+        "Desempenho consolidado e proativo."
+      ),
+      pontosMelhora: await cryptoService.encrypt("Nenhum."),
+      nomeProjeto: "Sistema de Avaliação",
+      periodoMeses: 6,
+      trabalhariaNovamente: await cryptoService.encrypt(
+        MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE
+      ),
+    },
   });
   console.log("✅ Avaliações 360 criadas para ciclo finalizado.");
 
@@ -616,8 +640,10 @@ async function main() {
         idMentorado: user.id,
         idMentor: mentorUser.id,
         idCiclo: cicloFinalizado.id,
-        nota: 4.7,
-        justificativa: `Sessão de mentoria de encerramento para ${user.name} no ciclo finalizado.`,
+        nota: await cryptoService.encrypt("4.7"),
+        justificativa: await cryptoService.encrypt(
+          `Sessão de mentoria de encerramento para ${user.name} no ciclo finalizado.`
+        ),
       },
     });
   }
@@ -629,11 +655,13 @@ async function main() {
       data: {
         idAvaliador: comiteUser.id, // O comitê é o avaliador da equalização
         idAvaliado: user.id,
-        mediaAutoavaliacao: 4.2, // Exemplo de média
-        mediaAvaliacaoGestor: 4.6, // Exemplo de média
-        mediaAvaliacao360: 4.4, // Exemplo de média
-        notaFinal: 4.7, // Exemplo de nota final equalizada
-        justificativa: `Equalização finalizada para ${user.name}: Desempenho excelente e consistente.`,
+        mediaAutoavaliacao: await cryptoService.encrypt("4.2"), // Exemplo de média
+        mediaAvaliacaoGestor: await cryptoService.encrypt("4.6"), // Exemplo de média
+        mediaAvaliacao360: await cryptoService.encrypt("4.4"), // Exemplo de média
+        notaFinal: await cryptoService.encrypt("4.7"), // Exemplo de nota final equalizada
+        justificativa: await cryptoService.encrypt(
+          `Equalização finalizada para ${user.name}: Desempenho excelente e consistente.`
+        ),
         status: StatusEqualizacao.FINALIZADO, // Definindo o status
         idCiclo: cicloFinalizado.id, // Adicionado o idCiclo
       },
@@ -642,21 +670,23 @@ async function main() {
   console.log("✅ Equalizações criadas para ciclo finalizado.");
 
   console.log("🤖 Gerando resumos de IA para ciclo finalizado...");
-  await prisma.resumoIA.createMany({
-    data: [
-      {
-        userId: luanUser.id,
-        idCiclo: cicloFinalizado.id,
-        resumo:
-          "Luan Bezerra concluiu o ciclo com um desempenho excepcional, superando todas as expectativas.",
-      },
-      {
-        userId: arthurUser.id,
-        idCiclo: cicloFinalizado.id,
-        resumo:
-          "Arthur Lins teve um ciclo de sucesso, com todas as avaliações e equalizações finalizadas positivamente.",
-      },
-    ],
+  await prisma.resumoIA.create({
+    data: {
+      userId: luanUser.id,
+      idCiclo: cicloFinalizado.id,
+      resumo: await cryptoService.encrypt(
+        "Luan Bezerra concluiu o ciclo com um desempenho excepcional, superando todas as expectativas."
+      ),
+    },
+  });
+  await prisma.resumoIA.create({
+    data: {
+      userId: arthurUser.id,
+      idCiclo: cicloFinalizado.id,
+      resumo: await cryptoService.encrypt(
+        "Arthur Lins teve um ciclo de sucesso, com todas as avaliações e equalizações finalizadas positivamente."
+      ),
+    },
   });
   console.log("✅ Resumos de IA gerados para ciclo finalizado.");
 
