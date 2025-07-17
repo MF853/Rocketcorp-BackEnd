@@ -11,7 +11,7 @@ export class LogController {
   constructor(private readonly logService: LogService) {}
 
   @Get("recent")
-  @Roles(Role.rh, Role.admin)
+  @Roles(Role.rh, Role.admin, Role.comite)
   async getRecentLogs() {
     return this.logService.getRecentLogs();
   }
