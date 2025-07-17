@@ -444,22 +444,17 @@ export class AvaliacaoService {
       `📊 Avaliações encontradas para gestor ${gestorId} no ciclo ${idCiclo}:`,
       avaliacoes.length
     );
-    for (const a of avaliacoes) {
-      console.log(
-        `Avaliação: ${a.id}, Avaliado: ${a.user.name}, Nota: ${a.nota}, Nota Gestor: ${a.notaGestor}`
-      );
-    }
 
     // Define proper types for the grouped data
     type GroupedUser = {
       id: number;
       name: string;
       cargo: string | null;
-      notas: (string | null)[];
-      notasGestor: (string | null)[];
+      notas: number[];
+      notasGestor: number[];
     };
 
-    // Group by user
+    // Group by user and decrypt values
     const grouped = new Map<number, GroupedUser>();
     for (const a of avaliacoes) {
       const userId = a.user.id;
@@ -473,27 +468,35 @@ export class AvaliacaoService {
         });
       }
       const user = grouped.get(userId)!;
-      user.notas.push(a.nota);
-      user.notasGestor.push(a.notaGestor);
+
+      // Decrypt and parse the notes
+      if (a.nota) {
+        const decryptedNota = await this.cryptoService.decrypt(a.nota);
+        user.notas.push(parseFloat(decryptedNota) || 0);
+      }
+
+      if (a.notaGestor) {
+        const decryptedNotaGestor = await this.cryptoService.decrypt(
+          a.notaGestor
+        );
+        user.notasGestor.push(parseFloat(decryptedNotaGestor) || 0);
+      }
     }
 
-    // Calculate means - convert encrypted strings to numbers for calculation
+    // Calculate means
     return Array.from(grouped.values()).map((u) => ({
       id: u.id,
       name: u.name,
       cargo: u.cargo,
-      meanNota: u.notas.includes(null)
-        ? null
-        : u.notas.reduce(
-            (acc, nota) => acc + (nota ? parseFloat(nota) : 0),
-            0
-          ) / u.notas.length,
-      meanNotaGestor: u.notasGestor.includes(null)
-        ? null
-        : u.notasGestor.reduce(
-            (acc, nota) => acc + (nota ? parseFloat(nota) : 0),
-            0
-          ) / u.notasGestor.length,
+      meanNota:
+        u.notas.length > 0
+          ? u.notas.reduce((acc, nota) => acc + nota, 0) / u.notas.length
+          : null,
+      meanNotaGestor:
+        u.notasGestor.length > 0
+          ? u.notasGestor.reduce((acc, nota) => acc + nota, 0) /
+            u.notasGestor.length
+          : null,
     }));
   }
 
@@ -521,13 +524,27 @@ export class AvaliacaoService {
       }
       const block = blocksMap.get(tipo);
       if (block) {
+        // Decrypt all encrypted fields
+        const decryptedNota = a.nota
+          ? await this.cryptoService.decrypt(a.nota)
+          : "0";
+        const decryptedJustificativa = a.justificativa
+          ? await this.cryptoService.decrypt(a.justificativa)
+          : "";
+        const decryptedNotaGestor = a.notaGestor
+          ? await this.cryptoService.decrypt(a.notaGestor)
+          : "0";
+        const decryptedJustificativaGestor = a.justificativaGestor
+          ? await this.cryptoService.decrypt(a.justificativaGestor)
+          : "";
+
         block.criteria.push({
           id: a.id.toString(),
           name: criterio.name,
-          selfScore: a.nota ?? 0,
-          selfJustification: a.justificativa ?? "",
-          managerScore: a.notaGestor ?? 0,
-          managerJustification: a.justificativaGestor ?? "",
+          selfScore: parseFloat(decryptedNota) || 0,
+          selfJustification: decryptedJustificativa,
+          managerScore: parseFloat(decryptedNotaGestor) || 0,
+          managerJustification: decryptedJustificativaGestor,
         });
       }
     }
