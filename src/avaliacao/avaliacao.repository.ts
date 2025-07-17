@@ -1,34 +1,72 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Autoavaliacao, Avaliacao360 } from "@prisma/client";
+import { Autoavaliacao, Avaliacao360, Prisma } from "@prisma/client";
 import {
   CreateAvaliacaoDto,
   CreateAvaliacao360Dto,
   CreateMentoringDto,
-  BulkCreateAvaliacaoDto,
 } from "./dto/create-avaliacao.dto";
 import {
   UpdateAvaliacaoDto,
   UpdateAvaliacao360Dto,
 } from "./dto/update-avaliacao.dto";
 
-type AutoavaliacaoWithIncludes = Autoavaliacao & {
+// Type for encrypted data where numeric fields become strings
+type EncryptedCreateAvaliacaoDto = Omit<
+  CreateAvaliacaoDto,
+  "nota" | "notaGestor"
+> & {
+  nota: string;
+  notaGestor?: string;
+};
+
+type EncryptedUpdateAvaliacaoDto = Omit<
+  UpdateAvaliacaoDto,
+  "nota" | "notaGestor"
+> & {
+  nota?: string;
+  notaGestor?: string;
+};
+
+type EncryptedCreateAvaliacao360Dto = Omit<
+  CreateAvaliacao360Dto,
+  "nota" | "trabalhariaNovamente"
+> & {
+  nota: string;
+  trabalhariaNovamente: string;
+};
+
+type EncryptedUpdateAvaliacao360Dto = Omit<UpdateAvaliacao360Dto, "nota"> & {
+  nota?: string;
+};
+
+type EncryptedCreateMentoringDto = Omit<CreateMentoringDto, "nota"> & {
+  nota: string;
+};
+
+export type AutoavaliacaoWithIncludes = Autoavaliacao & {
   criterio: { id: number; name: string; enabled: boolean } | null;
   user: { id: number; name: string; email: string };
 };
 
-type Avaliacao360WithIncludes = Avaliacao360 & {
+export type Avaliacao360WithIncludes = Avaliacao360 & {
   avaliador: { id: number; name: string; email: string };
   avaliado: { id: number; name: string; email: string };
 };
 
 @Injectable()
 export class AvaliacaoRepository {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
-  async createAvaliacao(data: CreateAvaliacaoDto) {
+  async createAvaliacao(data: EncryptedCreateAvaliacaoDto) {
+    const { idUser, idCiclo, criterioId, ...rest } = data;
     return this.prisma.autoavaliacao.create({
-      data,
+      data: {
+        ...rest,
+        user: { connect: { id: idUser } },
+        ciclo: { connect: { id: idCiclo } },
+        criterio: { connect: { id: criterioId } },
+      },
       include: {
         criterio: { select: { id: true, name: true, enabled: true } },
         user: { select: { id: true, name: true, email: true } },
@@ -55,10 +93,24 @@ export class AvaliacaoRepository {
     });
   }
 
-  async updateAvaliacao(id: number, data: UpdateAvaliacaoDto) {
+  async updateAvaliacao(id: number, data: EncryptedUpdateAvaliacaoDto) {
+    const { idUser, idCiclo, criterioId, ...rest } = data;
+
+    const updateData: Prisma.AutoavaliacaoUpdateInput = { ...rest };
+
+    if (idUser) {
+      updateData.user = { connect: { id: idUser } };
+    }
+    if (idCiclo) {
+      updateData.ciclo = { connect: { id: idCiclo } };
+    }
+    if (criterioId) {
+      updateData.criterio = { connect: { id: criterioId } };
+    }
+
     return this.prisma.autoavaliacao.update({
       where: { id },
-      data,
+      data: updateData,
       include: this.getAvaliacaoIncludes(),
     });
   }
@@ -136,9 +188,15 @@ export class AvaliacaoRepository {
     return count > 0;
   }
 
-  async createAvaliacao360(data: CreateAvaliacao360Dto) {
+  async createAvaliacao360(data: EncryptedCreateAvaliacao360Dto) {
+    const { idAvaliador, idAvaliado, idCiclo, ...rest } = data;
     return this.prisma.avaliacao360.create({
-      data,
+      data: {
+        ...rest,
+        avaliador: { connect: { id: idAvaliador } },
+        avaliado: { connect: { id: idAvaliado } },
+        ciclo: { connect: { id: idCiclo } },
+      },
       include: this.getAvaliacao360Includes(),
     });
   }
@@ -162,10 +220,24 @@ export class AvaliacaoRepository {
     });
   }
 
-  async updateAvaliacao360(id: number, data: UpdateAvaliacao360Dto) {
+  async updateAvaliacao360(id: number, data: EncryptedUpdateAvaliacao360Dto) {
+    const { idAvaliador, idAvaliado, idCiclo, ...rest } = data;
+
+    const updateData: Prisma.Avaliacao360UpdateInput = { ...rest };
+
+    if (idAvaliador) {
+      updateData.avaliador = { connect: { id: idAvaliador } };
+    }
+    if (idAvaliado) {
+      updateData.avaliado = { connect: { id: idAvaliado } };
+    }
+    if (idCiclo) {
+      updateData.ciclo = { connect: { id: idCiclo } };
+    }
+
     return this.prisma.avaliacao360.update({
       where: { id },
-      data,
+      data: updateData,
       include: this.getAvaliacao360Includes(),
     });
   }
@@ -223,25 +295,16 @@ export class AvaliacaoRepository {
     return count > 0;
   }
   async getCycleStatistics(idCiclo: number) {
-    const [totalAutoavaliacoes, totalAvaliacoes360, avgNota, avgNota360] =
-      await Promise.all([
-        this.prisma.autoavaliacao.count({ where: { idCiclo } }),
-        this.prisma.avaliacao360.count({ where: { idCiclo } }),
-        this.prisma.autoavaliacao.aggregate({
-          where: { idCiclo, nota: { not: null } },
-          _avg: { nota: true },
-        }),
-        this.prisma.avaliacao360.aggregate({
-          where: { idCiclo, nota: { not: null } },
-          _avg: { nota: true },
-        }),
-      ]);
+    const [totalAutoavaliacoes, totalAvaliacoes360] = await Promise.all([
+      this.prisma.autoavaliacao.count({ where: { idCiclo } }),
+      this.prisma.avaliacao360.count({ where: { idCiclo } }),
+    ]);
 
     return {
       totalAutoavaliacoes,
       totalAvaliacoes360,
-      avgNota: (avgNota._avg.nota as number) || 0,
-      avgNota360: (avgNota360._avg.nota as number) || 0,
+      avgNota: 0, // Cannot calculate average on encrypted fields
+      avgNota360: 0, // Cannot calculate average on encrypted fields
     };
   }
 
@@ -298,10 +361,16 @@ export class AvaliacaoRepository {
   /**
    * Cria uma nova avaliação de mentoring
    */
-  async createMentoring(createMentoringDto: CreateMentoringDto) {
+  async createMentoring(createMentoringDto: EncryptedCreateMentoringDto) {
+    const { idMentor, idMentorado, idCiclo, ...rest } = createMentoringDto;
     try {
       return await this.prisma.mentoring.create({
-        data: createMentoringDto,
+        data: {
+          ...rest,
+          mentor: { connect: { id: idMentor } },
+          mentorado: { connect: { id: idMentorado } },
+          ciclo: { connect: { id: idCiclo } },
+        },
       });
     } catch (error) {
       console.error("Erro ao criar mentoring:", error);
@@ -312,13 +381,23 @@ export class AvaliacaoRepository {
   /**
    * Cria múltiplas avaliações de mentoring em lote
    */
-  async createBulkMentoring(mentoringData: CreateMentoringDto[]) {
+  async createBulkMentoring(mentoringData: EncryptedCreateMentoringDto[]) {
     try {
       console.log("📝 Criando mentoring em lote:", mentoringData);
 
+      const data = mentoringData.map((item) => {
+        const { idMentor, idMentorado, idCiclo, ...rest } = item;
+        return {
+          ...rest,
+          idMentor,
+          idMentorado,
+          idCiclo,
+        };
+      });
+
       // Opção 1: Usar createMany (mais eficiente)
       const result = await this.prisma.mentoring.createMany({
-        data: mentoringData,
+        data: data,
         skipDuplicates: false, // ou true se quiser pular duplicatas
       });
 
@@ -375,11 +454,28 @@ export class AvaliacaoRepository {
   /**
    * Atualiza uma avaliação de mentoring
    */
-  async updateMentoring(id: number, updateData: Partial<CreateMentoringDto>) {
+  async updateMentoring(
+    id: number,
+    updateData: Partial<EncryptedCreateMentoringDto>
+  ) {
+    const { idMentor, idMentorado, idCiclo, ...rest } = updateData;
+
+    const data: Prisma.MentoringUpdateInput = { ...rest };
+
+    if (idMentor) {
+      data.mentor = { connect: { id: idMentor } };
+    }
+    if (idMentorado) {
+      data.mentorado = { connect: { id: idMentorado } };
+    }
+    if (idCiclo) {
+      data.ciclo = { connect: { id: idCiclo } };
+    }
+
     try {
       return await this.prisma.mentoring.update({
         where: { id },
-        data: updateData,
+        data,
       });
     } catch (error) {
       console.error("Erro ao atualizar mentoring:", error);
@@ -453,19 +549,21 @@ export class AvaliacaoRepository {
    * Creates multiple Avaliacoes in a single transaction
    */
   async createBulkAvaliacoes(
-    avaliacoes: CreateAvaliacaoDto[]
+    avaliacoes: EncryptedCreateAvaliacaoDto[]
   ): Promise<AutoavaliacaoWithIncludes[]> {
     return this.prisma.$transaction(async (tx) => {
       const createdAvaliacoes: AutoavaliacaoWithIncludes[] = [];
 
       for (const avaliacao of avaliacoes) {
+        const { idUser, idCiclo, criterioId, ...rest } = avaliacao;
+
         // Check if autoavaliacao already exists for this user, cycle, and criterion
         const existingAvaliacao = await tx.autoavaliacao.findUnique({
           where: {
             idUser_idCiclo_criterioId: {
-              idUser: avaliacao.idUser,
-              idCiclo: avaliacao.idCiclo,
-              criterioId: avaliacao.criterioId,
+              idUser: idUser,
+              idCiclo: idCiclo,
+              criterioId: criterioId,
             },
           },
         });
@@ -474,23 +572,20 @@ export class AvaliacaoRepository {
           // Update existing autoavaliacao
           const result = await tx.autoavaliacao.update({
             where: { id: existingAvaliacao.id },
-            data: avaliacao,
-            include: {
-              criterio: { select: { id: true, name: true, enabled: true } },
-              user: { select: { id: true, name: true, email: true } },
-            },
+            data: rest,
           });
-          createdAvaliacoes.push(result);
+          createdAvaliacoes.push(result as AutoavaliacaoWithIncludes);
         } else {
           // Create new autoavaliacao
           const result = await tx.autoavaliacao.create({
-            data: avaliacao,
-            include: {
-              criterio: { select: { id: true, name: true, enabled: true } },
-              user: { select: { id: true, name: true, email: true } },
+            data: {
+              ...rest,
+              user: { connect: { id: idUser } },
+              ciclo: { connect: { id: idCiclo } },
+              criterio: { connect: { id: criterioId } },
             },
           });
-          createdAvaliacoes.push(result);
+          createdAvaliacoes.push(result as AutoavaliacaoWithIncludes);
         }
       }
 
@@ -502,20 +597,22 @@ export class AvaliacaoRepository {
    * Creates multiple Avaliacoes360 in a single transaction
    */
   async createBulkAvaliacoes360(
-    avaliacoes360: CreateAvaliacao360Dto[]
+    avaliacoes360: EncryptedCreateAvaliacao360Dto[]
   ): Promise<Avaliacao360WithIncludes[]> {
     return this.prisma.$transaction(async (tx) => {
       const createdAvaliacoes360: Avaliacao360WithIncludes[] = [];
 
       for (const avaliacao360 of avaliacoes360) {
+        const { idAvaliador, idAvaliado, idCiclo, ...rest } = avaliacao360;
         const created = await tx.avaliacao360.create({
-          data: avaliacao360,
-          include: {
-            avaliador: { select: { id: true, name: true, email: true } },
-            avaliado: { select: { id: true, name: true, email: true } },
+          data: {
+            ...rest,
+            avaliador: { connect: { id: idAvaliador } },
+            avaliado: { connect: { id: idAvaliado } },
+            ciclo: { connect: { id: idCiclo } },
           },
         });
-        createdAvaliacoes360.push(created);
+        createdAvaliacoes360.push(created as Avaliacao360WithIncludes);
       }
 
       return createdAvaliacoes360;
@@ -526,8 +623,8 @@ export class AvaliacaoRepository {
    * Creates a mix of Avaliacoes and Avaliacoes360 in a single transaction
    */
   async createBulkMixed(data: {
-    autoavaliacoes?: CreateAvaliacaoDto[];
-    avaliacoes360?: CreateAvaliacao360Dto[];
+    autoavaliacoes?: EncryptedCreateAvaliacaoDto[];
+    avaliacoes360?: EncryptedCreateAvaliacao360Dto[];
   }): Promise<{
     autoavaliacoes: AutoavaliacaoWithIncludes[];
     avaliacoes360: Avaliacao360WithIncludes[];
@@ -541,13 +638,15 @@ export class AvaliacaoRepository {
       // Create regular evaluations
       if (data.autoavaliacoes && data.autoavaliacoes.length > 0) {
         for (const avaliacao of data.autoavaliacoes) {
+          const { idUser, idCiclo, criterioId, ...rest } = avaliacao;
+
           // Check if autoavaliacao already exists for this user, cycle, and criterion
           const existingAvaliacao = await tx.autoavaliacao.findUnique({
             where: {
               idUser_idCiclo_criterioId: {
-                idUser: avaliacao.idUser,
-                idCiclo: avaliacao.idCiclo,
-                criterioId: avaliacao.criterioId,
+                idUser: idUser,
+                idCiclo: idCiclo,
+                criterioId: criterioId,
               },
             },
           });
@@ -556,37 +655,36 @@ export class AvaliacaoRepository {
             // Update existing autoavaliacao
             const result = await tx.autoavaliacao.update({
               where: { id: existingAvaliacao.id },
-              data: avaliacao,
-              include: {
-                criterio: { select: { id: true, name: true, enabled: true } },
-                user: { select: { id: true, name: true, email: true } },
-              },
+              data: rest,
             });
-            results.autoavaliacoes.push(result);
+            results.autoavaliacoes.push(result as AutoavaliacaoWithIncludes);
           } else {
             // Create new autoavaliacao
             const result = await tx.autoavaliacao.create({
-              data: avaliacao,
-              include: {
-                criterio: { select: { id: true, name: true, enabled: true } },
-                user: { select: { id: true, name: true, email: true } },
+              data: {
+                ...rest,
+                user: { connect: { id: idUser } },
+                ciclo: { connect: { id: idCiclo } },
+                criterio: { connect: { id: criterioId } },
               },
             });
-            results.autoavaliacoes.push(result);
+            results.autoavaliacoes.push(result as AutoavaliacaoWithIncludes);
           }
         }
       }
 
       if (data.avaliacoes360 && data.avaliacoes360.length > 0) {
         for (const avaliacao360 of data.avaliacoes360) {
+          const { idAvaliador, idAvaliado, idCiclo, ...rest } = avaliacao360;
           const created = await tx.avaliacao360.create({
-            data: avaliacao360,
-            include: {
-              avaliador: { select: { id: true, name: true, email: true } },
-              avaliado: { select: { id: true, name: true, email: true } },
+            data: {
+              ...rest,
+              avaliador: { connect: { id: idAvaliador } },
+              avaliado: { connect: { id: idAvaliado } },
+              ciclo: { connect: { id: idCiclo } },
             },
           });
-          results.avaliacoes360.push(created);
+          results.avaliacoes360.push(created as Avaliacao360WithIncludes);
         }
       }
 
@@ -611,11 +709,18 @@ export class AvaliacaoRepository {
   }
 
   // ✅ Método updateNotaGestor
-  async updateNotaGestor(id: number, notaGestor: number, justificativaGestor?: string) {
+  async updateNotaGestor(
+    id: number,
+    notaGestor: number,
+    justificativaGestor?: string
+  ) {
+    // Convert number to string for encrypted storage
+    const encryptedNotaGestor = notaGestor.toString();
+
     return await this.prisma.autoavaliacao.update({
       where: { id },
       data: {
-        notaGestor,
+        notaGestor: encryptedNotaGestor,
         ...(justificativaGestor !== undefined && { justificativaGestor }),
       },
       include: {
@@ -626,7 +731,10 @@ export class AvaliacaoRepository {
   }
 
   // ✅ Método createBulk que o service está chamando
-  async createBulk(data: BulkCreateAvaliacaoDto) {
+  async createBulk(data: {
+    autoavaliacoes?: EncryptedCreateAvaliacaoDto[];
+    avaliacoes360?: EncryptedCreateAvaliacao360Dto[];
+  }) {
     return this.createBulkMixed(data);
   }
 

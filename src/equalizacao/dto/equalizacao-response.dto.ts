@@ -54,33 +54,30 @@ export class EqualizacaoResponseDto {
   notaGestor: number | null;
 
   @ApiProperty({
-    description: "Média das avaliações 360° do usuário",
-    example: 4.1,
+    description: "Média das notas de avaliação 360 para o usuário",
+    example: 4.0,
     nullable: true,
   })
   notaAvaliacao360: number | null;
 
   @ApiProperty({
-    description: "Nota final calculada (ainda não implementada)",
-    example: null,
-    nullable: true,
+    description: "Nota final da equalização",
+    example: 4.25,
   })
   notaFinal: number | null;
 
   @ApiProperty({
-    description:
-      "Justificativa principal ou observações (será preenchida pelo módulo de equalização)",
-    example: null,
-    nullable: true,
+    description: "Justificativa para a nota final",
+    example: "O colaborador demonstrou excelente desempenho...",
   })
   justificativa: string | null;
 
   @ApiProperty({
-    description: "Resumo gerado por IA com base nas avaliações",
-    example:
-      "Luan demonstra excelente capacidade técnica conforme suas autoavaliações...",
+    description: "Resumo gerado pela IA sobre o desempenho do usuário",
+    example: "Luan Bezerra é um profissional proativo...",
+    nullable: true,
   })
-  resumoIA: string;
+  resumoIA: string | null;
 
   @ApiProperty({
     description: "Status atual da equalização",
