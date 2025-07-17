@@ -16,6 +16,7 @@ Nosso time é formado pelos seguintes integrantes:
 ## 📖 Resumo do Projeto
 
 Este projeto consiste em um backend robusto desenvolvido com NestJS, utilizando PostgreSQL como banco de dados, Prisma como ORM, e Docker para a containerização do ambiente. A autenticação é gerenciada com JWT, incluindo um sistema de controle de acesso baseado em roles (Role-Based Access Control). O projeto está configurado com scripts para facilitar o desenvolvimento, deploy em produção e seeding do banco de dados.
+Você pode visualizar o nosso repositório do FrontEnd em: [Rocketcorp-FrontEnd](https://github.com/ArthurLins00/Rocketcorp-frontend)
 
 ## 🛠️ Tecnologias
 
