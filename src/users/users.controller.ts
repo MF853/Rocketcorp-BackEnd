@@ -173,6 +173,12 @@ export class UsersController {
     return this.usersService.getAllUsersStatisticsByCycle(+cicloId);
   }
 
+  @Get("by-equipe-com-gestor/:equipeId")
+  @ApiOperation({ summary: "Lista todos os membros e o gestor de uma equipe" })
+  @ApiResponse({
+    status: 200,
+    description: "Lista de membros e gestor da equipe retornada com sucesso.",
+  })
   @Get(":id/performance")
   @ApiOperation({
     summary: "Busca dados de performance de um usuário",
@@ -227,8 +233,6 @@ export class UsersController {
     return this.usersService.getUserHistory(+id);
   }
 
-  @Get("by-equipe-com-gestor/:equipeId")
-  @ApiOperation({ summary: "Lista todos os membros e o gestor de uma equipe" })
   @Get("by-equipe-com-gestor/:equipeId")
   @ApiOperation({ summary: "Lista todos os membros e o gestor de uma equipe" })
   @ApiResponse({
