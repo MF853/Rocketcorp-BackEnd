@@ -8,8 +8,6 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger("Bootstrap");
 
-  app.enableCors();
-
   // Cookie parser middleware
   app.use(cookieParser());
 
