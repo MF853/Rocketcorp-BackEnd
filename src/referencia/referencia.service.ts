@@ -64,10 +64,13 @@ export class ReferenciaService {
   ): Promise<BulkCreateResult> {
     try {
       const { referencias } = bulkCreateReferenciaDto;
+      console.log("🔍 ReferenciaService.createBulk - Dados recebidos:", JSON.stringify(bulkCreateReferenciaDto, null, 2));
 
       if (!referencias || referencias.length === 0) {
         throw new Error("Nenhuma referência fornecida para criação em lote");
       }
+
+      console.log(`📝 Processando ${referencias.length} referências...`);
 
       // Check for duplicates within the batch
       const seen = new Set<string>();
@@ -107,6 +110,7 @@ export class ReferenciaService {
       }
 
       // Check for existing referencias in database
+      console.log("🔍 Verificando referências existentes no banco...");
       const existingChecks = await Promise.all(
         referencias.map(async (ref, index) => {
           const exists = await this.referenciaRepository.referenciaExists(
@@ -135,10 +139,24 @@ export class ReferenciaService {
         );
       }
 
-      return await this.referenciaRepository.createBulkReferencias(
+      console.log("✅ Nenhuma referência duplicada encontrada. Criando referências...");
+      const result = await this.referenciaRepository.createBulkReferencias(
         bulkCreateReferenciaDto
       );
+      
+      console.log("✅ Referências criadas com sucesso:", {
+        count: result.count,
+        referencias: result.referencias.map(r => ({
+          id: r.id,
+          idReferenciador: r.idReferenciador,
+          idReferenciado: r.idReferenciado,
+          idCiclo: r.idCiclo
+        }))
+      });
+      
+      return result;
     } catch (error) {
+      console.error("❌ Erro no ReferenciaService.createBulk:", error);
       if (error instanceof ConflictException) {
         throw error;
       }

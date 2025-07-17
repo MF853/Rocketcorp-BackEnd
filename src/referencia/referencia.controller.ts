@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from "@nestjs/swagger";
 import { ReferenciaService } from "./referencia.service";
@@ -14,6 +15,7 @@ import {
   BulkCreateReferenciaDto,
 } from "./dto/create-referencia.dto";
 import { UpdateReferenciaDto } from "./dto/update-referencia.dto";
+import { JwtGuard } from "../auth/guard/jwt.guard";
 
 @ApiTags("Referências")
 @Controller("referencia")
@@ -55,6 +57,7 @@ export class ReferenciaController {
     description: "Referência já existe para esta combinação",
   })
   @ApiResponse({ status: 400, description: "Dados inválidos" })
+  @UseGuards(JwtGuard)
   @Post()
   create(@Body() createReferenciaDto: CreateReferenciaDto) {
     return this.referenciaService.create(createReferenciaDto);
@@ -80,9 +83,16 @@ export class ReferenciaController {
     status: 409,
     description: "Uma ou mais referências já existem",
   })
+  @UseGuards(JwtGuard)
   @Post("bulk")
   createBulk(@Body() bulkCreateReferenciaDto: BulkCreateReferenciaDto) {
-    return this.referenciaService.createBulk(bulkCreateReferenciaDto);
+    console.log("🔍 ReferenciaController.createBulk - Requisição recebida");
+    console.log("📦 Dados recebidos:", JSON.stringify(bulkCreateReferenciaDto, null, 2));
+    
+    const result = this.referenciaService.createBulk(bulkCreateReferenciaDto);
+    
+    console.log("✅ ReferenciaController.createBulk - Resultado retornado");
+    return result;
   }
 
   @ApiOperation({

@@ -4,9 +4,10 @@ import { AvaliacaoController } from "./avaliacao.controller";
 import { AvaliacaoRepository } from "./avaliacao.repository";
 import { PrismaService } from "../prisma/prisma.service";
 import { CryptoModule } from "../crypto/crypto.module";
+import { LogModule } from '../log/log.module';
 
 @Module({
-  imports: [CryptoModule],
+  imports: [CryptoModule, LogModule],
   controllers: [AvaliacaoController],
   providers: [AvaliacaoService, AvaliacaoRepository, PrismaService],
   exports: [AvaliacaoService, AvaliacaoRepository],

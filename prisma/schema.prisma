@@ -59,6 +59,7 @@ model User {
   idEquipe               Int?
   equipe                 Equipe?         @relation("MembrosEquipe", fields: [idEquipe], references: [id], onDelete: SetNull)
   equipesGeridas        Equipe[]         @relation("GestorEquipe")
+  logs                  Log[]            // Campo usado apenas para o relacionamento Prisma
 
   @@index([trilhaId])
   @@index([email])
@@ -261,4 +262,17 @@ enum statusProcessamento {
   PROCESSANDO
   CONCLUIDO
   ERRO
+}
+
+model Log {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String   @db.VarChar(50) // ex: CREATE, UPDATE, DELETE
+  entity    String   @db.VarChar(50) // ex: User, Equipe, Avaliacao, etc
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entity])
+  @@map("logs")
 }

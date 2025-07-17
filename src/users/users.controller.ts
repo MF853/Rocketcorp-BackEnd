@@ -6,6 +6,7 @@ import {
   Param,
   Delete,
   Query,
+  Req,
 } from "@nestjs/common";
 import { UsersService } from "./users.service";
 import { UpdateUserDto } from "./dto/update-user.dto";
@@ -20,11 +21,17 @@ import {
   ApiParam,
   ApiQuery,
 } from "@nestjs/swagger";
+import { LogService } from '../log/log.service';
+import { Request } from 'express';
+import { UserPayload } from '../types/express';
 
 @ApiTags("Users")
 @Controller("users")
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly logService: LogService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: "Lista todos os usuários" })
@@ -83,15 +90,29 @@ export class UsersController {
   @Patch(":id")
   @ApiOperation({ summary: "Atualiza um usuário pelo ID" })
   @ApiResponse({ status: 200, description: "Usuário atualizado com sucesso." })
-  update(@Param("id") id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
+  async update(@Param("id") id: string, @Body() updateUserDto: UpdateUserDto, @Req() req: Request) {
+    const updated = await this.usersService.update(+id, updateUserDto);
+    const userId = (req.user as UserPayload)?.userId;
+    await this.logService.createLog({
+      userId,
+      action: 'UPDATE',
+      entity: 'User',
+    });
+    return updated;
   }
 
   @Delete(":id")
   @ApiOperation({ summary: "Remove um usuário pelo ID" })
   @ApiResponse({ status: 200, description: "Usuário removido com sucesso." })
-  remove(@Param("id") id: string) {
-    return this.usersService.remove(+id);
+  async remove(@Param("id") id: string, @Req() req: Request) {
+    const removed = await this.usersService.remove(+id);
+    const userId = (req.user as UserPayload)?.userId;
+    await this.logService.createLog({
+      userId,
+      action: 'DELETE',
+      entity: 'User',
+    });
+    return removed;
   }
 
   @Get(":id/statistics")

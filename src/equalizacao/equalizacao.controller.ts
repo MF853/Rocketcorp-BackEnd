@@ -6,6 +6,8 @@ import {
   Patch,
   Param,
   Delete,
+  Req,
+  UseGuards,
 } from "@nestjs/common";
 import { EqualizacaoService } from "./equalizacao.service";
 import { CreateEqualizacaoDto } from "./dto/create-equalizacao.dto";
@@ -18,18 +20,33 @@ import {
   ApiParam,
   ApiBody,
 } from "@nestjs/swagger";
+import { LogService } from '../log/log.service';
+import { Request } from 'express';
+import { UserPayload } from '../types/express';
+import { JwtGuard } from '../auth/guard';
 
 @ApiTags("Equalizacao")
 @Controller("equalizacao")
 export class EqualizacaoController {
-  constructor(private readonly equalizacaoService: EqualizacaoService) {}
+  constructor(
+    private readonly equalizacaoService: EqualizacaoService,
+    private readonly logService: LogService,
+  ) {}
 
+  @UseGuards(JwtGuard)
   @Post()
   @ApiOperation({ summary: "Create a new equalizacao" })
   @ApiBody({ type: CreateEqualizacaoDto })
   @ApiResponse({ status: 201, description: "Equalizacao created successfully" })
-  create(@Body() createEqualizacaoDto: CreateEqualizacaoDto) {
-    return this.equalizacaoService.create(createEqualizacaoDto);
+  async create(@Body() createEqualizacaoDto: CreateEqualizacaoDto, @Req() req: Request) {
+    const result = await this.equalizacaoService.create(createEqualizacaoDto);
+    const userId = (req.user as UserPayload)?.userId;
+    await this.logService.createLog({
+      userId,
+      action: 'CREATE',
+      entity: 'Equalizacao',
+    });
+    return result;
   }
 
   @Get("ciclo/:cicloId")
@@ -162,6 +179,7 @@ export class EqualizacaoController {
     return this.equalizacaoService.findOne(+id);
   }
 
+  @UseGuards(JwtGuard)
   @Patch()
   @ApiOperation({ summary: "Update an existing equalizacao" })
   @ApiBody({ type: UpdateEqualizacaoDto })
@@ -172,8 +190,15 @@ export class EqualizacaoController {
   })
   @ApiResponse({ status: 400, description: "ID is required in the DTO" })
   @ApiResponse({ status: 404, description: "Equalizacao not found" })
-  update(@Body() updateEqualizacaoDto: UpdateEqualizacaoDto) {
-    return this.equalizacaoService.update(updateEqualizacaoDto);
+  async update(@Body() updateEqualizacaoDto: UpdateEqualizacaoDto, @Req() req: Request) {
+    const result = await this.equalizacaoService.update(updateEqualizacaoDto);
+    const userId = (req.user as UserPayload)?.userId;
+    await this.logService.createLog({
+      userId,
+      action: 'UPDATE',
+      entity: 'Equalizacao',
+    });
+    return result;
   }
 
   @Delete(":id")

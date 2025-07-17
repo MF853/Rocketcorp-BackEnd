@@ -6,9 +6,10 @@ import { PrismaService } from "../prisma/prisma.service";
 import { UsersModule } from "../users/users.module";
 import { CicleModule } from "../cicle/cicle.module";
 import { CryptoModule } from "../crypto/crypto.module";
+import { LogModule } from '../log/log.module';
 
 @Module({
-  imports: [UsersModule, CicleModule, CryptoModule],
+  imports: [UsersModule, CicleModule, CryptoModule, LogModule],
   controllers: [EqualizacaoController],
   providers: [EqualizacaoService, EqualizacaoRepository, PrismaService],
 })
