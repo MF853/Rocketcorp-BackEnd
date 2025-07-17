@@ -2,6 +2,12 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { UsersRepository } from "./users.repository";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { UserStatisticsResponseDto } from "./dto/user-statistics-response.dto";
+import { Role } from "@prisma/client";
+
+function convertRoleStringsToEnum(role?: string[]): Role[] | undefined {
+  if (!role) return undefined;
+  return role.map((r) => r as Role);
+}
 
 @Injectable()
 export class UsersService {
@@ -62,9 +68,13 @@ export class UsersService {
       return this.usersRepository.update(id, {
         ...updateUserDto,
         gestorId: novoGestorId,
+        role: convertRoleStringsToEnum(updateUserDto.role),
       });
     }
-    return this.usersRepository.update(id, updateUserDto);
+    return this.usersRepository.update(id, {
+      ...updateUserDto,
+      role: convertRoleStringsToEnum(updateUserDto.role),
+    });
   }
 
   async remove(id: number) {

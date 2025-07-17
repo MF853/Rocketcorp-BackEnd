@@ -8,6 +8,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  colaborador
+  admin
+  rh
+  gestor
+  mentor
+  comite
+}
+
 model Equipe {
   id        Int      @id @default(autoincrement())
   nome      String   @db.VarChar(255)
@@ -26,7 +35,7 @@ model User {
   email                  String          @unique
   name                   String
   password               String
-  role                   String[]        @default(["user"])
+  role                   Role[]          @default([colaborador])
   cargo                  String?         @db.VarChar(50)
   unidade                String?         @db.VarChar(50)
   createdAt              DateTime        @default(now())
@@ -61,6 +70,7 @@ model Ciclo {
   name                        String                @db.VarChar(255)
   year                        Int
   period                      Int
+  status                      String
   createdAt                   DateTime              @default(now())
   updatedAt                   DateTime              @updatedAt
   dataAberturaAvaliacao       DateTime
