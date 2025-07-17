@@ -1,10 +1,27 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { EqualizacaoResponseDto } from "./dto/equalizacao-response.dto";
 import { CreateEqualizacaoDto } from "./dto/create-equalizacao.dto";
 import { UpdateEqualizacaoDto } from "./dto/update-equalizacao.dto";
-import { StatusEqualizacao } from "@prisma/client";
+import { StatusEqualizacao, Equalizacao } from "@prisma/client";
 import { CryptoService } from "../crypto/crypto.service";
+
+interface DecryptedEqualizacao
+  extends Omit<
+    Equalizacao,
+    | "mediaAutoavaliacao"
+    | "mediaAvaliacaoGestor"
+    | "mediaAvaliacao360"
+    | "notaFinal"
+    | "justificativa"
+  > {
+  mediaAutoavaliacao: number;
+  mediaAvaliacaoGestor: number;
+  mediaAvaliacao360: number;
+  notaFinal: number;
+  justificativa: string;
+}
 
 @Injectable()
 export class EqualizacaoRepository {
@@ -43,9 +60,15 @@ export class EqualizacaoRepository {
     // Use Promise.all to handle async map properly
     return Promise.all(
       users.map(async (user) => {
-        const existingEqualizacao = user.equalizacoesRecebidas.find(
+        let existingEqualizacao = user.equalizacoesRecebidas.find(
           (eq) => eq.idAvaliado === user.id && eq.idCiclo === idCiclo
         );
+
+        if (existingEqualizacao) {
+          existingEqualizacao = await this.cryptoService.decryptObject(
+            existingEqualizacao
+          );
+        }
 
         // Decrypt the resumoIA if it exists
         const decryptedResumoIA = user.ResumoIA?.[0]?.resumo
@@ -66,28 +89,35 @@ export class EqualizacaoRepository {
     );
   }
 
+  async findByUserAndCycle(idAvaliado: number, idCiclo: number) {
+    return await this.prisma.equalizacao.findUnique({
+      where: {
+        idAvaliado_idCiclo: {
+          idAvaliado,
+          idCiclo,
+        },
+      },
+    });
+  }
+
   async createEqualizacao(
     createEqualizacaoDto: CreateEqualizacaoDto,
-    mediaAutoavaliacao: number,
-    mediaAvaliacaoGestor: number,
-    mediaAvaliacao360: number
+    mediaAutoavaliacao: string,
+    mediaAvaliacaoGestor: string,
+    mediaAvaliacao360: string,
+    notaFinalEncrypted: string
   ): Promise<EqualizacaoResponseDto> {
     const createdEqualizacao = await this.prisma.equalizacao.create({
       data: {
         idAvaliador: createEqualizacaoDto.idAvaliador,
         idAvaliado: createEqualizacaoDto.idAvaliado,
         idCiclo: createEqualizacaoDto.idCiclo,
-        mediaAutoavaliacao,
-        mediaAvaliacaoGestor,
-        mediaAvaliacao360,
-        notaFinal: createEqualizacaoDto.notaFinal,
+        mediaAutoavaliacao: mediaAutoavaliacao,
+        mediaAvaliacaoGestor: mediaAvaliacaoGestor,
+        mediaAvaliacao360: mediaAvaliacao360,
+        notaFinal: notaFinalEncrypted,
         justificativa: createEqualizacaoDto.justificativa,
         status: StatusEqualizacao.FINALIZADO,
-      },
-      include: {
-        avaliado: {
-          select: { name: true, cargo: true },
-        },
       },
     });
 
@@ -106,18 +136,23 @@ export class EqualizacaoRepository {
       ? await this.cryptoService.decrypt(resumoIA.resumo)
       : "";
 
+    // Decrypt the nota fields
+    const decryptedEqualizacao = (await this.cryptoService.decryptObject(
+      createdEqualizacao
+    )) as unknown as DecryptedEqualizacao;
+
     return {
-      idEqualizacao: createdEqualizacao.id.toString(),
-      idAvaliador: createdEqualizacao.idAvaliador.toString(),
-      idAvaliado: createdEqualizacao.idAvaliado.toString(),
-      idCiclo: createdEqualizacao.idCiclo.toString(),
-      nomeAvaliado: createdEqualizacao.avaliado.name,
-      cargoAvaliado: createdEqualizacao.avaliado.cargo || "Desenvolvedor",
-      notaAutoavaliacao: createdEqualizacao.mediaAutoavaliacao,
-      notaGestor: createdEqualizacao.mediaAvaliacaoGestor,
-      notaAvaliacao360: createdEqualizacao.mediaAvaliacao360,
-      notaFinal: createdEqualizacao.notaFinal,
-      justificativa: createdEqualizacao.justificativa,
+      idEqualizacao: decryptedEqualizacao.id.toString(),
+      idAvaliador: decryptedEqualizacao.idAvaliador.toString(),
+      idAvaliado: decryptedEqualizacao.idAvaliado.toString(),
+      idCiclo: decryptedEqualizacao.idCiclo.toString(),
+      nomeAvaliado: "Nome Avaliado", // Placeholder
+      cargoAvaliado: "Desenvolvedor", // Placeholder
+      notaAutoavaliacao: decryptedEqualizacao.mediaAutoavaliacao,
+      notaGestor: decryptedEqualizacao.mediaAvaliacaoGestor,
+      notaAvaliacao360: decryptedEqualizacao.mediaAvaliacao360,
+      notaFinal: decryptedEqualizacao.notaFinal,
+      justificativa: decryptedEqualizacao.justificativa,
       resumoIA: decryptedResumo,
       status: "Finalizado" as "Finalizado" | "Pendente",
     };
@@ -127,34 +162,20 @@ export class EqualizacaoRepository {
     id: number,
     updateEqualizacaoDto: UpdateEqualizacaoDto
   ): Promise<EqualizacaoResponseDto> {
-    const existingEqualizacao = await this.prisma.equalizacao.findUnique({
-      where: { id },
-      include: {
-        avaliado: {
-          select: { name: true, cargo: true },
-        },
-      },
-    });
+    const dataToUpdate: { notaFinal?: string; justificativa?: string } = {};
 
-    if (!existingEqualizacao) {
-      throw new Error(`Equalizacao with ID ${id} not found`);
+    if (updateEqualizacaoDto.notaFinal !== undefined) {
+      dataToUpdate.notaFinal = await this.cryptoService.encrypt(
+        updateEqualizacaoDto.notaFinal.toString()
+      );
+    }
+    if (updateEqualizacaoDto.justificativa !== undefined) {
+      dataToUpdate.justificativa = updateEqualizacaoDto.justificativa;
     }
 
     const updatedEqualizacao = await this.prisma.equalizacao.update({
       where: { id },
-      data: {
-        ...(updateEqualizacaoDto.notaFinal !== undefined && {
-          notaFinal: updateEqualizacaoDto.notaFinal,
-        }),
-        ...(updateEqualizacaoDto.justificativa !== undefined && {
-          justificativa: updateEqualizacaoDto.justificativa,
-        }),
-      },
-      include: {
-        avaliado: {
-          select: { name: true, cargo: true },
-        },
-      },
+      data: dataToUpdate,
     });
 
     const resumoIA = await this.prisma.resumoIA.findUnique({
@@ -172,18 +193,22 @@ export class EqualizacaoRepository {
       ? await this.cryptoService.decrypt(resumoIA.resumo)
       : "";
 
+    const decryptedUpdatedEqualizacao = (await this.cryptoService.decryptObject(
+      updatedEqualizacao
+    )) as unknown as DecryptedEqualizacao;
+
     return {
-      idEqualizacao: updatedEqualizacao.id.toString(),
-      idAvaliador: updatedEqualizacao.idAvaliador.toString(),
-      idAvaliado: updatedEqualizacao.idAvaliado.toString(),
-      idCiclo: updatedEqualizacao.idCiclo.toString(),
-      nomeAvaliado: updatedEqualizacao.avaliado.name,
-      cargoAvaliado: updatedEqualizacao.avaliado.cargo || "Desenvolvedor",
-      notaAutoavaliacao: updatedEqualizacao.mediaAutoavaliacao,
-      notaGestor: updatedEqualizacao.mediaAvaliacaoGestor,
-      notaAvaliacao360: updatedEqualizacao.mediaAvaliacao360,
-      notaFinal: updatedEqualizacao.notaFinal,
-      justificativa: updatedEqualizacao.justificativa,
+      idEqualizacao: decryptedUpdatedEqualizacao.id.toString(),
+      idAvaliador: decryptedUpdatedEqualizacao.idAvaliador.toString(),
+      idAvaliado: decryptedUpdatedEqualizacao.idAvaliado.toString(),
+      idCiclo: decryptedUpdatedEqualizacao.idCiclo.toString(),
+      nomeAvaliado: "Nome Avaliado", // Placeholder
+      cargoAvaliado: "Desenvolvedor", // Placeholder
+      notaAutoavaliacao: decryptedUpdatedEqualizacao.mediaAutoavaliacao,
+      notaGestor: decryptedUpdatedEqualizacao.mediaAvaliacaoGestor,
+      notaAvaliacao360: decryptedUpdatedEqualizacao.mediaAvaliacao360,
+      notaFinal: decryptedUpdatedEqualizacao.notaFinal,
+      justificativa: decryptedUpdatedEqualizacao.justificativa,
       resumoIA: decryptedResumo,
       status: "Finalizado" as "Finalizado" | "Pendente",
     };

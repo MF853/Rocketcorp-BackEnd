@@ -13,6 +13,8 @@ enum Role {
   admin
   rh
   gestor
+  mentor
+  comite
 }
 
 model Equipe {
@@ -163,10 +165,10 @@ model Autoavaliacao {
   id                  Int       @id @default(autoincrement())
   idUser              Int
   idCiclo             Int
-  nota                Float?
+  nota                String?
   justificativa       String
   criterioId          Int?
-  notaGestor          Float?
+  notaGestor          String?
   justificativaGestor String?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
@@ -181,25 +183,17 @@ model Autoavaliacao {
   @@map("autoavaliacao")
 }
 
-enum MotivacaoTrabalhoNovamente {
-  DISCORDO_TOTALMENTE
-  DISCORDO_PARCIALMENTE
-  INDIFERENTE
-  CONCORDO_PARCIALMENTE
-  CONCORDO_TOTALMENTE
-}
-
 model Avaliacao360 {
   id                   Int                        @id @default(autoincrement())
   idAvaliador          Int
   idAvaliado           Int
   idCiclo              Int
-  nota                 Float?
+  nota                 String?
   pontosFortes         String
   pontosMelhora        String
   nomeProjeto          String                     @db.VarChar(255)
   periodoMeses         Int
-  trabalhariaNovamente MotivacaoTrabalhoNovamente
+  trabalhariaNovamente String
   avaliador            User                       @relation("Avaliador360", fields: [idAvaliador], references: [id], onDelete: Restrict)
   avaliado             User                       @relation("Avaliado360", fields: [idAvaliado], references: [id], onDelete: Restrict)
   ciclo                Ciclo                      @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
@@ -218,7 +212,7 @@ model Mentoring {
   idMentor      Int
   idMentorado   Int
   idCiclo       Int
-  nota          Float?
+  nota          String?
   justificativa String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -239,10 +233,10 @@ model Equalizacao {
   idAvaliador          Int
   idAvaliado           Int
   idCiclo              Int
-  mediaAutoavaliacao   Float
-  mediaAvaliacaoGestor Float
-  mediaAvaliacao360    Float
-  notaFinal            Float
+  mediaAutoavaliacao   String
+  mediaAvaliacaoGestor String
+  mediaAvaliacao360    String
+  notaFinal            String
   justificativa        String
   status               StatusEqualizacao
   avaliador            User              @relation("AvaliadorEqualizacao", fields: [idAvaliador], references: [id], onDelete: Restrict)
