@@ -28,8 +28,12 @@ type EncryptedUpdateAvaliacaoDto = Omit<
   notaGestor?: string;
 };
 
-type EncryptedCreateAvaliacao360Dto = Omit<CreateAvaliacao360Dto, "nota"> & {
+type EncryptedCreateAvaliacao360Dto = Omit<
+  CreateAvaliacao360Dto,
+  "nota" | "trabalhariaNovamente"
+> & {
   nota: string;
+  trabalhariaNovamente: string;
 };
 
 type EncryptedUpdateAvaliacao360Dto = Omit<UpdateAvaliacao360Dto, "nota"> & {

@@ -181,14 +181,6 @@ model Autoavaliacao {
   @@map("autoavaliacao")
 }
 
-enum MotivacaoTrabalhoNovamente {
-  DISCORDO_TOTALMENTE
-  DISCORDO_PARCIALMENTE
-  INDIFERENTE
-  CONCORDO_PARCIALMENTE
-  CONCORDO_TOTALMENTE
-}
-
 model Avaliacao360 {
   id                   Int                        @id @default(autoincrement())
   idAvaliador          Int
@@ -199,7 +191,7 @@ model Avaliacao360 {
   pontosMelhora        String
   nomeProjeto          String                     @db.VarChar(255)
   periodoMeses         Int
-  trabalhariaNovamente MotivacaoTrabalhoNovamente
+  trabalhariaNovamente String
   avaliador            User                       @relation("Avaliador360", fields: [idAvaliador], references: [id], onDelete: Restrict)
   avaliado             User                       @relation("Avaliado360", fields: [idAvaliado], references: [id], onDelete: Restrict)
   ciclo                Ciclo                      @relation(fields: [idCiclo], references: [id], onDelete: Restrict)

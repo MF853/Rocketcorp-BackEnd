@@ -72,6 +72,7 @@ export class CryptoService {
       "justificativaGestor",
       "pontosFortes",
       "pontosMelhora",
+      "trabalhariaNovamente",
     ];
 
     const numericKeysToEncrypt = [
@@ -109,6 +110,7 @@ export class CryptoService {
       "justificativaGestor",
       "pontosFortes",
       "pontosMelhora",
+      "trabalhariaNovamente",
     ];
 
     const numericKeysToDecrypt = [

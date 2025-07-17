@@ -1,6 +1,5 @@
 import {
   PrismaClient,
-  MotivacaoTrabalhoNovamente,
   User,
   Trilha,
   Ciclo,
@@ -10,6 +9,7 @@ import {
 import * as argon from "argon2";
 import { execSync } from "child_process";
 import { CryptoService } from "../src/crypto/crypto.service";
+import { MotivacaoTrabalhoNovamente } from "../src/avaliacao/dto/create-avaliacao.dto";
 
 // Inicializa o cliente do Prisma
 const prisma = new PrismaClient();
@@ -663,7 +663,9 @@ async function main() {
       ),
       nomeProjeto: "Sistema de Gestão",
       periodoMeses: 6,
-      trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+      trabalhariaNovamente: await cryptoService.encrypt(
+        MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE
+      ),
     },
   });
   await prisma.avaliacao360.create({
@@ -680,7 +682,9 @@ async function main() {
       ),
       nomeProjeto: "Plataforma de Avaliação",
       periodoMeses: 8,
-      trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+      trabalhariaNovamente: await cryptoService.encrypt(
+        MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE
+      ),
     },
   });
   await prisma.avaliacao360.create({
@@ -697,7 +701,9 @@ async function main() {
       ),
       nomeProjeto: "Sistema de Avaliação",
       periodoMeses: 6,
-      trabalhariaNovamente: MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE,
+      trabalhariaNovamente: await cryptoService.encrypt(
+        MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE
+      ),
     },
   });
   await prisma.avaliacao360.create({
@@ -714,7 +720,9 @@ async function main() {
       ),
       nomeProjeto: "Análise de Vendas Q1",
       periodoMeses: 4,
-      trabalhariaNovamente: MotivacaoTrabalhoNovamente.DISCORDO_PARCIALMENTE,
+      trabalhariaNovamente: await cryptoService.encrypt(
+        MotivacaoTrabalhoNovamente.DISCORDO_PARCIALMENTE
+      ),
     },
   });
   console.log("✅ Avaliações 360 criadas.");
