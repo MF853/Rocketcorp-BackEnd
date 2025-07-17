@@ -13,6 +13,8 @@ enum Role {
   admin
   rh
   gestor
+  mentor
+  comite
 }
 
 model Equipe {
