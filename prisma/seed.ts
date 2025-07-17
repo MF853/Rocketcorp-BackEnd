@@ -88,8 +88,8 @@ async function main() {
       dataAberturaRevisaoGestor: new Date("2025-06-11T00:00:00-03:00"),
       dataFechamentoRevisaoGestor: new Date("2025-06-20T23:59:59-03:00"),
       dataAberturaRevisaoComite: new Date("2025-07-10T00:00:00-03:00"),
-      dataFechamentoRevisaoComite: new Date("2025-07-15T23:59:59-03:00"),
-      dataFinalizacao: new Date("2025-07-16T23:59:59-03:00"),
+      dataFechamentoRevisaoComite: new Date("2025-07-22T23:59:59-03:00"),
+      dataFinalizacao: new Date("2025-07-30T23:59:59-03:00"),
     },
   });
 
@@ -684,7 +684,7 @@ main()
     // Garante que a conexão com o banco de dados seja fechada
     prisma
       .$disconnect()
-      .then(() => {})
+      .then(() => { })
       .catch((e) => {
         console.error("Erro ao desconectar do banco de dados:", e);
       });

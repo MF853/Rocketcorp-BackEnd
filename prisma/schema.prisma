@@ -61,6 +61,7 @@ model Ciclo {
   name                        String                @db.VarChar(255)
   year                        Int
   period                      Int
+  status                      String
   createdAt                   DateTime              @default(now())
   updatedAt                   DateTime              @updatedAt
   dataAberturaAvaliacao       DateTime
