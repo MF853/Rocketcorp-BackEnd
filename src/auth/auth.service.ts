@@ -8,6 +8,7 @@ import * as argon2 from "argon2";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import { JwtPayload } from "./interfaces/jwtpayload.interface";
+import { Role } from "@prisma/client";
 import { UserPayload } from "src/types/express";
 import { PrismaService } from "src/prisma/prisma.service";
 @Injectable()
@@ -16,7 +17,7 @@ export class AuthService {
     private config: ConfigService,
     private jwtService: JwtService,
     private prismaService: PrismaService
-  ) { }
+  ) {}
 
   async login(authDto: AuthDto) {
     const user = await this.prismaService.user.findUnique({
@@ -35,7 +36,7 @@ export class AuthService {
     const userPayload: UserPayload = {
       userId: user.id,
       email: authDto.email,
-      roles: user.role || ["user"], // para exemplo
+      roles: user.role || ["colaborador" as Role], // default role
     };
     const payload: JwtPayload = { user: userPayload };
 

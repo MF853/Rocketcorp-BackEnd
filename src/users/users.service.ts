@@ -8,6 +8,9 @@ function convertRoleStringsToEnum(role?: string[]): Role[] | undefined {
   if (!role) return undefined;
   return role.map((r) => r as Role);
 }
+import { UserPerformanceResponseDto } from "./dto/performance-data.dto";
+import { UserEvaluationCyclesResponseDto } from "./dto/evaluation-cycle.dto";
+import { UserHistoryResponseDto } from "./dto/user-history.dto";
 
 @Injectable()
 export class UsersService {
@@ -116,5 +119,42 @@ export class UsersService {
 
   async findLideradosByGestor(gestorId: number) {
     return this.usersRepository.findLideradosByGestor(gestorId);
+  }
+  async getUserPerformanceData(
+    userId: number
+  ): Promise<UserPerformanceResponseDto> {
+    const user = await this.findOne(userId);
+    const performanceData = await this.usersRepository.getUserPerformanceData(
+      userId
+    );
+
+    return {
+      userId: user.id,
+      userName: user.name,
+      performanceData,
+    };
+  }
+
+  async getUserEvaluationCycles(
+    userId: number
+  ): Promise<UserEvaluationCyclesResponseDto> {
+    const user = await this.findOne(userId);
+    const evaluationCycles = await this.usersRepository.getUserEvaluationCycles(
+      userId
+    );
+
+    return {
+      userId: user.id,
+      userName: user.name,
+      evaluationCycles,
+    };
+  }
+
+  async getUserHistory(userId: number): Promise<UserHistoryResponseDto> {
+    try {
+      return await this.usersRepository.getUserHistory(userId);
+    } catch (error) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
   }
 }
