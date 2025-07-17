@@ -11,5 +11,6 @@ import { CryptoModule } from "../crypto/crypto.module";
   imports: [UsersModule, CicleModule, CryptoModule],
   controllers: [EqualizacaoController],
   providers: [EqualizacaoService, EqualizacaoRepository, PrismaService],
+  exports: [EqualizacaoService],
 })
 export class EqualizacaoModule {}

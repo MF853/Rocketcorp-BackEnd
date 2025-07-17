@@ -8,10 +8,11 @@ import { TrilhaModule } from '../trilha/trilha.module';
 import { CriterioModule } from '../criterio/criterio.module';
 import { CicleModule } from 'src/cicle/cicle.module';
 import { CryptoModule } from 'src/crypto/crypto.module';
+import { EqualizacaoModule } from 'src/equalizacao/equalizacao.module';
 
 
 @Module({
-  imports: [AvaliacaoModule, ReferenciaModule, UsersModule, TrilhaModule, CriterioModule, CicleModule, CryptoModule],
+  imports: [AvaliacaoModule, ReferenciaModule, UsersModule, TrilhaModule, CriterioModule, CicleModule, CryptoModule, EqualizacaoModule],
   controllers: [ExcelController],
   providers: [ExcelService],
 })

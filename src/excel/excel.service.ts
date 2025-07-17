@@ -9,6 +9,8 @@ import { CriterioService } from 'src/criterio/criterio.service';
 import { Criterio } from '@prisma/client';
 import { mapTipoCriterio } from 'src/criterio/helpers/map.tipo.criterios';
 import { CryptoService } from 'src/crypto/crypto.service';
+import { EqualizacaoService } from 'src/equalizacao/equalizacao.service';
+import { Autoavaliacao, Avaliacao360 } from 'src/avaliacao/entities/avaliacao.entity';
 
 @Injectable()
 export class ExcelService {
@@ -17,7 +19,8 @@ export class ExcelService {
               private readonly cicleService: CicleService, 
               private readonly avaliacaoService: AvaliacaoService,
               private readonly criterioService: CriterioService,
-              private readonly cryptoService: CryptoService) {}
+              private readonly cryptoService: CryptoService,
+              private readonly equalizacaoService: EqualizacaoService) {}
 
   // async processExcel(filePath: string) {
   async importExcel(buffer: Buffer) {
@@ -223,15 +226,13 @@ export class ExcelService {
   }
  
   async exportExcel(userId: number, cicleId: number) {
-  //Planilha PERFIL - idUser = Pegar parte dos dados dele
-  //Planilha AUTOAVALIACAO - 
-  //Planilha AVALIACAO360 - 
-  //Planilha EQUALIZACAO - 
+ 
     const workbook = new ExcelJS.Workbook();
   
     await this.exportPerfil(workbook, userId);
     await this.exportAvaliacao(workbook, userId, cicleId);
     await this.exportAvaliacao360(workbook, userId, cicleId);
+    await this.exportEqualizacao(workbook);
   
     // Gerar o buffer e retornar
     const buffer = await workbook.xlsx.writeBuffer();
@@ -298,6 +299,7 @@ export class ExcelService {
     }
     // lógica para adicionar os dados
     sheet.columns = [
+      { header: 'Avaliador', key: 'avaliador', width: 30 },
       { header: 'Projeto', key: 'projeto', width: 30 },
       { header: 'Periodo', key: 'periodo', width:15 },
       { header: 'Trabalharia Novamente', key: 'trabalharia_novamente', width: 50 },
@@ -308,6 +310,7 @@ export class ExcelService {
     
     evaluation360Data.forEach((evaluation) => {
       sheet.addRow({
+        avaliador: evaluation.avaliador.name,
         projeto: evaluation.nomeProjeto || 'NA',
         periodo: evaluation.periodoMeses ?? 'NA',
         trabalharia_novamente: evaluation.trabalhariaNovamente,
@@ -318,4 +321,31 @@ export class ExcelService {
     });
 } 
 
+  private async exportEqualizacao(workbook: ExcelJS.Workbook) {
+      const sheet = workbook.addWorksheet('Equalizacao');
+
+      const equalizacaoData = await this.equalizacaoService.getEqualizacoesCycleInRevisao();
+
+      sheet.columns = [
+        { header: 'Autoavaliacao', key: 'autoavaliacao', width: 15 },
+        { header: 'Avaliacao360', key: 'avaliacao360', width: 15 },
+        { header: 'Nota Gestor', key: 'nota_gestor', width: 15 },
+        { header: 'Resumo IA', key: 'resumoIA', width: 50 },
+        { header: 'Nota Final', key: 'nota_final', width: 15 },
+        { header: 'Justificativa', key: 'justificativa', width:50 },
+      ];
+      
+      equalizacaoData.forEach((equalizacao) => {
+        sheet.addRow({
+          autoavaliacao: equalizacao.notaAutoavaliacao,
+          avaliacao360: equalizacao.notaAvaliacao360 || 'NA',
+          nota_gestor: equalizacao.notaGestor ?? 'NA',
+          resumoIA: equalizacao.resumoIA ?? 'NA',
+          nota_final: equalizacao.notaFinal || 'NA',
+          justifica: equalizacao.justificativa || 'NA',
+        });
+      });
+  
+  }
+  
 }
