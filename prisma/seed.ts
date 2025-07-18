@@ -1,5 +1,6 @@
 import {
   PrismaClient,
+  StatusEqualizacao,
   User,
   Trilha,
   Ciclo,
@@ -8,12 +9,12 @@ import {
 } from "@prisma/client";
 import * as argon from "argon2";
 import { execSync } from "child_process";
-import { CryptoService } from "../src/crypto/crypto.service";
-import { MotivacaoTrabalhoNovamente } from "../src/avaliacao/dto/create-avaliacao.dto";
+import { CryptoService } from "../src/crypto/crypto.service"; // Garanta que este caminho está correto
+import { MotivacaoTrabalhoNovamente } from "../src/avaliacao/dto/create-avaliacao.dto"; // Importação correta para MotivacaoTrabalhoNovamente
 
 // Inicializa o cliente do Prisma
 const prisma = new PrismaClient();
-const cryptoService = new CryptoService();
+const cryptoService = new CryptoService(); // Inicializa CryptoService aqui
 
 /**
  * Gera o hash de uma senha usando argon2.
@@ -32,7 +33,7 @@ function runMigrations() {
   try {
     // Usamos 'deploy' para aplicar migrações pendentes em ambientes de produção/staging
     execSync("npx prisma migrate deploy", { stdio: "inherit" });
-    console.log("✅ Migrações concluídas com sucesso.");
+    console.log("✅ Migrações concluída com sucesso.");
   } catch (error) {
     console.error("❌ Erro ao executar as migrações:", error);
     // Propaga o erro para interromper o script se as migrações falharem
@@ -58,6 +59,7 @@ async function main() {
   await prisma.autoavaliacao.deleteMany();
   await prisma.referencia.deleteMany();
   await prisma.criterio.deleteMany();
+  await prisma.equipe.deleteMany(); // Limpa equipes também
   await prisma.user.deleteMany();
   await prisma.ciclo.deleteMany();
   await prisma.trilha.deleteMany();
@@ -76,56 +78,44 @@ async function main() {
   const trilhas: Trilha[] = [devTrilha, dadosTrilha, infraTrilha, gestaoTrilha];
   console.log(`✅ Criadas ${trilhas.length} trilhas.`);
 
-  // 4. Cria os Ciclos de avaliação
+  // 4. Cria os Ciclos de avaliação com datas coerentes com a data de hoje (18/07/2025)
   console.log("🔄 Criando ciclos...");
-  const [cicloQ1_2025, cicloQ2_2025, cicloQ4_2024] = await Promise.all([
-    prisma.ciclo.create({
-      data: {
-        name: "Q1 2025",
-        year: 2025,
-        period: 1,
-        status: "aberto",
-        dataAberturaAvaliacao: new Date("2025-06-15T00:00:00Z"),
-        dataFechamentoAvaliacao: new Date("2025-07-05T23:59:59Z"),
-        dataAberturaRevisaoGestor: new Date("2025-07-06T00:00:00Z"),
-        dataFechamentoRevisaoGestor: new Date("2025-07-12T23:59:59Z"),
-        dataAberturaRevisaoComite: new Date("2025-07-13T00:00:00Z"),
-        dataFechamentoRevisaoComite: new Date("2025-07-20T23:59:59Z"),
-        dataFinalizacao: new Date("2025-07-25T23:59:59Z"),
-      },
-    }),
-    prisma.ciclo.create({
-      data: {
-        name: "Q2 2025",
-        year: 2025,
-        period: 2,
-        status: "planejamento",
-        dataAberturaAvaliacao: new Date("2025-04-15T00:00:00Z"),
-        dataFechamentoAvaliacao: new Date("2025-05-15T23:59:59Z"),
-        dataAberturaRevisaoGestor: new Date("2025-05-16T00:00:00Z"),
-        dataFechamentoRevisaoGestor: new Date("2025-05-30T23:59:59Z"),
-        dataAberturaRevisaoComite: new Date("2025-06-01T00:00:00Z"),
-        dataFechamentoRevisaoComite: new Date("2025-06-10T23:59:59Z"),
-        dataFinalizacao: new Date("2025-06-15T23:59:59Z"),
-      },
-    }),
-    prisma.ciclo.create({
-      data: {
-        name: "Q4 2024",
-        year: 2024,
-        period: 4,
-        status: "finalizado",
-        dataAberturaAvaliacao: new Date("2024-10-15T00:00:00Z"),
-        dataFechamentoAvaliacao: new Date("2024-11-15T23:59:59Z"),
-        dataAberturaRevisaoGestor: new Date("2024-11-16T00:00:00Z"),
-        dataFechamentoRevisaoGestor: new Date("2024-11-30T23:59:59Z"),
-        dataAberturaRevisaoComite: new Date("2024-12-01T00:00:00Z"),
-        dataFechamentoRevisaoComite: new Date("2024-12-10T23:59:59Z"),
-        dataFinalizacao: new Date("2024-12-15T23:59:59Z"),
-      },
-    }),
-  ]);
-  const ciclos: Ciclo[] = [cicloQ1_2025, cicloQ2_2025, cicloQ4_2024];
+
+  // Ciclo Finalizado (hoje é após dataFinalizacao)
+  const cicloFinalizado = await prisma.ciclo.create({
+    data: {
+      name: "2024.1",
+      year: 2024,
+      period: 1,
+      status: "finalizado", // Status: finalizado
+      dataAberturaAvaliacao: new Date("2024-05-01T00:00:00-03:00"),
+      dataFechamentoAvaliacao: new Date("2024-05-10T23:59:59-03:00"),
+      dataAberturaRevisaoGestor: new Date("2024-05-11T00:00:00-03:00"),
+      dataFechamentoRevisaoGestor: new Date("2024-05-20T23:59:59-03:00"),
+      dataAberturaRevisaoComite: new Date("2024-06-15T00:00:00-03:00"),
+      dataFechamentoRevisaoComite: new Date("2024-06-25T23:59:59-03:00"),
+      dataFinalizacao: new Date("2024-07-01T23:59:59-03:00"), // Terminou antes de hoje
+    },
+  });
+
+  // Ciclo em Revisão de Comitê (hoje está entre dataAberturaRevisaoComite e dataFechamentoRevisaoComite)
+  const cicloRevisaoComite = await prisma.ciclo.create({
+    data: {
+      name: "2025.2",
+      year: 2025,
+      period: 2,
+      status: "revisao_comite", // Status: revisão de comitê
+      dataAberturaAvaliacao: new Date("2025-06-01T00:00:00-03:00"),
+      dataFechamentoAvaliacao: new Date("2025-06-10T23:59:59-03:00"),
+      dataAberturaRevisaoGestor: new Date("2025-06-11T00:00:00-03:00"),
+      dataFechamentoRevisaoGestor: new Date("2025-06-20T23:59:59-03:00"),
+      dataAberturaRevisaoComite: new Date("2025-07-15T00:00:00-03:00"),
+      dataFechamentoRevisaoComite: new Date("2025-07-25T23:59:59-03:00"),
+      dataFinalizacao: new Date("2025-08-01T23:59:59-03:00"),
+    },
+  });
+
+  const ciclos: Ciclo[] = [cicloFinalizado, cicloRevisaoComite];
   console.log(`✅ Criados ${ciclos.length} ciclos.`);
 
   // 5. Cria os Usuários
@@ -135,26 +125,19 @@ async function main() {
       name: "Raylandson Cesário",
       email: "raylandson.cesario@rocketcorp.com",
       password: await hashPassword("password123"),
-      role: [
-        "admin" as Role,
-        "gestor" as Role,
-        "colaborador" as Role,
-        "mentor" as Role,
-        "comite" as Role,
-        "rh" as Role,
-      ],
-      cargo: "Desenvolvimento",
-      unidade: "Recife",
+      role: ["admin" as Role, "colaborador" as Role], // 'user' -> 'colaborador'
+      cargo: "fullstack",
+      unidade: "sao paulo",
       trilhaId: devTrilha.id,
-      gestorId: null,
+      gestorId: null, // Será definido dinamicamente abaixo
     },
     {
       name: "Alice Cadete",
       email: "alice.cadete@rocketcorp.com",
       password: await hashPassword("password123"),
-      role: ["gestor" as Role],
-      cargo: "Desenvolvimento",
-      unidade: "Recife",
+      role: ["gestor" as Role], // 'manager' -> 'gestor'
+      cargo: "Gestão",
+      unidade: "recife",
       trilhaId: devTrilha.id,
       gestorId: null,
     },
@@ -163,30 +146,80 @@ async function main() {
       email: "arthur.lins@rocketcorp.com",
       password: await hashPassword("password123"),
       role: ["colaborador" as Role],
-      cargo: "Análise de Dados",
-      unidade: "São Paulo",
+      cargo: "front",
+      unidade: "recife",
       trilhaId: dadosTrilha.id,
-      gestorId: 2, // Alice as gestor
+      gestorId: null, // Será definido dinamicamente abaixo
     },
     {
       name: "Erico Chen",
       email: "erico.chen@rocketcorp.com",
       password: await hashPassword("password123"),
       role: ["colaborador" as Role],
-      cargo: "Infraestrutura",
-      unidade: "Belo Horizonte",
+      cargo: "Back",
+      unidade: "recife",
       trilhaId: infraTrilha.id,
-      gestorId: 2, // Alice as gestor
+      gestorId: null, // Será definido dinamicamente abaixo
     },
     {
       name: "Luan Bezerra",
       email: "luan.bezerra@rocketcorp.com",
       password: await hashPassword("password123"),
       role: ["colaborador" as Role],
-      cargo: "Desenvolvimento",
-      unidade: "Recife",
+      cargo: "Dados",
+      unidade: "rio de janeiro",
       trilhaId: devTrilha.id,
-      gestorId: 2, // Alice as gestor
+      gestorId: null, // Será definido dinamicamente abaixo
+    },
+    {
+      name: "Fernanda Lima",
+      email: "fernanda.lima@rocketcorp.com",
+      password: await hashPassword("password123"),
+      role: ["comite" as Role, "rh" as Role],
+      cargo: "Gestão",
+      unidade: "sao paulo",
+      trilhaId: gestaoTrilha.id,
+      gestorId: null,
+    },
+    {
+      name: "Bruno Souza",
+      email: "bruno.souza@rocketcorp.com",
+      password: await hashPassword("password123"),
+      role: ["mentor" as Role],
+      cargo: "Mentor",
+      unidade: "recife",
+      trilhaId: devTrilha.id,
+      gestorId: null,
+    },
+    {
+      name: "Maria Santos",
+      email: "maria.santos@rocketcorp.com",
+      password: await hashPassword("password123"),
+      role: ["colaborador" as Role],
+      cargo: "Desenvolvimento",
+      unidade: "São Paulo",
+      trilhaId: devTrilha.id,
+      gestorId: null, // Será definido dinamicamente abaixo
+    },
+    {
+      name: "Pedro Costa",
+      email: "pedro.costa@rocketcorp.com",
+      password: await hashPassword("password123"),
+      role: ["colaborador" as Role],
+      cargo: "Análise de Dados",
+      unidade: "Porto Alegre",
+      trilhaId: dadosTrilha.id,
+      gestorId: null, // Será definido dinamicamente abaixo
+    },
+    {
+      name: "Ana Oliveira",
+      email: "ana.oliveira@rocketcorp.com",
+      password: await hashPassword("password123"),
+      role: ["colaborador" as Role],
+      cargo: "Infraestrutura",
+      unidade: "Curitiba",
+      trilhaId: infraTrilha.id,
+      gestorId: null, // Será definido dinamicamente abaixo
     },
     {
       name: "José Mário",
@@ -199,36 +232,6 @@ async function main() {
       gestorId: null,
     },
     {
-      name: "Maria Santos",
-      email: "maria.santos@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["colaborador" as Role],
-      cargo: "Desenvolvimento",
-      unidade: "São Paulo",
-      trilhaId: devTrilha.id,
-      gestorId: 2, // Alice as gestor
-    },
-    {
-      name: "Pedro Costa",
-      email: "pedro.costa@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["colaborador" as Role],
-      cargo: "Análise de Dados",
-      unidade: "Porto Alegre",
-      trilhaId: dadosTrilha.id,
-      gestorId: 2, // Alice as gestor
-    },
-    {
-      name: "Ana Oliveira",
-      email: "ana.oliveira@rocketcorp.com",
-      password: await hashPassword("password123"),
-      role: ["colaborador" as Role],
-      cargo: "Infraestrutura",
-      unidade: "Curitiba",
-      trilhaId: infraTrilha.id,
-      gestorId: 2, // Alice as gestor
-    },
-    {
       name: "Carlos Silva",
       email: "carlos.silva@rocketcorp.com",
       password: await hashPassword("password123"),
@@ -239,28 +242,125 @@ async function main() {
       gestorId: null,
     },
   ];
+
   const users: User[] = await prisma.$transaction(
     usersData.map((user) => prisma.user.create({ data: user }))
   );
   console.log(`✅ Criados ${users.length} usuários.`);
 
-  // 6. Define as relações de mentoria
-  console.log("🤝 Configurando relações de mentoria...");
-  await prisma.user.update({
-    where: { id: users[4].id },
-    data: { mentorId: users[1].id },
-  }); // Alice -> Luan
-  await prisma.user.update({
-    where: { id: users[6].id },
-    data: { mentorId: users[1].id },
-  }); // Alice -> Maria
-  await prisma.user.update({
-    where: { id: users[7].id },
-    data: { mentorId: users[2].id },
-  }); // Arthur -> Pedro
-  console.log("✅ Relações de mentoria estabelecidas.");
+  // Mapeamento de usuários para facilitar o acesso
+  const adminUser = users.find(
+    (u) => u.email === "raylandson.cesario@rocketcorp.com"
+  )!;
+  const managerUser = users.find(
+    (u) => u.email === "alice.cadete@rocketcorp.com"
+  )!;
+  const arthurUser = users.find(
+    (u) => u.email === "arthur.lins@rocketcorp.com"
+  )!;
+  const ericoUser = users.find((u) => u.email === "erico.chen@rocketcorp.com")!;
+  const luanUser = users.find(
+    (u) => u.email === "luan.bezerra@rocketcorp.com"
+  )!;
+  const fernandaUser = users.find(
+    (u) => u.email === "fernanda.lima@rocketcorp.com"
+  )!;
+  const brunoUser = users.find(
+    (u) => u.email === "bruno.souza@rocketcorp.com"
+  )!;
+  const mariaUser = users.find(
+    (u) => u.email === "maria.santos@rocketcorp.com"
+  )!;
+  const pedroUser = users.find(
+    (u) => u.email === "pedro.costa@rocketcorp.com"
+  )!;
+  const anaUser = users.find((u) => u.email === "ana.oliveira@rocketcorp.com")!;
+  const joseMarioUser = users.find(
+    (u) => u.email === "jose.mario@rocketcorp.com"
+  )!;
+  const carlosSilvaUser = users.find(
+    (u) => u.email === "carlos.silva@rocketcorp.com"
+  )!;
 
-  // 7. Cria os Critérios de avaliação
+  // 6. Criação de Equipes
+  console.log("🏢 Criando equipes...");
+  const equipeDev = await prisma.equipe.create({
+    data: {
+      nome: "Equipe Alpha Dev",
+      descricao: "Equipe de desenvolvimento principal",
+      idGestor: managerUser.id,
+    },
+  });
+  const equipeDados = await prisma.equipe.create({
+    data: {
+      nome: "Equipe Beta Dados",
+      descricao: "Equipe de análise de dados",
+      idGestor: joseMarioUser.id,
+    },
+  });
+  console.log("✅ Equipes criadas.");
+
+  // 7. Define as relações de mentoria e gestão (CORRIGIDO PARA O PADRÃO ANTIGO)
+  console.log("🤝 Configurando relações de mentoria e gestão...");
+
+  // Bruno (mentorUser) é mentor de TODOS os outros usuários, exceto ele mesmo.
+  for (const user of users) {
+    if (user.id !== brunoUser.id) {
+      // Garante que o mentor não seja mentor de si mesmo
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { mentorId: brunoUser.id },
+      });
+    }
+  }
+
+  // Alice (managerUser) é gestora de Raylandson, Arthur, Erico, Luan, Maria, Ana
+  await prisma.user.update({
+    where: { id: adminUser.id },
+    data: { gestorId: managerUser.id, idEquipe: equipeDev.id },
+  });
+  await prisma.user.update({
+    where: { id: arthurUser.id },
+    data: { gestorId: managerUser.id, idEquipe: equipeDev.id },
+  });
+  await prisma.user.update({
+    where: { id: ericoUser.id },
+    data: { gestorId: managerUser.id, idEquipe: equipeDev.id },
+  });
+  await prisma.user.update({
+    where: { id: luanUser.id },
+    data: { gestorId: managerUser.id, idEquipe: equipeDev.id },
+  });
+  await prisma.user.update({
+    where: { id: mariaUser.id },
+    data: { gestorId: managerUser.id, idEquipe: equipeDev.id },
+  });
+  await prisma.user.update({
+    where: { id: anaUser.id },
+    data: { gestorId: managerUser.id, idEquipe: equipeDev.id },
+  });
+
+  // José Mário (joseMarioUser) é gestor de Pedro Costa
+  await prisma.user.update({
+    where: { id: pedroUser.id },
+    data: { gestorId: joseMarioUser.id, idEquipe: equipeDados.id },
+  });
+
+  console.log("✅ Relações de mentoria e gestão estabelecidas.");
+
+  // Colaboradores que participarão das avaliações (todos com role 'colaborador' e que não sejam o Bruno)
+  const colaboradoresAvaliadores = users.filter(
+    (user) =>
+      user.role.includes("colaborador" as Role) && user.id !== brunoUser.id
+  );
+  console.log(
+    "👥 Colaboradores identificados para realizar avaliações:",
+    colaboradoresAvaliadores.map((u) => u.name)
+  );
+  // Lista de todos os usuários (exceto Bruno) para serem avaliados ou referenciados
+  const allUsersExceptBruno = users.filter((user) => user.id !== brunoUser.id);
+
+  // 8. Cria os Critérios de avaliação (associados ao ciclo em revisão de comitê para simplificação, podem ser reutilizados)
   console.log("📋 Criando critérios...");
   const baseCriterios = [
     {
@@ -380,407 +480,554 @@ async function main() {
   const allCriterios: Criterio[] = [];
   for (const trilha of trilhas) {
     for (const criterio of baseCriterios) {
-      const createdCriterio = await prisma.criterio.create({
+      // Criar critérios para o ciclo finalizado
+      const createdCriterioFinalizado = await prisma.criterio.create({
         data: {
           ...criterio,
           trilhaId: trilha.id,
-          idCiclo: cicloQ1_2025.id, // Associando ao ciclo principal
+          idCiclo: cicloFinalizado.id,
         },
       });
-      allCriterios.push(createdCriterio);
+      allCriterios.push(createdCriterioFinalizado);
+
+      // Criar critérios para o ciclo em revisão de comitê
+      const createdCriterioRevisao = await prisma.criterio.create({
+        data: {
+          ...criterio,
+          trilhaId: trilha.id,
+          idCiclo: cicloRevisaoComite.id,
+        },
+      });
+      allCriterios.push(createdCriterioRevisao);
     }
   }
   console.log(
-    `✅ Criados ${allCriterios.length} critérios para ${trilhas.length} trilhas.`
+    `✅ Criados ${allCriterios.length} critérios para ${trilhas.length} trilhas e ${ciclos.length} ciclos.`
   );
 
-  // 8. Cria as Referências
-  console.log("📝 Criando referências...");
-  await prisma.referencia.create({
-    data: {
-      idReferenciador: users[1].id,
-      idReferenciado: users[4].id,
-      idCiclo: cicloQ1_2025.id,
-      justificativa: await cryptoService.encrypt(
-        "Luan demonstrou excelente crescimento técnico e é muito colaborativo."
-      ),
-    },
-  });
-  await prisma.referencia.create({
-    data: {
-      idReferenciador: users[0].id,
-      idReferenciado: users[6].id,
-      idCiclo: cicloQ1_2025.id,
-      justificativa: await cryptoService.encrypt(
-        "Maria é uma desenvolvedora excepcional com forte capacidade de resolver problemas complexos."
-      ),
-    },
-  });
-  await prisma.referencia.create({
-    data: {
-      idReferenciador: users[2].id,
-      idReferenciado: users[7].id,
-      idCiclo: cicloQ1_2025.id,
-      justificativa: await cryptoService.encrypt(
-        "Pedro possui conhecimento sólido em análise de dados e grande potencial."
-      ),
-    },
-  });
-  await prisma.referencia.create({
-    data: {
-      idReferenciador: users[5].id,
-      idReferenciado: users[3].id,
-      idCiclo: cicloQ1_2025.id,
-      justificativa: await cryptoService.encrypt(
-        "Erico tem mostrado excelente trabalho em DevOps e infraestrutura."
-      ),
-    },
-  });
-  console.log("✅ Referências criadas.");
-
-  // 9. Cria as Autoavaliações
-  console.log("📊 Criando autoavaliações...");
-  const devCriterios = allCriterios.filter((c) => c.trilhaId === devTrilha.id);
-  const dadosCriterios = allCriterios.filter(
-    (c) => c.trilhaId === dadosTrilha.id
+  // Filtra os critérios de acordo com as trilhas para uso nas avaliações
+  const devCriteriosFinalizado = allCriterios.filter(
+    (c) => c.trilhaId === devTrilha.id && c.idCiclo === cicloFinalizado.id
+  );
+  const dadosCriteriosFinalizado = allCriterios.filter(
+    (c) => c.trilhaId === dadosTrilha.id && c.idCiclo === cicloFinalizado.id
+  );
+  const infraCriteriosFinalizado = allCriterios.filter(
+    (c) => c.trilhaId === infraTrilha.id && c.idCiclo === cicloFinalizado.id
+  );
+  const gestaoCriteriosFinalizado = allCriterios.filter(
+    (c) => c.trilhaId === gestaoTrilha.id && c.idCiclo === cicloFinalizado.id
   );
 
-  // Luan Bezerra (users[4]) - Desenvolvimento
-  await prisma.autoavaliacao.create({
-    data: {
-      idUser: users[4].id,
-      idCiclo: cicloQ1_2025.id,
-      criterioId: devCriterios.find((c) => c.name === "Qualidade")?.id,
-      nota: await cryptoService.encrypt("4.0"),
-      justificativa: await cryptoService.encrypt(
-        "Tenho me esforçado para escrever código limpo e bem documentado."
-      ),
-      notaGestor: await cryptoService.encrypt("4.5"),
-      justificativaGestor: await cryptoService.encrypt(
-        "Código muito bem estruturado."
-      ),
-    },
-  });
-  await prisma.autoavaliacao.create({
-    data: {
-      idUser: users[4].id,
-      idCiclo: cicloQ1_2025.id,
-      criterioId: devCriterios.find((c) => c.name === "Trabalho em Equipe")?.id,
-      nota: await cryptoService.encrypt("4.5"),
-      justificativa: await cryptoService.encrypt(
-        "Colaboro ativamente com a equipe e compartilho conhecimento."
-      ),
-      notaGestor: await cryptoService.encrypt("4.3"),
-      justificativaGestor: await cryptoService.encrypt(
-        "Muito colaborativo, sempre disposto a ajudar."
-      ),
-    },
-  });
-  await prisma.autoavaliacao.create({
-    data: {
-      idUser: users[4].id,
-      idCiclo: cicloQ1_2025.id,
-      criterioId: devCriterios.find((c) => c.name === "Aprendizagem Contínua")
-        ?.id,
-      nota: await cryptoService.encrypt("4.8"),
-      justificativa: await cryptoService.encrypt(
-        "Estou sempre estudando novas tecnologias e práticas."
-      ),
-      notaGestor: await cryptoService.encrypt("4.7"),
-      justificativaGestor: await cryptoService.encrypt(
-        "Demonstra curiosidade e vontade de aprender."
-      ),
-    },
-  });
+  const devCriteriosRevisaoComite = allCriterios.filter(
+    (c) => c.trilhaId === devTrilha.id && c.idCiclo === cicloRevisaoComite.id
+  );
+  const dadosCriteriosRevisaoComite = allCriterios.filter(
+    (c) => c.trilhaId === dadosTrilha.id && c.idCiclo === cicloRevisaoComite.id
+  );
+  const infraCriteriosRevisaoComite = allCriterios.filter(
+    (c) => c.trilhaId === infraTrilha.id && c.idCiclo === cicloRevisaoComite.id
+  );
+  const gestaoCriteriosRevisaoComite = allCriterios.filter(
+    (c) => c.trilhaId === gestaoTrilha.id && c.idCiclo === cicloRevisaoComite.id
+  );
 
-  // Maria Santos (users[6]) - Desenvolvimento
-  await prisma.autoavaliacao.create({
-    data: {
-      idUser: users[6].id,
-      idCiclo: cicloQ1_2025.id,
-      criterioId: devCriterios.find((c) => c.name === "Iniciativa")?.id,
-      nota: await cryptoService.encrypt("4.5"),
-      justificativa: await cryptoService.encrypt(
-        "Sempre busco antecipar problemas e propor soluções."
-      ),
-      notaGestor: await cryptoService.encrypt("4.8"),
-      justificativaGestor: await cryptoService.encrypt(
-        "Proatividade excepcional."
-      ),
-    },
-  });
-  await prisma.autoavaliacao.create({
-    data: {
-      idUser: users[6].id,
-      idCiclo: cicloQ1_2025.id,
-      criterioId: devCriterios.find((c) => c.name === "Produtividade")?.id,
-      nota: await cryptoService.encrypt("4.2"),
-      justificativa: await cryptoService.encrypt(
-        "Mantenho um ritmo consistente de entrega."
-      ),
-      notaGestor: await cryptoService.encrypt("4.4"),
-      justificativaGestor: await cryptoService.encrypt(
-        "Entrega sempre dentro do prazo com qualidade."
-      ),
-    },
-  });
-  await prisma.autoavaliacao.create({
-    data: {
-      idUser: users[6].id,
-      idCiclo: cicloQ1_2025.id,
-      criterioId: devCriterios.find((c) => c.name === "Criatividade e Inovação")
-        ?.id,
-      nota: await cryptoService.encrypt("4.6"),
-      justificativa: await cryptoService.encrypt(
-        "Gosto de pensar em soluções criativas para problemas complexos."
-      ),
-      notaGestor: await cryptoService.encrypt("4.5"),
-      justificativaGestor: await cryptoService.encrypt(
-        "Sempre traz ideias inovadoras para o projeto."
-      ),
-    },
-  });
+  // --- DADOS PARA CADA ESTÁGIO DE CICLO ---
 
-  // Pedro Costa (users[7]) - Análise de Dados
-  await prisma.autoavaliacao.create({
-    data: {
-      idUser: users[7].id,
-      idCiclo: cicloQ1_2025.id,
-      criterioId: dadosCriterios.find((c) => c.name === "Produtividade")?.id,
-      nota: await cryptoService.encrypt("4.0"),
-      justificativa: await cryptoService.encrypt(
-        "Tenho boa capacidade analítica, mas ainda estou aprendendo técnicas mais avançadas."
-      ),
-      notaGestor: await cryptoService.encrypt("2.5"),
-      justificativaGestor: await cryptoService.encrypt(
-        "Produtividade abaixo do esperado, precisa melhorar o ritmo de entrega."
-      ),
-    },
-  });
-  await prisma.autoavaliacao.create({
-    data: {
-      idUser: users[7].id,
-      idCiclo: cicloQ1_2025.id,
-      criterioId: dadosCriterios.find((c) => c.name === "Qualidade")?.id,
-      nota: await cryptoService.encrypt("4.3"),
-      justificativa: await cryptoService.encrypt(
-        "Busco sempre validar meus resultados e entregar análises precisas."
-      ),
-      notaGestor: await cryptoService.encrypt("2.8"),
-      justificativaGestor: await cryptoService.encrypt(
-        "Qualidade das análises inconsistente, muitos erros básicos detectados."
-      ),
-    },
-  });
-  await prisma.autoavaliacao.create({
-    data: {
-      idUser: users[7].id,
-      idCiclo: cicloQ1_2025.id,
-      criterioId: dadosCriterios.find((c) => c.name === "Foco no Cliente")?.id,
-      nota: await cryptoService.encrypt("4.1"),
-      justificativa: await cryptoService.encrypt(
-        "Procuro entender as necessidades do negócio antes de começar as análises."
-      ),
-      notaGestor: await cryptoService.encrypt("2.2"),
-      justificativaGestor: await cryptoService.encrypt(
-        "Dificuldade em compreender requisitos do cliente, entrega não atende as expectativas."
-      ),
-    },
-  });
+  // Funções auxiliares para gerar dados de avaliação
+  const generateAutoAvaliacao = async (
+    user: User,
+    ciclo: Ciclo,
+    criterios: Criterio[]
+  ) => {
+    // Mentor não faz autoavaliação
+    if (user.id === brunoUser.id) return;
 
-  // Alice Cadete (users[1]) - Desenvolvimento (Manager)
-  await prisma.autoavaliacao.create({
-    data: {
-      idUser: users[1].id,
-      idCiclo: cicloQ1_2025.id,
-      criterioId: devCriterios.find((c) => c.name === "Gestão de Pessoas")?.id,
-      nota: await cryptoService.encrypt("4.5"),
-      justificativa: await cryptoService.encrypt(
-        "Procuro desenvolver minha equipe e criar um ambiente colaborativo."
-      ),
-      notaGestor: await cryptoService.encrypt("4.7"),
-      justificativaGestor: await cryptoService.encrypt(
-        "Liderança exemplar, equipe muito motivada."
-      ),
-    },
-  });
-  await prisma.autoavaliacao.create({
-    data: {
-      idUser: users[1].id,
-      idCiclo: cicloQ1_2025.id,
-      criterioId: devCriterios.find((c) => c.name === "Gestão de Projetos")?.id,
-      nota: await cryptoService.encrypt("4.3"),
-      justificativa: await cryptoService.encrypt(
-        "Mantenho os projetos organizados e dentro do cronograma."
-      ),
-      notaGestor: await cryptoService.encrypt("4.6"),
-      justificativaGestor: await cryptoService.encrypt(
-        "Excelente controle de projetos e prazos."
-      ),
-    },
-  });
+    // Garante que haja um critério para cada trilha
+    const selectedCriterio =
+      criterios.find((c) => c.name === "Produtividade") || criterios[0];
 
-  // Raylandson Cesário (users[0]) - Desenvolvimento (Admin)
-  await prisma.autoavaliacao.create({
-    data: {
-      idUser: users[0].id,
-      idCiclo: cicloQ1_2025.id,
-      criterioId: devCriterios.find((c) => c.name === "Gestão Organizacional")
-        ?.id,
-      nota: await cryptoService.encrypt("4.4"),
-      justificativa: await cryptoService.encrypt(
-        "Contribuo para a melhoria contínua dos processos organizacionais."
-      ),
-      notaGestor: await cryptoService.encrypt("4.8"),
-      justificativaGestor: await cryptoService.encrypt(
-        "Visão estratégica excepcional para melhorias organizacionais."
-      ),
-    },
-  });
-  await prisma.autoavaliacao.create({
-    data: {
-      idUser: users[0].id,
-      idCiclo: cicloQ1_2025.id,
-      criterioId: devCriterios.find((c) => c.name === "Qualidade")?.id,
-      nota: await cryptoService.encrypt("4.7"),
-      justificativa: await cryptoService.encrypt(
-        "Busco sempre entregar soluções robustas e escaláveis."
-      ),
-      notaGestor: await cryptoService.encrypt("4.9"),
-      justificativaGestor: await cryptoService.encrypt(
-        "Qualidade técnica excepcional em todas as entregas."
-      ),
-    },
-  });
-  console.log("✅ Autoavaliações criadas.");
+    // Verifica se selectedCriterio é undefined antes de prosseguir
+    if (!selectedCriterio) {
+      console.warn(
+        `⚠️ Nenhum critério encontrado para o usuário ${user.name} na trilha ${user.trilhaId} no ciclo ${ciclo.name}. Pulando autoavaliação.`
+      );
+      return;
+    }
 
-  // 10. Cria as Avaliações 360
-  console.log("🔄 Criando avaliações 360...");
-  await prisma.avaliacao360.create({
-    data: {
-      idAvaliador: users[4].id,
-      idAvaliado: users[1].id,
-      idCiclo: cicloQ1_2025.id,
-      nota: await cryptoService.encrypt("4.8"),
-      pontosFortes: await cryptoService.encrypt(
-        "Excelente liderança técnica, sempre disponível para mentoria."
-      ),
-      pontosMelhora: await cryptoService.encrypt(
-        "Poderia delegar mais tarefas."
-      ),
-      nomeProjeto: "Sistema de Gestão",
-      periodoMeses: 6,
-      trabalhariaNovamente: await cryptoService.encrypt(
-        MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE
-      ),
-    },
-  });
-  await prisma.avaliacao360.create({
-    data: {
-      idAvaliador: users[6].id,
-      idAvaliado: users[0].id,
-      idCiclo: cicloQ1_2025.id,
-      nota: await cryptoService.encrypt("4.9"),
-      pontosFortes: await cryptoService.encrypt(
-        "Visão estratégica excepcional, capacidade de resolver problemas complexos."
-      ),
-      pontosMelhora: await cryptoService.encrypt(
-        "Poderia focar mais na visão macro."
-      ),
-      nomeProjeto: "Plataforma de Avaliação",
-      periodoMeses: 8,
-      trabalhariaNovamente: await cryptoService.encrypt(
-        MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE
-      ),
-    },
-  });
-  await prisma.avaliacao360.create({
-    data: {
-      idAvaliador: users[1].id,
-      idAvaliado: users[4].id,
-      idCiclo: cicloQ1_2025.id,
-      nota: await cryptoService.encrypt("4.2"),
-      pontosFortes: await cryptoService.encrypt(
-        "Muito dedicado, aprende rapidamente, código bem estruturado."
-      ),
-      pontosMelhora: await cryptoService.encrypt(
-        "Precisa ganhar mais confiança para propor soluções."
-      ),
-      nomeProjeto: "Sistema de Avaliação",
-      periodoMeses: 6,
-      trabalhariaNovamente: await cryptoService.encrypt(
-        MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE
-      ),
-    },
-  });
-  await prisma.avaliacao360.create({
-    data: {
-      idAvaliador: users[2].id, // Arthur Lins
-      idAvaliado: users[7].id, // Pedro Costa
-      idCiclo: cicloQ1_2025.id,
-      nota: await cryptoService.encrypt("2.3"),
-      pontosFortes: await cryptoService.encrypt(
-        "Tem conhecimento básico em análise de dados e é educado."
-      ),
-      pontosMelhora: await cryptoService.encrypt(
-        "Precisa melhorar drasticamente a qualidade das entregas, atenção aos detalhes e comunicação. Frequentemente não consegue atender prazos e requisitos."
-      ),
-      nomeProjeto: "Análise de Vendas Q1",
-      periodoMeses: 4,
-      trabalhariaNovamente: await cryptoService.encrypt(
-        MotivacaoTrabalhoNovamente.DISCORDO_PARCIALMENTE
-      ),
-    },
-  });
-  console.log("✅ Avaliações 360 criadas.");
+    try {
+      await prisma.autoavaliacao.create({
+        data: {
+          idUser: user.id,
+          idCiclo: ciclo.id,
+          criterioId: selectedCriterio.id,
+          nota: await cryptoService.encrypt("4.0"),
+          justificativa: await cryptoService.encrypt(
+            `Autoavaliação de ${user.name} para o ciclo ${ciclo.name}.`
+          ),
+          notaGestor: await cryptoService.encrypt("4.2"),
+          justificativaGestor: await cryptoService.encrypt(
+            `Avaliação do gestor para ${user.name} no ciclo ${ciclo.name}.`
+          ),
+        },
+      });
+      console.log(
+        `   -> Autoavaliação criada para ${user.name} no ciclo ${ciclo.name}`
+      );
+    } catch (error) {
+      console.error(
+        `❌ Erro ao criar Autoavaliação para ${user.name} no ciclo ${ciclo.name}:`,
+        error
+      );
+    }
+  };
 
-  // 11. Cria as Avaliações de Mentoring
-  console.log("🤝 Criando avaliações de mentoring...");
-  await prisma.mentoring.create({
-    data: {
-      idMentor: users[1].id, // Alice Cadete
-      idMentorado: users[4].id, // Luan Bezerra
-      idCiclo: cicloQ1_2025.id,
-      nota: await cryptoService.encrypt("4.6"),
-      justificativa: await cryptoService.encrypt(
-        "Luan tem demonstrado excelente evolução técnica e está mais confiante em suas decisões. Precisa trabalhar um pouco mais a comunicação com stakeholders."
-      ),
-    },
+  const generateAvaliacao360 = async (
+    avaliador: User,
+    avaliado: User,
+    ciclo: Ciclo
+  ) => {
+    // Mentor não faz 360
+    if (avaliador.id === brunoUser.id) return;
+
+    try {
+      // Prevenção de autoavaliação 360 e avaliação de mentor por si mesmo
+      if (avaliador.id === avaliado.id) {
+        console.log(
+          `   🚫 Pulando Avaliação 360: ${avaliador.name} não pode avaliar a si mesmo.`
+        );
+        return;
+      }
+      if (avaliado.id === brunoUser.id) {
+        console.log(
+          `   🚫 Pulando Avaliação 360: ${avaliador.name} não avalia o mentor Bruno aqui.`
+        );
+        return;
+      }
+
+      console.log(
+        `   Attempting to create Avaliação 360: ${avaliador.name} (Avaliador) -> ${avaliado.name} (Avaliado) in cycle ${ciclo.name}`
+      );
+      await prisma.avaliacao360.create({
+        data: {
+          idAvaliador: avaliador.id,
+          idAvaliado: avaliado.id,
+          idCiclo: ciclo.id,
+          nota: await cryptoService.encrypt("4.5"),
+          pontosFortes: await cryptoService.encrypt(
+            `Pontos fortes de ${avaliado.name} por ${avaliador.name} no ciclo ${ciclo.name}.`
+          ),
+          pontosMelhora: await cryptoService.encrypt(
+            `Pontos de melhoria de ${avaliado.name} por ${avaliador.name} no ciclo ${ciclo.name}.`
+          ),
+          nomeProjeto: "Projeto Integrado",
+          periodoMeses: 6,
+          trabalhariaNovamente: await cryptoService.encrypt(
+            MotivacaoTrabalhoNovamente.CONCORDO_TOTALMENTE
+          ),
+        },
+      });
+      console.log(
+        `   ✅ Avaliação 360 criada: ${avaliador.name} avaliou ${avaliado.name} no ciclo ${ciclo.name}`
+      );
+    } catch (error) {
+      console.error(
+        `❌ Erro ao criar Avaliação 360 de ${avaliador.name} para ${avaliado.name} no ciclo ${ciclo.name}:`,
+        error
+      );
+    }
+  };
+
+  const generateMentoring = async (mentorado: User, ciclo: Ciclo) => {
+    // Mentor não recebe mentoring de si
+    if (mentorado.id === brunoUser.id) return;
+    try {
+      await prisma.mentoring.create({
+        data: {
+          idMentorado: mentorado.id,
+          idMentor: brunoUser.id,
+          idCiclo: ciclo.id,
+          nota: await cryptoService.encrypt("4.5"),
+          justificativa: await cryptoService.encrypt(
+            `Sessão de mentoria de Bruno para ${mentorado.name} no ciclo ${ciclo.name}.`
+          ),
+        },
+      });
+      console.log(
+        `   -> Mentoring criado para ${mentorado.name} por Bruno no ciclo ${ciclo.name}`
+      );
+    } catch (error) {
+      console.error(
+        `❌ Erro ao criar Mentoring para ${mentorado.name} no ciclo ${ciclo.name}:`,
+        error
+      );
+    }
+  };
+
+  const generateEqualizacao = async (
+    avaliado: User,
+    ciclo: Ciclo,
+    status: StatusEqualizacao
+  ) => {
+    // Mentor não tem equalização
+    if (avaliado.id === brunoUser.id) return;
+    try {
+      await prisma.equalizacao.create({
+        data: {
+          idAvaliador: fernandaUser.id,
+          idAvaliado: avaliado.id,
+          idCiclo: ciclo.id,
+          mediaAutoavaliacao: await cryptoService.encrypt("4.0"),
+          mediaAvaliacaoGestor: await cryptoService.encrypt("4.2"),
+          mediaAvaliacao360: await cryptoService.encrypt("4.1"),
+          notaFinal: await cryptoService.encrypt("4.3"),
+          justificativa: await cryptoService.encrypt(
+            `Equalização de ${avaliado.name} para o ciclo ${ciclo.name} por Fernanda.`
+          ),
+          status: status,
+        },
+      });
+      console.log(
+        `   -> Equalização criada para ${avaliado.name} no ciclo ${ciclo.name} (Status: ${status})`
+      );
+    } catch (error) {
+      console.error(
+        `❌ Erro ao criar Equalização para ${avaliado.name} no ciclo ${ciclo.name}:`,
+        error
+      );
+    }
+  };
+
+  const generateReferencia = async (
+    referenciador: User,
+    referenciado: User,
+    ciclo: Ciclo
+  ) => {
+    // Ninguém pode se referenciar
+    if (referenciador.id === referenciado.id) {
+      console.log(
+        `   🚫 Pulando Referência: ${referenciador.name} não pode referenciar a si mesmo.`
+      );
+      return;
+    }
+    try {
+      console.log(
+        `   Attempting to create Referencia: ${referenciador.name} (Referenciador) -> ${referenciado.name} (Referenciado) in cycle ${ciclo.name}`
+      );
+      await prisma.referencia.create({
+        data: {
+          idReferenciador: referenciador.id,
+          idReferenciado: referenciado.id,
+          idCiclo: ciclo.id,
+          justificativa: await cryptoService.encrypt(
+            `Referência de ${referenciador.name} sobre ${referenciado.name} no ciclo ${ciclo.name}.`
+          ),
+        },
+      });
+      console.log(
+        `   ✅ Referência criada: ${referenciador.name} referenciou ${referenciado.name} no ciclo ${ciclo.name}`
+      );
+    } catch (error) {
+      console.error(
+        `❌ Erro ao criar Referência de ${referenciador.name} para ${referenciado.name} no ciclo ${ciclo.name}:`,
+        error
+      );
+    }
+  };
+
+  // --- Popula dados para o Ciclo Finalizado (2024.1) ---
+  console.log("\n--- Populando dados para o Ciclo Finalizado (2024.1) ---");
+
+  // Referências para ciclo finalizado
+  console.log("📝 Criando referências para ciclo finalizado...");
+  // Cada usuário (exceto Bruno) referencia outro aleatório (exceto Bruno e ele mesmo)
+  for (const referenciador of allUsersExceptBruno) {
+    const possibleReferenced = allUsersExceptBruno.filter(
+      (u) => u.id !== referenciador.id
+    );
+    if (possibleReferenced.length > 0) {
+      const referenciado =
+        possibleReferenced[
+          Math.floor(Math.random() * possibleReferenced.length)
+        ];
+      await generateReferencia(referenciador, referenciado, cicloFinalizado);
+    } else {
+      console.log(
+        `   🚫 Não há outros usuários para ${referenciador.name} referenciar no ciclo ${cicloFinalizado.name}.`
+      );
+    }
+  }
+  console.log("✅ Referências criadas para ciclo finalizado.");
+
+  // Autoavaliação para todos (exceto Bruno)
+  console.log("📊 Criando autoavaliações para ciclo finalizado...");
+  for (const user of colaboradoresAvaliadores) {
+    let criteriosParaUsuario: Criterio[];
+    if (user.trilhaId === devTrilha.id) {
+      criteriosParaUsuario = devCriteriosFinalizado;
+    } else if (user.trilhaId === dadosTrilha.id) {
+      criteriosParaUsuario = dadosCriteriosFinalizado;
+    } else if (user.trilhaId === infraTrilha.id) {
+      criteriosParaUsuario = infraCriteriosFinalizado;
+    } else {
+      criteriosParaUsuario = gestaoCriteriosFinalizado;
+    }
+    await generateAutoAvaliacao(user, cicloFinalizado, criteriosParaUsuario);
+  }
+  console.log("✅ Autoavaliações criadas para ciclo finalizado.");
+
+  // Avaliações 360 para todos os colaboradores (exceto Bruno)
+  console.log("🔄 Criando avaliações 360 para ciclo finalizado...");
+  for (const avaliador of colaboradoresAvaliadores) {
+    // Avaliar o gestor direto
+    if (avaliador.gestorId) {
+      const gestor = users.find((u) => u.id === avaliador.gestorId);
+      if (gestor) {
+        await generateAvaliacao360(avaliador, gestor, cicloFinalizado);
+      } else {
+        console.warn(
+          `   ⚠️ Gestor não encontrado para ${avaliador.name} (ID: ${avaliador.gestorId}).`
+        );
+      }
+    } else {
+      console.log(
+        `   ${avaliador.name} não possui gestor definido. Pulando avaliação do gestor.`
+      );
+    }
+
+    // Avaliar um colega aleatório (exceto ele mesmo e Bruno)
+    const possibleColleagues = colaboradoresAvaliadores.filter(
+      (u) => u.id !== avaliador.id && u.id !== brunoUser.id
+    );
+    if (possibleColleagues.length > 0) {
+      const colega =
+        possibleColleagues[
+          Math.floor(Math.random() * possibleColleagues.length)
+        ];
+      await generateAvaliacao360(avaliador, colega, cicloFinalizado);
+    } else {
+      console.log(
+        `   🚫 Não há colegas disponíveis para ${avaliador.name} avaliar no ciclo ${cicloFinalizado.name}.`
+      );
+    }
+  }
+  console.log("✅ Avaliações 360 criadas para ciclo finalizado.");
+
+  // Mentoring de Bruno para todos (exceto Bruno)
+  console.log("👨‍🏫 Criando registros de mentoring para ciclo finalizado...");
+  for (const user of allUsersExceptBruno) {
+    // Mentoring é para todos exceto o mentor
+    await generateMentoring(user, cicloFinalizado);
+  }
+  console.log("✅ Registros de mentoring criados para ciclo finalizado.");
+
+  // Equalizações de Fernanda para todos (exceto Bruno)
+  console.log("⚖️ Criando equalizações para ciclo finalizado...");
+  for (const user of allUsersExceptBruno) {
+    // Equalização é para todos exceto o mentor
+    await generateEqualizacao(
+      user,
+      cicloFinalizado,
+      StatusEqualizacao.FINALIZADO
+    );
+  }
+  console.log("✅ Equalizações criadas para ciclo finalizado.");
+
+  // Geração de Resumos de IA (mantido como estava, pois não foi requisitado alteração)
+  console.log("🤖 Gerando resumos de IA para ciclo finalizado...");
+  await prisma.resumoIA.createMany({
+    data: [
+      {
+        userId: luanUser.id,
+        idCiclo: cicloFinalizado.id,
+        resumo: await cryptoService.encrypt(
+          "Luan Bezerra teve um ciclo de avaliação muito positivo, com grande evolução em suas habilidades."
+        ),
+      },
+      {
+        userId: pedroUser.id,
+        idCiclo: cicloFinalizado.id,
+        resumo: await cryptoService.encrypt(
+          "Pedro Costa necessita de um plano de desenvolvimento focado em qualidade e cumprimento de prazos, conforme feedback do comitê."
+        ),
+      },
+    ],
   });
-  await prisma.mentoring.create({
-    data: {
-      idMentor: users[1].id, // Alice Cadete
-      idMentorado: users[6].id, // Maria Santos
-      idCiclo: cicloQ1_2025.id,
-      nota: await cryptoService.encrypt("4.8"),
-      justificativa: await cryptoService.encrypt(
-        "Maria é uma mentorada excepcional, sempre proativa e com grande capacidade de aprendizado. Tem potencial para assumir posições de liderança."
-      ),
-    },
+  console.log("✅ Resumos de IA gerados para ciclo finalizado.");
+
+  // --- Popula dados para o Ciclo em Revisão de Comitê (2025.2) ---
+  console.log(
+    "\n--- Populando dados para o Ciclo em Revisão de Comitê (2025.2) ---"
+  );
+
+  // Referências para ciclo em revisão de comitê
+  console.log("📝 Criando referências para ciclo em revisão de comitê...");
+  for (const referenciador of allUsersExceptBruno) {
+    const possibleReferenced = allUsersExceptBruno.filter(
+      (u) => u.id !== referenciador.id
+    );
+    if (possibleReferenced.length > 0) {
+      const referenciado =
+        possibleReferenced[
+          Math.floor(Math.random() * possibleReferenced.length)
+        ];
+      await generateReferencia(referenciador, referenciado, cicloRevisaoComite);
+    } else {
+      console.log(
+        `   🚫 Não há outros usuários para ${referenciador.name} referenciar no ciclo ${cicloRevisaoComite.name}.`
+      );
+    }
+  }
+  console.log("✅ Referências criadas para ciclo em revisão de comitê.");
+
+  // Autoavaliação para todos (exceto Bruno)
+  console.log("📊 Criando autoavaliações para ciclo em revisão de comitê...");
+  for (const user of colaboradoresAvaliadores) {
+    let criteriosParaUsuario: Criterio[];
+    if (user.trilhaId === devTrilha.id) {
+      criteriosParaUsuario = devCriteriosRevisaoComite;
+    } else if (user.trilhaId === dadosTrilha.id) {
+      criteriosParaUsuario = dadosCriteriosRevisaoComite;
+    } else if (user.trilhaId === infraTrilha.id) {
+      criteriosParaUsuario = infraCriteriosRevisaoComite;
+    } else {
+      criteriosParaUsuario = gestaoCriteriosRevisaoComite;
+    }
+    await generateAutoAvaliacao(user, cicloRevisaoComite, criteriosParaUsuario);
+  }
+  console.log("✅ Autoavaliações criadas para ciclo em revisão de comitê.");
+
+  // Avaliações 360 para todos os colaboradores (exceto Bruno)
+  console.log("🔄 Criando avaliações 360 para ciclo em revisão de comitê...");
+  for (const avaliador of colaboradoresAvaliadores) {
+    // Avaliar o gestor direto
+    if (avaliador.gestorId) {
+      const gestor = users.find((u) => u.id === avaliador.gestorId);
+      if (gestor) {
+        await generateAvaliacao360(avaliador, gestor, cicloRevisaoComite);
+      } else {
+        console.warn(
+          `   ⚠️ Gestor não encontrado para ${avaliador.name} (ID: ${avaliador.gestorId}).`
+        );
+      }
+    } else {
+      console.log(
+        `   ${avaliador.name} não possui gestor definido. Pulando avaliação do gestor.`
+      );
+    }
+
+    // Avaliar um colega aleatório (exceto ele mesmo e Bruno)
+    const possibleColleagues = colaboradoresAvaliadores.filter(
+      (u) => u.id !== avaliador.id && u.id !== brunoUser.id
+    );
+    if (possibleColleagues.length > 0) {
+      const colega =
+        possibleColleagues[
+          Math.floor(Math.random() * possibleColleagues.length)
+        ];
+      await generateAvaliacao360(avaliador, colega, cicloRevisaoComite);
+    } else {
+      console.log(
+        `   🚫 Não há colegas disponíveis para ${avaliador.name} avaliar no ciclo ${cicloRevisaoComite.name}.`
+      );
+    }
+  }
+  console.log("✅ Avaliações 360 criadas para ciclo em revisão de comitê.");
+
+  // Mentoring de Bruno para todos (exceto Bruno)
+  console.log(
+    "👨‍🏫 Criando registros de mentoring para ciclo em revisão de comitê..."
+  );
+  for (const user of allUsersExceptBruno) {
+    // Mentoring é para todos exceto o mentor
+    await generateMentoring(user, cicloRevisaoComite);
+  }
+  console.log(
+    "✅ Registros de mentoring criados para ciclo em revisão de comitê."
+  );
+
+  // Equalizações de Fernanda para todos (exceto Bruno)
+  console.log("⚖️ Criando equalizações para ciclo em revisão de comitê...");
+  for (const user of allUsersExceptBruno) {
+    // Equalização é para todos exceto o mentor
+    await generateEqualizacao(
+      user,
+      cicloRevisaoComite,
+      StatusEqualizacao.PENDENTE
+    );
+  }
+  console.log("✅ Equalizações criadas para ciclo em revisão de comitê.");
+
+  // Geração de Resumos de IA (mantido como estava, pois não foi requisitado alteração)
+  console.log("🤖 Gerando resumos de IA para ciclo em revisão de comitê...");
+  await prisma.resumoIA.createMany({
+    data: [
+      {
+        userId: luanUser.id,
+        idCiclo: cicloRevisaoComite.id,
+        resumo: await cryptoService.encrypt(
+          "Luan Bezerra é um desenvolvedor em ascensão com fortes habilidades em colaboração e qualidade de código."
+        ),
+      },
+      {
+        userId: arthurUser.id,
+        idCiclo: cicloRevisaoComite.id,
+        resumo: await cryptoService.encrypt(
+          "Arthur Lins demonstra grande criatividade e habilidade no desenvolvimento front-end."
+        ),
+      },
+      {
+        userId: ericoUser.id,
+        idCiclo: cicloRevisaoComite.id,
+        resumo: await cryptoService.encrypt(
+          "Erico Chen é um especialista em infraestrutura com grande potencial de crescimento."
+        ),
+      },
+      {
+        userId: mariaUser.id,
+        idCiclo: cicloRevisaoComite.id,
+        resumo: await cryptoService.encrypt(
+          "Maria Santos é uma colaboradora dedicada com forte iniciativa e pensamento criativo, entregando resultados de alta qualidade."
+        ),
+      },
+      {
+        userId: pedroUser.id,
+        idCiclo: cicloRevisaoComite.id,
+        resumo: await cryptoService.encrypt(
+          "Pedro Costa demonstra conhecimento básico em análise de dados, mas necessita de aprimoramento em produtividade e qualidade para atender às expectativas."
+        ),
+      },
+      {
+        userId: managerUser.id,
+        idCiclo: cicloRevisaoComite.id,
+        resumo: await cryptoService.encrypt(
+          "Alice Cadete demonstra liderança exemplar e excelente controle de projetos, motivando sua equipe de forma eficaz."
+        ),
+      },
+      {
+        userId: adminUser.id,
+        idCiclo: cicloRevisaoComite.id,
+        resumo: await cryptoService.encrypt(
+          "Raylandson Cesário possui visão estratégica e entrega soluções robustas e escaláveis, contribuindo significativamente para a organização."
+        ),
+      },
+    ],
   });
-  await prisma.mentoring.create({
-    data: {
-      idMentor: users[2].id, // Arthur Lins
-      idMentorado: users[7].id, // Pedro Costa
-      idCiclo: cicloQ1_2025.id,
-      nota: await cryptoService.encrypt("2.8"),
-      justificativa: await cryptoService.encrypt(
-        "Pedro tem enfrentado dificuldades significativas em análise de dados. Precisa melhorar a atenção aos detalhes e desenvolver maior autonomia. Tem potencial, mas precisa de muito mais dedicação e foco."
-      ),
-    },
-  });
-  console.log("✅ Avaliações de mentoring criadas.");
+  console.log("✅ Resumos de IA gerados para ciclo em revisão de comitê.");
 
   // --- Resumo Final ---
   console.log("\n🎉 Seeding concluído com sucesso!");
   const summary = {
     trilhas: await prisma.trilha.count(),
     ciclos: await prisma.ciclo.count(),
+    equipes: await prisma.equipe.count(),
     users: await prisma.user.count(),
     criterios: await prisma.criterio.count(),
     referencias: await prisma.referencia.count(),
     autoavaliacoes: await prisma.autoavaliacao.count(),
     avaliacoes360: await prisma.avaliacao360.count(),
+    mentoring: await prisma.mentoring.count(),
+    equalizacoes: await prisma.equalizacao.count(),
     resumosIA: await prisma.resumoIA.count(),
   };
 
