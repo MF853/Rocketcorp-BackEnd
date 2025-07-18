@@ -503,6 +503,12 @@ export class UsersRepository {
             finalScore = parseFloat(decryptedFinalScore);
           }
 
+          // Decrypt resumo if it exists
+          let decryptedResumo = "";
+          if (resumoIA?.resumo) {
+            decryptedResumo = await this.cryptoService.decrypt(resumoIA.resumo);
+          }
+
           return {
             id: ciclo.id.toString(),
             cycle,
@@ -514,7 +520,7 @@ export class UsersRepository {
               postura: scoresByType["comportamental"] || 0,
               gestao: scoresByType["gestao"],
             },
-            resumo: resumoIA?.resumo || "",
+            resumo: decryptedResumo,
             period: cycle,
             completionDate:
               status === "finalizado"

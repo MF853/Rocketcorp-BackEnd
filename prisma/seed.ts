@@ -135,7 +135,14 @@ async function main() {
       name: "Raylandson Cesário",
       email: "raylandson.cesario@rocketcorp.com",
       password: await hashPassword("password123"),
-      role: ["admin" as Role],
+      role: [
+        "admin" as Role,
+        "gestor" as Role,
+        "colaborador" as Role,
+        "mentor" as Role,
+        "comite" as Role,
+        "rh" as Role,
+      ],
       cargo: "Desenvolvimento",
       unidade: "Recife",
       trilhaId: devTrilha.id,
@@ -790,7 +797,7 @@ main()
     // Garante que a conexão com o banco de dados seja fechada
     prisma
       .$disconnect()
-      .then(() => { })
+      .then(() => {})
       .catch((e) => {
         console.error("Erro ao desconectar do banco de dados:", e);
       });
