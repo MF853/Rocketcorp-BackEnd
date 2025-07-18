@@ -150,6 +150,64 @@ export class EqualizacaoController {
     return this.equalizacaoService.getEqualizacoesByCycle(+cicloId);
   }
 
+  @Get("ciclo/:cicloId/avaliado/:idAvaliado")
+  @ApiOperation({
+    summary: "Busca equalização de um usuário específico em um ciclo",
+    description:
+      "Retorna a equalização de um usuário (idAvaliado) em um ciclo (cicloId).",
+  })
+  @ApiParam({
+    name: "cicloId",
+    description: "ID do ciclo para buscar equalização",
+    type: "number",
+  })
+  @ApiParam({
+    name: "idAvaliado",
+    description: "ID do usuário avaliado",
+    type: "number",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Equalização encontrada com sucesso.",
+    type: EqualizacaoResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description:
+      "Equalização não encontrada para o usuário e ciclo informados.",
+  })
+  getEqualizacaoByCicloAndAvaliado(
+    @Param("cicloId") cicloId: string,
+    @Param("idAvaliado") idAvaliado: string
+  ): Promise<EqualizacaoResponseDto | null> {
+    return this.equalizacaoService.getEqualizacaoByCicloAndAvaliado(
+      +cicloId,
+      +idAvaliado
+    );
+  }
+
+  @Get("avaliado/:idAvaliado")
+  @ApiOperation({
+    summary: "Busca todas as equalizações de um usuário em todos os ciclos",
+    description:
+      "Retorna todas as equalizações onde o usuário informado é o avaliado.",
+  })
+  @ApiParam({
+    name: "idAvaliado",
+    description: "ID do usuário avaliado",
+    type: "number",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Lista de equalizações encontradas.",
+    type: [EqualizacaoResponseDto],
+  })
+  getEqualizacoesByAvaliado(
+    @Param("idAvaliado") idAvaliado: string
+  ): Promise<EqualizacaoResponseDto[]> {
+    return this.equalizacaoService.getEqualizacoesByAvaliado(+idAvaliado);
+  }
+
   @Get("current-cycle")
   @ApiOperation({
     summary: "Get equalizações for current cycle in revisao comite phase",

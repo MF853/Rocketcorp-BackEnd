@@ -294,6 +294,42 @@ export class UsersRepository {
     );
   }
 
+  async findUsersWithAutoavaliacaoByCiclo(idCiclo: number) {
+    // Busca todos os usuários que fizeram autoavaliação no ciclo
+    const autoavaliacoes = await this.prisma.autoavaliacao.findMany({
+      where: { idCiclo },
+      select: { idUser: true },
+      distinct: ["idUser"],
+    });
+    const userIds = autoavaliacoes.map((a) => a.idUser);
+    if (userIds.length === 0) return [];
+    return this.prisma.user.findMany({
+      where: { id: { in: userIds } },
+      include: this.getUserIncludes(),
+      orderBy: { name: "asc" },
+    });
+  }
+
+  async findMentores() {
+    return this.prisma.user.findMany({
+      where: {
+        role: {
+          has: "mentor",
+        },
+      },
+      include: this.getUserIncludes(),
+      orderBy: { name: "asc" },
+    });
+  }
+
+  async findLideradosByGestor(gestorId: number) {
+    return this.prisma.user.findMany({
+      where: { gestorId },
+      include: this.getUserIncludes(),
+      orderBy: { name: "asc" },
+    });
+  }
+
   private getUserIncludes() {
     return userInclude;
   }

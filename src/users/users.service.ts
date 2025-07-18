@@ -8,7 +8,7 @@ import { UserHistoryResponseDto } from "./dto/user-history.dto";
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly usersRepository: UsersRepository) {}
+  constructor(private readonly usersRepository: UsersRepository) { }
 
   async create(data: any) {
     return this.usersRepository.create(data);
@@ -95,6 +95,10 @@ export class UsersService {
     return this.usersRepository.getAllUsersStatisticsByCycle(idCiclo);
   }
 
+  async findUsersWithAutoavaliacaoByCiclo(idCiclo: number) {
+    return this.usersRepository.findUsersWithAutoavaliacaoByCiclo(idCiclo);
+  }
+
   async getMembrosAndGestorByEquipe(equipeId: number) {
     return this.usersRepository.findMembrosAndGestorByEquipe(equipeId);
   }
@@ -135,5 +139,13 @@ export class UsersService {
     } catch (error) {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
+  }
+
+  async findMentores() {
+    return this.usersRepository.findMentores();
+  }
+
+  async findLideradosByGestor(gestorId: number) {
+    return this.usersRepository.findLideradosByGestor(gestorId);
   }
 }

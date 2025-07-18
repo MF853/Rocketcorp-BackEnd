@@ -18,15 +18,15 @@ enum Role {
 }
 
 model Equipe {
-  id         Int      @id @default(autoincrement())
-  nome       String   @db.VarChar(255)
-  descricao  String?  @db.VarChar(255)
-  idGestor   Int
-  gestor     User     @relation("GestorEquipe", fields: [idGestor], references: [id], onDelete: Restrict)
-  membros    User[]   @relation("MembrosEquipe")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  
+  id        Int      @id @default(autoincrement())
+  nome      String   @db.VarChar(255)
+  descricao String?  @db.VarChar(255)
+  idGestor  Int
+  gestor    User     @relation("GestorEquipe", fields: [idGestor], references: [id], onDelete: Restrict)
+  membros   User[]   @relation("MembrosEquipe")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("equipes")
 }
 
@@ -67,13 +67,13 @@ model User {
 }
 
 model Ciclo {
-  id                          Int             @id @default(autoincrement())
-  name                        String          @db.VarChar(255)
+  id                          Int                   @id @default(autoincrement())
+  name                        String                @db.VarChar(255)
   year                        Int
   period                      Int
-  status                      String          @default("aberto") @db.VarChar(50)
-  createdAt                   DateTime        @default(now())
-  updatedAt                   DateTime        @updatedAt
+  status                      String
+  createdAt                   DateTime              @default(now())
+  updatedAt                   DateTime              @updatedAt
   dataAberturaAvaliacao       DateTime
   dataFechamentoAvaliacao     DateTime
   dataAberturaRevisaoGestor   DateTime
@@ -87,7 +87,7 @@ model Ciclo {
   criterios                   Criterio[]
   ResumoIA                    ResumoIA[]
   mentorings                  Mentoring[]
-  Equalizacao Equalizacao[]
+  Equalizacao                 Equalizacao[]
   ResumoProcessamento         ResumoProcessamento[]
 
   @@unique([year, period])
@@ -221,6 +221,7 @@ model Mentoring {
   ciclo     Ciclo @relation(fields: [idCiclo], references: [id], onDelete: Restrict)
   mentor    User  @relation("MentorMentoring", fields: [idMentor], references: [id], onDelete: Restrict)
   mentorado User  @relation("MentoradoMentoring", fields: [idMentorado], references: [id], onDelete: Restrict)
+
   @@map("mentoring")
 }
 
@@ -249,12 +250,12 @@ model Equalizacao {
 }
 
 model ResumoProcessamento {
-  id         String   @id @default(uuid())
-  cicloId    Int
-  status     statusProcessamento
-  criadoEm   DateTime @default(now())
+  id       String              @id @default(uuid())
+  cicloId  Int
+  status   statusProcessamento
+  criadoEm DateTime            @default(now())
 
-  ciclo      Ciclo    @relation(fields: [cicloId], references: [id], onDelete: Cascade)
+  ciclo Ciclo @relation(fields: [cicloId], references: [id], onDelete: Cascade)
 }
 
 enum statusProcessamento {

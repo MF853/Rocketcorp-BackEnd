@@ -67,6 +67,13 @@ export class CicleRepository {
         year: data.year !== undefined ? Number(data.year) : undefined,
         period: data.period !== undefined ? Number(data.period) : undefined,
         status: data.status,
+        dataAberturaAvaliacao: data.dataAberturaAvaliacao,
+        dataFechamentoAvaliacao: data.dataFechamentoAvaliacao,
+        dataAberturaRevisaoGestor: data.dataAberturaRevisaoGestor,
+        dataFechamentoRevisaoGestor: data.dataFechamentoRevisaoGestor,
+        dataAberturaRevisaoComite: data.dataAberturaRevisaoComite,
+        dataFechamentoRevisaoComite: data.dataFechamentoRevisaoComite,
+        dataFinalizacao: data.dataFinalizacao,
       },
     });
   }
@@ -82,5 +89,43 @@ export class CicleRepository {
         },
       },
     });
+  }
+
+  async findLastFinalizado() {
+    return this.prisma.ciclo.findFirst({
+      where: { status: "finalizado" },
+      orderBy: { dataFinalizacao: "desc" },
+    });
+  }
+
+  async findCicloAtualByData(date: Date) {
+    // Busca todos os ciclos ordenados pela data mais recente
+    const ciclos = await this.prisma.ciclo.findMany({
+      orderBy: { dataAberturaAvaliacao: "desc" },
+    });
+    for (const ciclo of ciclos) {
+      if (
+        date >= ciclo.dataAberturaAvaliacao &&
+        date <= ciclo.dataFechamentoAvaliacao
+      ) {
+        return { ...ciclo, statusAtual: "aberto" };
+      }
+      if (
+        date >= ciclo.dataAberturaRevisaoGestor &&
+        date <= ciclo.dataFechamentoRevisaoGestor
+      ) {
+        return { ...ciclo, statusAtual: "revisao_gestor" };
+      }
+      if (
+        date >= ciclo.dataAberturaRevisaoComite &&
+        date <= ciclo.dataFechamentoRevisaoComite
+      ) {
+        return { ...ciclo, statusAtual: "revisao_comite" };
+      }
+      if (date >= ciclo.dataFinalizacao) {
+        return { ...ciclo, statusAtual: "finalizado" };
+      }
+    }
+    return null;
   }
 }

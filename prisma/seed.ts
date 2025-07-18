@@ -790,7 +790,7 @@ main()
     // Garante que a conexão com o banco de dados seja fechada
     prisma
       .$disconnect()
-      .then(() => {})
+      .then(() => { })
       .catch((e) => {
         console.error("Erro ao desconectar do banco de dados:", e);
       });

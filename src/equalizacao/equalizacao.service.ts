@@ -14,7 +14,7 @@ export class EqualizacaoService {
     private readonly usersService: UsersService,
     private readonly cicleService: CicleService,
     private readonly cryptoService: CryptoService
-  ) {}
+  ) { }
 
   async create(
     createEqualizacaoDto: CreateEqualizacaoDto
@@ -146,5 +146,77 @@ export class EqualizacaoService {
     }
 
     return results.sort((a, b) => a.nomeAvaliado.localeCompare(b.nomeAvaliado));
+  }
+
+  async getEqualizacaoByCicloAndAvaliado(
+    idCiclo: number,
+    idAvaliado: number
+  ): Promise<EqualizacaoResponseDto | null> {
+    const usersData = await this.equalizacaoRepository.getEqualizacoesByCycle(
+      idCiclo
+    );
+    const userData = usersData.find((u) => u.user.id === idAvaliado);
+    if (!userData) return null;
+
+    const { user, existingEqualizacao, idCiclo: cycleId } = userData;
+    if (existingEqualizacao) {
+      return {
+        idEqualizacao: existingEqualizacao.id.toString(),
+        idAvaliador: existingEqualizacao.idAvaliador.toString(),
+        idAvaliado: existingEqualizacao.idAvaliado.toString(),
+        idCiclo: cycleId.toString(),
+        nomeAvaliado: user.name,
+        cargoAvaliado: user.cargo,
+        notaAutoavaliacao: parseFloat(await this.cryptoService.decrypt(existingEqualizacao.mediaAutoavaliacao)),
+        notaGestor: parseFloat(await this.cryptoService.decrypt(existingEqualizacao.mediaAvaliacaoGestor)),
+        notaAvaliacao360: parseFloat(await this.cryptoService.decrypt(existingEqualizacao.mediaAvaliacao360)),
+        notaFinal: parseFloat(await this.cryptoService.decrypt(existingEqualizacao.notaFinal)),
+        justificativa: await this.cryptoService.decrypt(existingEqualizacao.justificativa),
+        resumoIA: await this.cryptoService.decrypt(user.resumoIA),
+        status:
+          existingEqualizacao.status === "FINALIZADO"
+            ? "Finalizado"
+            : "Pendente",
+      };
+    } else {
+      const stats = await this.usersService.getUserStatistics(user.id, cycleId);
+      return {
+        idEqualizacao: `temp_${user.id}_${cycleId}`,
+        idAvaliador: user.id.toString(),
+        idAvaliado: user.id.toString(),
+        idCiclo: cycleId.toString(),
+        nomeAvaliado: user.name,
+        cargoAvaliado: user.cargo,
+        notaAutoavaliacao: stats?.autoavaliacaoAverage || null,
+        notaGestor: stats?.avaliacaoGestorAvg || null,
+        notaAvaliacao360: stats?.avaliacao360Avg || null,
+        notaFinal: null,
+        justificativa: null,
+        resumoIA: user.resumoIA,
+        status: "Pendente",
+      };
+    }
+  }
+
+  async getEqualizacoesByAvaliado(
+    idAvaliado: number
+  ): Promise<EqualizacaoResponseDto[]> {
+    const equalizacoes =
+      await this.equalizacaoRepository.getEqualizacoesByAvaliado(idAvaliado);
+    return await Promise.all(equalizacoes.map(async (eq) => ({
+      idEqualizacao: eq.id.toString(),
+      idAvaliador: eq.idAvaliador.toString(),
+      idAvaliado: eq.idAvaliado.toString(),
+      idCiclo: eq.idCiclo.toString(),
+      nomeAvaliado: eq.nomeAvaliado,
+      cargoAvaliado: eq.cargoAvaliado,
+      notaAutoavaliacao: parseFloat(await this.cryptoService.decrypt(eq.mediaAutoavaliacao)),
+      notaGestor: parseFloat(await this.cryptoService.decrypt(eq.mediaAvaliacaoGestor)),
+      notaAvaliacao360: parseFloat(await this.cryptoService.decrypt(eq.mediaAvaliacao360)),
+      notaFinal: parseFloat(await this.cryptoService.decrypt(eq.notaFinal)),
+      justificativa: await this.cryptoService.decrypt(eq.justificativa),
+      resumoIA: await this.cryptoService.decrypt(eq.resumoIA),
+      status: eq.status === "FINALIZADO" ? "Finalizado" : "Pendente",
+    })));
   }
 }

@@ -31,7 +31,7 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly logService: LogService,
-  ) {}
+  ) { }
 
   @Get()
   @ApiOperation({ summary: "Lista todos os usuários" })
@@ -41,6 +41,16 @@ export class UsersController {
   })
   findAll() {
     return this.usersService.findAll();
+  }
+
+  @Get("mentores")
+  @ApiOperation({ summary: "Lista todos os usuários com role mentor" })
+  @ApiResponse({
+    status: 200,
+    description: "Lista de mentores retornada com sucesso.",
+  })
+  findMentores() {
+    return this.usersService.findMentores();
   }
 
   @Get(":id")
@@ -55,6 +65,16 @@ export class UsersController {
   @ApiResponse({ status: 200, description: "Usuário retornado com sucesso." })
   findByEmail(@Param("email") email: string) {
     return this.usersService.findByEmail(email);
+  }
+
+  @Get(":id/liderados")
+  @ApiOperation({ summary: "Lista todos os liderados de um gestor" })
+  @ApiResponse({
+    status: 200,
+    description: "Lista de liderados retornada com sucesso.",
+  })
+  findLideradosByGestor(@Param("id") id: string) {
+    return this.usersService.findLideradosByGestor(+id);
   }
 
   @Get(":id/mentorados")

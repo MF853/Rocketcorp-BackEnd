@@ -36,11 +36,31 @@ export class CicleController {
     return await this.cicleService.getCicloAtual();
   }
 
+  @Get("last-finalizado")
+  @ApiOperation({ summary: "Retorna o ciclo finalizado mais recente" })
+  @ApiResponse({
+    status: 200,
+    description: "Ciclo finalizado mais recente retornado com sucesso.",
+  })
+  async getLastFinalizado() {
+    return this.cicleService.getLastFinalizado();
+  }
+
   @Get(":id")
   @ApiOperation({ summary: "Busca um ciclo pelo ID" })
   @ApiResponse({ status: 200, description: "Ciclo retornado com sucesso." })
   findOne(@Param("id") id: string) {
     return this.cicleService.findOne(+id);
+  }
+
+  @Get(":id/users")
+  @ApiOperation({ summary: "Lista todos os colaboradores de um ciclo" })
+  @ApiResponse({
+    status: 200,
+    description: "Colaboradores retornados com sucesso.",
+  })
+  async getUsersByCiclo(@Param("id") id: string) {
+    return this.cicleService.getUsersByCiclo(+id);
   }
 
   @Patch(":id")
@@ -50,6 +70,7 @@ export class CicleController {
     @Param("id") id: number,
     @Body() updateCicleDto: UpdateCicleDto
   ) {
-    return await this.cicleService.update(id, updateCicleDto);
+    const updated = await this.cicleService.update(id, updateCicleDto);
+    return { message: "Ciclo atualizado com sucesso", ciclo: updated };
   }
 }
