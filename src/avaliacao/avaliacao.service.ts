@@ -557,11 +557,18 @@ export class AvaliacaoService {
     notaGestor: number,
     justificativa?: string
   ) {
-    return await this.avaliacaoRepository.updateNotaGestor(
-      id,
-      notaGestor,
-      justificativa
+    // Encrypt the data before saving
+    const encryptedNotaGestor = await this.cryptoService.encrypt(
+      notaGestor.toString()
     );
+    const encryptedJustificativa = justificativa
+      ? await this.cryptoService.encrypt(justificativa)
+      : undefined;
+
+    return await this.avaliacaoRepository.updateAvaliacao(id, {
+      notaGestor: encryptedNotaGestor,
+      justificativaGestor: encryptedJustificativa,
+    });
   }
 
   async patchGestorBulk(body: {
@@ -581,11 +588,11 @@ export class AvaliacaoService {
     }
     let updated = 0;
     const errors: string[] = [];
-    for (const u of updates) {
+    for (const update of updates) {
       try {
         // Confirma se a avaliação pertence ao colaborador e ciclo
         const avaliacao = await this.avaliacaoRepository.findAvaliacaoById(
-          u.avaliacaoId
+          update.avaliacaoId
         );
         if (
           !avaliacao ||
@@ -593,19 +600,26 @@ export class AvaliacaoService {
           avaliacao.idCiclo !== cicloId
         ) {
           errors.push(
-            `Avaliação ${u.avaliacaoId} não pertence ao colaborador/ciclo informado.`
+            `Avaliação ${update.avaliacaoId} não pertence ao colaborador/ciclo informado.`
           );
           continue;
         }
-        await this.avaliacaoRepository.updateNotaGestor(
-          u.avaliacaoId,
-          u.notaGestor,
-          u.justificativaGestor
+
+        const encryptedNotaGestor = await this.cryptoService.encrypt(
+          update.notaGestor.toString()
         );
+        const encryptedJustificativaGestor = update.justificativaGestor
+          ? await this.cryptoService.encrypt(update.justificativaGestor)
+          : undefined;
+
+        await this.avaliacaoRepository.updateAvaliacao(update.avaliacaoId, {
+          notaGestor: encryptedNotaGestor,
+          justificativaGestor: encryptedJustificativaGestor,
+        });
         updated++;
       } catch (e) {
         errors.push(
-          `Erro ao atualizar avaliação ${u.avaliacaoId}: ${
+          `Erro ao atualizar avaliação ${update.avaliacaoId}: ${
             e instanceof Error ? e.message : "Erro desconhecido"
           }`
         );
